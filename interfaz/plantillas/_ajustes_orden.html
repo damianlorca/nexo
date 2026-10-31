@@ -1,0 +1,22 @@
+<h2 id="t-orden">Orden de llamada de los proveedores</h2>
+<p class="nota">El primero de la lista es al que NEXO llama antes al delegar un trabajo o una revisión. Un proveedor apagado,
+  en pausa o sin cuota se salta solo. {% if orden_propio %}Orden elegido por ti.{% else %}Ahora rige el orden de siempre de NEXO.{% endif %}
+  Apagar o encender cada proveedor se hace en <a href="/proveedores">Proveedores</a>.</p>
+<ol class="lista-orden">
+  {% for n in orden %}
+  <li>
+    <code>{{ n }}</code>
+    <button type="button" class="boton-sutil" aria-label="Subir {{ n }}"{% if loop.first %} disabled{% endif %}
+            hx-post="/ajustes/orden-proveedores" hx-vals='{"nombre": "{{ n }}", "accion": "subir"}'
+            hx-target="#orden-proveedores" hx-swap="innerHTML">Subir</button>
+    <button type="button" class="boton-sutil" aria-label="Bajar {{ n }}"{% if loop.last %} disabled{% endif %}
+            hx-post="/ajustes/orden-proveedores" hx-vals='{"nombre": "{{ n }}", "accion": "bajar"}'
+            hx-target="#orden-proveedores" hx-swap="innerHTML">Bajar</button>
+  </li>
+  {% endfor %}
+</ol>
+{% if orden_propio %}
+<button type="button" class="boton-sutil" hx-post="/ajustes/orden-proveedores" hx-vals='{"accion": "restablecer"}'
+        hx-target="#orden-proveedores" hx-swap="innerHTML">Volver al orden de siempre</button>
+{% endif %}
+<div role="status" aria-live="polite">{% if aviso %}{{ aviso }}{% endif %}{% if error %}<span class="error">{{ error }}</span>{% endif %}</div>

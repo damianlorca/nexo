@@ -1,0 +1,16 @@
+{# Centro v2 (T230): «En marcha» en tres lineas: Ahora / Después / En cola, con el nombre del turno en llano. #}
+{% if parada %}
+<p class="tt-vacio">Nada: NEXO está parado.</p>
+{% else %}
+<dl class="em-lineas">
+  <dt>Ahora</dt>
+  <dd>{% if ahora %}{{ ahora.nombre }}{% if ahora.parando %} · parando…{% endif %}
+    <span class="nota">Lleva {{ ahora.tiempo }}{% if ahora.tarea %} · con «{{ ahora.tarea|truncate(80) }}»{% endif %}</span>
+    {% else %}Nada. NEXO está esperando al siguiente turno.{% endif %}</dd>
+  <dt>Después{% if despues %} · {{ despues.cuando }}{% endif %}</dt>
+  <dd>{% if despues %}{{ despues.nombre }}.{% else %}Ninguno programado.{% endif %}</dd>
+  <dt>En cola</dt>
+  <dd>{% if cola %}{{ cola|length }}: {{ cola|join(" · ") }}.{% else %}Vacía.{% endif %}</dd>
+</dl>
+{% if n_en_curso %}<p class="nota">{{ n_en_curso }} tarea{{ "s" if n_en_curso != 1 }} en curso · <a href="/tareas?estado=en_curso">verlas</a></p>{% endif %}
+{% endif %}

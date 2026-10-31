@@ -1,0 +1,71 @@
+{# T667 (F1 de la epica T664): escalera tribunal -> apelacion -> Damian. Claude solo recibe R3, lo que Damian le
+   manda y la calibracion. Los botones POST van a /tribunal/decidir y repintan este panel. #}
+{% if aviso %}<p class="nota nota-aviso" role="status">{{ aviso }}</p>{% endif %}
+{% if error %}<p class="estado-parado" role="alert">{{ error }}</p>{% endif %}
+
+<h3>Bandeja de Damián</h3>
+{% if not m.damian %}
+<p role="status">Nada esperando tu decisión: lo unánime lo resuelven solos el tribunal y la apelación.</p>
+{% else %}
+<ul class="lista-limpia">
+  {% for c in m.damian %}
+  <li class="panel">
+    <p><strong>{{ c.lineas[0] }}</strong><br>{{ c.lineas[1] }}<br>{{ c.lineas[2] }}</p>
+    <form hx-post="/tribunal/decidir" hx-target="#panel-tribunal" hx-disabled-elt="find button">
+      <input type="hidden" name="nombre" value="{{ c.nombre }}">
+      {% if c.es_inv %}
+      <label>RESULTADO si apruebas
+        <select name="resultado">
+          {% for r in ["ADOPTAR", "ADAPTAR", "DESCARTAR"] %}<option value="{{ r }}"{% if r == c.resultado %} selected{% endif %}>{{ r }}</option>{% endfor %}
+        </select>
+      </label>
+      {% endif %}
+      <button type="submit" name="accion" value="aprobar">Aprobar</button>
+      <button type="submit" name="accion" value="rechazar">Rechazar</button>
+      <button type="submit" name="accion" value="claude"{% if m.claude.llena %} disabled title="La bandeja de Claude está llena"{% endif %}>Mandar a Claude</button>
+    </form>
+  </li>
+  {% endfor %}
+</ul>
+{% endif %}
+
+<h3>Bandeja de Claude</h3>
+<p><strong>{{ m.claude.pendientes }} / {{ m.claude.maximo }}</strong> pendientes{% if m.claude.en_espera %} · {{ m.claude.en_espera }} R3 esperando hueco{% endif %}{% if m.claude.llena %} · <strong>llena</strong>{% endif %}. Claude solo recibe R3, lo que tú le mandas y la calibración.</p>
+<p>
+  <button type="button" data-copiar="#orden-claude"{% if not m.claude.pendientes %} disabled{% endif %}>Copiar orden</button>
+  <span data-copiar-estado role="status"></span>
+</p>
+<details>
+  <summary>Ver la orden para Claude Code</summary>
+  <label for="orden-claude" class="solo-lector">Orden para pegar en Claude Code</label>
+  <textarea id="orden-claude" readonly rows="8">{{ orden }}</textarea>
+</details>
+
+<h3>Calidad</h3>
+<p>Expedientes: {% for f, n in m.fases|dictsort %}{{ f }} {{ n }}{% if not loop.last %} · {% endif %}{% else %}ninguno todavía{% endfor %}.
+   Siembra de calibración: {{ m.siembra.registrados }} / {{ m.siembra.objetivo }} registrados ({{ m.siembra.casos }} sembrados).
+   Web hoy: {% for p, c in m.cupo|dictsort %}{{ p }} {{ c.usadas }}/{{ c.cupo }}{% if c.enfriado %} (en pausa){% endif %}{% if not loop.last %} · {% endif %}{% endfor %}.</p>
+<div class="tabla-desplazable">
+<table class="tabla-compacta">
+  <caption>Coincidencia por tipo de trabajo (vigilado = pasa por apelación y por tu bandeja)</caption>
+  <thead><tr><th scope="col">Tipo</th><th scope="col">Casos</th><th scope="col">Coincidencia</th><th scope="col">Estado</th></tr></thead>
+  <tbody>
+    {% for t in m.tipos %}
+    <tr><th scope="row">{{ t.tipo }}</th><td class="numero">{{ t.casos }}</td><td class="numero">{{ (t.tasa * 100)|round|int }} %</td><td>{{ "VIGILADO" if t.vigilado else "normal" }}</td></tr>
+    {% else %}
+    <tr><td colspan="4">Sin datos todavía: empieza con la siembra.</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+</div>
+<div class="tabla-desplazable">
+<table class="tabla-compacta">
+  <caption>Revisores (sale de la lista quien baja del 70 % en 20 casos)</caption>
+  <thead><tr><th scope="col">Revisor</th><th scope="col">Familia</th><th scope="col">Casos</th><th scope="col">Coincidencia</th><th scope="col">Estado</th></tr></thead>
+  <tbody>
+    {% for r in m.revisores %}
+    <tr><th scope="row">{{ r.id }}{% if r.web %} (web){% endif %}</th><td>{{ r.familia }}</td><td class="numero">{{ r.casos }}</td><td class="numero">{% if r.tasa is not none %}{{ (r.tasa * 100)|round|int }} %{% else %}—{% endif %}</td><td>{{ "FUERA" if r.excluido else "en lista" }}</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+</div>

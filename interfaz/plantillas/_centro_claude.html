@@ -1,0 +1,27 @@
+{# Indicador fijo de la bandeja de Claude (Damian 04/10). Icono PROPIO (una bandeja de entrada), no el logo de
+   Claude; naranja de Claude. Encendido con el numero de casos si hay trabajo; gris y apagado si no. Al pulsarlo
+   copia la orden de documentacion/prompts/CLAUDE_BANDEJA.md (la copia nexo.js con [data-copiar]) y dice "Copiado".
+   La orden va en un textarea fuera de pantalla (no display:none: seleccionarlo es el plan B sin portapapeles,
+   p. ej. por http con Tailscale). #}
+<div class="claude-fijo" data-claude-pendientes="{{ pendientes }}">
+  {% if pendientes %}
+  <button type="button" class="claude-indicador claude-encendido" data-copiar="#orden-claude-rapida" data-copiado="Copiado"
+          aria-label="Claude: {{ pendientes }} caso{{ 's' if pendientes != 1 else '' }} en la bandeja. Pulsa para copiar la orden para Claude Code.">
+    <svg class="claude-icono" viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" focusable="false">
+      <path d="M3 13.5 6.2 5.6A2 2 0 0 1 8 4.5h8a2 2 0 0 1 1.8 1.1L21 13.5V18a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4.5zm4.4-.5 1 2h7.2l1-2H19l-2.4-6H7.4L5 13h2.4z" fill="currentColor"/>
+    </svg>
+    <span class="claude-texto">Claude</span>
+    <span class="claude-numero">{{ pendientes }}</span>
+  </button>
+  {% else %}
+  <button type="button" class="claude-indicador claude-apagado" disabled title="Nada pendiente para Claude"
+          aria-label="Claude: bandeja vacía, nada pendiente.">
+    <svg class="claude-icono" viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" focusable="false">
+      <path d="M3 13.5 6.2 5.6A2 2 0 0 1 8 4.5h8a2 2 0 0 1 1.8 1.1L21 13.5V18a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4.5zm4.4-.5 1 2h7.2l1-2H19l-2.4-6H7.4L5 13h2.4z" fill="currentColor"/>
+    </svg>
+    <span class="claude-texto">Claude</span>
+  </button>
+  {% endif %}
+  <span class="claude-estado" data-copiar-estado role="status" aria-live="polite"></span>
+  <textarea id="orden-claude-rapida" class="solo-lector" readonly tabindex="-1" aria-hidden="true">{{ orden }}</textarea>
+</div>

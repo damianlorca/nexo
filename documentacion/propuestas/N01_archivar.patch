@@ -1,0 +1,82 @@
+diff --git a/herramientas_archivadas/LEEME.md b/herramientas_archivadas/LEEME.md
+new file mode 100644
+index 0000000..4a45949
+--- /dev/null
++++ b/herramientas_archivadas/LEEME.md
+@@ -0,0 +1,12 @@
++# Herramientas archivadas
++
++Scripts de un solo uso que ya cumplieron su función: consultas multi-IA de las fases 2 y 3,
++demos del 12/09, exploración de selectores web (T147), el parche T112 ya aplicado y el banco
++de roles de T100 (lo sustituyó `banco_roles_v2.py`). Se archivaron en la auditoría N01
++(hallazgo H19, 25/09/2026).
++
++- Ningún código de NEXO los importa ni los lanza: se comprobó con grep antes de moverlos.
++- Se guardan aquí, versionados, y no en `_archivo/`, porque `_archivo/` está en `.gitignore`
++  y se perderían del repositorio. Regla de CLAUDE.md: no borrar, archivar.
++- **No ejecutar desde aquí.** Calculan rutas relativas a su sitio original. `_cerrar2.py`,
++  además, reescribiría `memoria/estado.json` con datos del 12/09.
+diff --git a/_cerrar2.py b/herramientas_archivadas/_cerrar2.py
+similarity index 100%
+rename from _cerrar2.py
+rename to herramientas_archivadas/_cerrar2.py
+diff --git a/banco_roles_locales.py b/herramientas_archivadas/banco_roles_locales.py
+similarity index 100%
+rename from banco_roles_locales.py
+rename to herramientas_archivadas/banco_roles_locales.py
+diff --git a/consulta_fase2.py b/herramientas_archivadas/consulta_fase2.py
+similarity index 100%
+rename from consulta_fase2.py
+rename to herramientas_archivadas/consulta_fase2.py
+diff --git a/consulta_fase3.py b/herramientas_archivadas/consulta_fase3.py
+similarity index 100%
+rename from consulta_fase3.py
+rename to herramientas_archivadas/consulta_fase3.py
+diff --git a/consulta_fase3_relleno.py b/herramientas_archivadas/consulta_fase3_relleno.py
+similarity index 100%
+rename from consulta_fase3_relleno.py
+rename to herramientas_archivadas/consulta_fase3_relleno.py
+diff --git a/consulta_replanteamiento.py b/herramientas_archivadas/consulta_replanteamiento.py
+similarity index 100%
+rename from consulta_replanteamiento.py
+rename to herramientas_archivadas/consulta_replanteamiento.py
+diff --git a/demo_en_vivo.py b/herramientas_archivadas/demo_en_vivo.py
+similarity index 100%
+rename from demo_en_vivo.py
+rename to herramientas_archivadas/demo_en_vivo.py
+diff --git a/demo_imagen_retry.py b/herramientas_archivadas/demo_imagen_retry.py
+similarity index 100%
+rename from demo_imagen_retry.py
+rename to herramientas_archivadas/demo_imagen_retry.py
+diff --git a/herramientas_delegacion/diag_gemini_web.py b/herramientas_archivadas/herramientas_delegacion/diag_gemini_web.py
+similarity index 100%
+rename from herramientas_delegacion/diag_gemini_web.py
+rename to herramientas_archivadas/herramientas_delegacion/diag_gemini_web.py
+diff --git a/herramientas_delegacion/explorar_ampliado.py b/herramientas_archivadas/herramientas_delegacion/explorar_ampliado.py
+similarity index 100%
+rename from herramientas_delegacion/explorar_ampliado.py
+rename to herramientas_archivadas/herramientas_delegacion/explorar_ampliado.py
+diff --git a/herramientas_delegacion/explorar_modos.py b/herramientas_archivadas/herramientas_delegacion/explorar_modos.py
+similarity index 100%
+rename from herramientas_delegacion/explorar_modos.py
+rename to herramientas_archivadas/herramientas_delegacion/explorar_modos.py
+diff --git a/herramientas_delegacion/explorar_pensar.py b/herramientas_archivadas/herramientas_delegacion/explorar_pensar.py
+similarity index 100%
+rename from herramientas_delegacion/explorar_pensar.py
+rename to herramientas_archivadas/herramientas_delegacion/explorar_pensar.py
+diff --git a/herramientas_delegacion/explorar_selectores_modelo.py b/herramientas_archivadas/herramientas_delegacion/explorar_selectores_modelo.py
+similarity index 100%
+rename from herramientas_delegacion/explorar_selectores_modelo.py
+rename to herramientas_archivadas/herramientas_delegacion/explorar_selectores_modelo.py
+diff --git a/herramientas_delegacion/leer_overlay_gemini.py b/herramientas_archivadas/herramientas_delegacion/leer_overlay_gemini.py
+similarity index 100%
+rename from herramientas_delegacion/leer_overlay_gemini.py
+rename to herramientas_archivadas/herramientas_delegacion/leer_overlay_gemini.py
+diff --git a/parche_shell_t112.ps1 b/herramientas_archivadas/parche_shell_t112.ps1
+similarity index 100%
+rename from parche_shell_t112.ps1
+rename to herramientas_archivadas/parche_shell_t112.ps1
+diff --git a/verificar_graft_t112.py b/herramientas_archivadas/verificar_graft_t112.py
+similarity index 100%
+rename from verificar_graft_t112.py
+rename to herramientas_archivadas/verificar_graft_t112.py

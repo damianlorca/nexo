@@ -1,0 +1,31 @@
+{# Centro v2 (T230): «Hecho desde tu última visita». Agrupado por lo que cambia para ti; «Probado» = hay pruebas
+   automaticas que pasan. La frase sale de cierre.para_damian o, si falta, de Qwen local o del titulo en llano.
+   T1020: al final, el grupo «Permisos que ha resuelto NEXO» (guardian, tribunal de 3 IAs, revisor de reglas). #}
+{% if not grupos and not resueltos %}
+<p class="tt-vacio">Todavía nada terminado desde tu última visita{% if visita %} ({{ visita }}){% endif %}.</p>
+{% else %}
+{% if grupos %}
+<p class="nota">Agrupado por lo que cambia para ti. «Probado» quiere decir que hay pruebas automáticas que pasan.{% if ultimas_24h %} (Primera visita: las últimas 24 horas.){% endif %}</p>
+{% endif %}
+<ul class="hh-lista">
+  {% for g in grupos %}
+  <li class="hh-grupo">
+    <p class="hh-frase"><a href="{{ g.enlace }}">{{ g.frase }}</a>
+      {% if g.novedad %}<span class="hh-nuevo">Nuevo para ti</span>{% endif %}</p>
+    {% if g.segunda %}<p class="nota">{{ g.segunda }}</p>{% endif %}
+    {% if g.probado %}<p class="hh-ok" title="Hay pruebas automáticas que pasan"><span aria-hidden="true">✓</span> Probado</p>{% endif %}
+  </li>
+  {% endfor %}
+  {% if resueltos %}
+  <li class="hh-grupo" id="permisos-resueltos">
+    <p class="hh-frase">Permisos que ha resuelto NEXO · {{ n_resueltos }} ({{ n_resueltos_si }} sí, {{ n_resueltos - n_resueltos_si }} no)</p>
+    <ul class="lista-limpia">
+      {% for r in resueltos %}
+      <li class="nota"><a href="{{ r.enlace }}">{{ r.que }}</a> · {{ "Aprobado" if r.aprobada else "Denegado" }} por {{ r.quien }}{% if r.motivo %} ({{ r.motivo|truncate(90) }}){% endif %}</li>
+      {% endfor %}
+    </ul>
+  </li>
+  {% endif %}
+</ul>
+{% if total > grupos|length %}<p class="nota"><a href="/tareas?estado=hecha&amp;orden=actualizada">Ver las {{ total }}</a></p>{% endif %}
+{% endif %}

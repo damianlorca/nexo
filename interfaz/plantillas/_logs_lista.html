@@ -1,0 +1,24 @@
+{% if not filas %}
+<p class="vacio">{% if f.fuente or f.proveedor or f.estado %}Ninguna línea con estos filtros.{% else %}Los registros están vacíos.{% endif %}</p>
+{% else %}
+<p class="nota">{{ filas|length }} línea{{ "s" if filas|length != 1 }}{% if recortada %} de {{ total }} (límite {{ f.limite }}){% endif %}, la más reciente arriba.
+  Lo que parece un secreto se muestra como «oculto».</p>
+<div class="tabla-desplazable">
+<table class="tabla tabla-logs tabla-apilable">
+  <thead><tr><th scope="col">Hora</th><th scope="col">Fichero</th><th scope="col">Evento / proveedor</th>
+    <th scope="col">Estado</th><th scope="col">Detalle</th></tr></thead>
+  <tbody>
+  {% for x in filas %}
+  <tr>
+    <td class="hora" data-etiqueta="Hora">{{ x.hora or "—" }}</td>
+    <td data-etiqueta="Fichero">{{ x.fuente }}</td>
+    <td data-etiqueta="Evento / proveedor">{{ x.evento or x.proveedor or "—" }}</td>
+    <td data-etiqueta="Estado">{% if x.estado %}<span class="insignia-texto">{{ x.estado }}</span>{% else %}—{% endif %}</td>
+    <td class="celda-detalle" data-etiqueta="Detalle"><details><summary>{{ x.resumen or "(sin más campos)" }}</summary><pre>{{ x.completa }}</pre></details></td>
+  </tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+{% endif %}
+<p class="nota">Se busca en el último medio mega de cada fichero de <code>registros/</code>.</p>

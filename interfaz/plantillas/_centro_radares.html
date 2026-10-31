@@ -1,0 +1,18 @@
+{# Fila de Radares del Centro (bloque 5): una tarjeta corta por radar; el detalle, en /radares. #}
+{% if error %}
+<p class="nota">No se han podido leer los radares.</p>
+{% elif not radares %}
+<p class="nota">Todavía no hay ningún radar.</p>
+{% else %}
+<ul class="radares-fila">
+  {% for r in radares %}
+  <li class="radar-mini">
+    <h3>{{ r.nombre }}{% if r.prueba %} <span class="nota">· de prueba</span>{% endif %}</h3>
+    <p class="nota">{{ r.frase }}</p>
+    {% if r.novedades %}
+    <ul class="lista-llana">{% for a in r.novedades %}<li><a href="{{ a.url }}" rel="noopener noreferrer" target="_blank">{{ a.titulo|truncate(70) }}</a></li>{% endfor %}</ul>
+    {% else %}<p class="nota">Sin novedades.</p>{% endif %}
+  </li>
+  {% endfor %}
+</ul>
+{% endif %}

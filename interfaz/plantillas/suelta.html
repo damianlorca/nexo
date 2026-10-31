@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="es" data-tema="sistema">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="192x192" href="/estatico/iconos/nexo-192.png">
+<meta name="theme-color" media="(prefers-color-scheme: light)" content="#f6f7f9">
+<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0f1115">
+{% block cabeza %}{% endblock %}
+<title>{% block titulo %}NEXO{% endblock %} · NEXO</title>
+<link rel="stylesheet" href="/estatico/nexo.css">
+<script src="/estatico/nexo.js"></script>
+</head>
+<body class="suelta">
+<main id="principal" class="tarjeta-suelta">
+  <p class="marca">NEXO</p>
+  {% block contenido %}{% endblock %}
+</main>
+</body>
+</html>

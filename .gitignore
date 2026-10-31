@@ -1,0 +1,116 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Registros: la carpeta ENTERA, no solo los .log.
+# Comprobado el 11/09/2026: el token de Telegram esta en claro dentro
+# de registros/agente_20260910.log y de registros/bot_err_con_token.viejo.
+# El patron antiguo era "registros/*.log", que dejaba fuera el .viejo y
+# tambien trazas.jsonl. O sea que el primer commit habria subido el token.
+registros/*
+!registros/.gitkeep
+
+# Secretos
+.env
+secretos.toml
+chrome-perfil/
+
+# Salidas y trastero. Son copias y descartes: el historial de verdad
+# lo lleva Git, no estas carpetas.
+salidas/
+_respaldos/
+_archivo/
+
+# La memoria de trabajo: SI entra en Git. Decidido el 11/09/2026.
+#
+# Antes habia aqui una linea "memoria/*.json" que dejaba fuera
+# estado.json y tareas.json, o sea justo los dos archivos cuya perdida
+# silenciosa era el hallazgo D1 de la auditoria. Poner la red de
+# seguridad y dejar fuera lo unico irreemplazable no tenia sentido: el
+# codigo se puede reescribir, la memoria no.
+#
+# Contrapartida asumida: estado.json cambia en cada turno, asi que el
+# historial tendra mucho ruido. Es un precio barato por poder volver a
+# la memoria de anteayer.
+#
+# Esto vale mientras el repositorio sea LOCAL. Si algun dia se sube a
+# GitHub hay que revisarlo: memoria/becas.md lleva datos personales.
+
+# Mensajes ya cursados del canal. El contenido vivo si entra.
+canal/entrada/*.leido
+canal/salida/*.enviado
+
+# Dependencias descargadas. NO son codigo del proyecto.
+#
+# Anadido el 11/09/2026 despues de meter 363 archivos y 73 MB de Piper
+# en un commit por hacer `git add -A` sin mirar. Un binario en Git se
+# queda en el historial para siempre aunque lo borres despues.
+#
+# Piper se reinstala con _instalar_piper.ps1 en dos minutos. Lo que hay
+# que versionar es el script que lo trae, no los 73 MB.
+piper/
+_descargas/
+
+# graft's local graph cache — regenerable, not committed (run `graft build`).
+/graft/
+
+# estado de ejecucion (T143/T079)
+/memoria/enfriamiento.json
+/memoria/proveedores_apagados.json
+/memoria/PARADA_NEXO
+/memoria/CIERRE_TURNO
+/memoria/.candado_turno_nexo.lock
+
+# interfaz web: token por arranque (secreto de sesion, cambia en cada arranque)
+/memoria/interfaz_token.txt
+# hito movil: clave privada VAPID y suscripciones push del navegador (push.py)
+/memoria/push/
+
+# cola de aprobaciones (N04): puede guardar comandos enteros con datos sensibles; es estado local, no se sube
+/memoria/aprobaciones.json
+/memoria/aprobaciones_historial.jsonl
+/memoria/.candado_aprobaciones.lock
+/memoria/revisor_estado.json
+/memoria/.candado_revisor.lock
+/memoria/TURNOS_DESACTIVADOS
+# T189: avisos para la web (estado de modo, anti-repeticion) y expedientes del auditor. Datos de
+# ejecucion con URLs de conversaciones: se quedan en el PC (el resumen va en tareas.json y en el borrador).
+/memoria/avisos/
+/memoria/auditoria/
+
+# T231: estado de ejecucion de los turnos (la config memoria/turnos_config.json SI se versiona)
+/memoria/turno_una_vez.json
+/memoria/turnos_estado.json
+/memoria/vigia/
+/memoria/planificador.json
+/memoria/turno_en_marcha.json
+/memoria/.candado_planificador.lock
+
+# T667: estado vivo del tribunal (lleva el texto de los borradores). calibracion.jsonl SI se versiona (evidencia).
+/memoria/tribunal/expedientes.json
+/memoria/tribunal/estado.json
+/memoria/tribunal/*.lock
+/memoria/tribunal/*.tmp
+.venv-implementador/
+.venv-reels/
+# T669: ficheros de trabajo de Aider (historial, cache del mapa del repo); .aiderignore SI se versiona.
+.aider.*
+# T669: historiales de Aider por tarea (texto de la tarea + respuesta del modelo): solo en local.
+/memoria/implementador/*/
+/memoria/implementador/urls_bloqueadas.log
+# Damian 04/10: lo reescribe el bot sin parar; fuera de git para que principal quede limpio con el bot vivo.
+/canal/estado_bot.json
+# T750: perfil privado de Damian (CV, datos personales) y perfil de los radares: nunca a git, al espejo ni a un prompt.
+/memoria/perfil_privado/
+/memoria/radares/perfil.json
+# T693: datos de ejecucion de los radares (el config.json de cada radar SI se versiona)
+/memoria/radares/*/articulos*.jsonl
+/memoria/radares/*/estado*.json
+/memoria/radares/*/simulacion_*.json
+/memoria/radares/*/historico*.jsonl
+# Guardia de responsables: repaso horario (se regenera solo)
+/memoria/responsables_repaso.json
+# T691: capturas de pantalla de los informes (binarios: se quedan en el PC).
+/documentacion/informes/capturas/

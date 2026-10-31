@@ -1,0 +1,133 @@
+# Configuración del agente.
+# Los secretos NO van aquí: van en secretos.toml, que está en .gitignore.
+
+[rutas]
+raiz = "C:\\Users\\damia\\Desktop\\AI\\agente"
+salidas = "C:\\Users\\damia\\Desktop\\AI\\agente\\salidas"
+
+[permisos]
+# Carpetas donde el agente puede escribir sin preguntar.
+zona_verde = [
+    "C:\\Users\\damia\\Desktop\\AI\\agente",
+    "C:\\Users\\damia\\Desktop\\AI\\ComfyUI",
+    # Vault de NEXO (documentacion). Aprobado por Damian 23/09/2026 ("si, vault").
+    "C:\\Users\\damia\\Desktop\\AI\\contexto\\proyectos\\nexo",
+]
+# Todo lo de fuera es ámbar. El rojo no se configura: está fijo en el código.
+
+[qwen]
+# Ollama primero: arranca como servicio y funciona sin que haya
+# ninguna ventana abierta, que es lo que hace falta para trabajar
+# cuando Damián no está. LM Studio queda de reserva.
+url = "http://localhost:11434/v1"
+url_reserva = "http://localhost:1234/v1"   # LM Studio, si Ollama no responde
+
+# Contexto de Ollama (API nativa /api/chat). CLAUDE.md: num_ctx 4096.
+# Sin esta linea extremidades/qwen.py pedia 8192 (hallazgo B2 de N02, 25/09).
+num_ctx = 4096
+
+# MEDIDO el 11/09/2026 con tres encargos cortos y el mismo
+# presupuesto de 800 tokens:
+#
+#     qwen3:4b      116,1 s    3 de 3 respuestas VACIAS
+#     qwen2.5:7b     15,9 s    0 vacias
+#     llama3.2:3b    26,4 s    0 vacias
+#
+# El obrero era qwen3:4b, el unico que no contestaba. qwen3 razona
+# antes de responder y ese razonamiento sale del mismo presupuesto:
+# para contestar una palabra se lo gasta entero pensando. Para faena
+# corta, un modelo que razona es lo peor que se puede poner.
+#
+# Detalle en memoria/comparativa_modelos.json.
+modelo_obrero = "qwen2.5:7b"     # faena mecánica: resumir, clasificar, limpiar
+# Decision 6 (26/09): nada de mas de 8B sin Damian delante. El 14B de antes
+# (qwen3:14b) sigue instalado, pero ya no se carga solo.
+modelo_criterio = "qwen2.5:7b"   # cuando hace falta algo de juicio (<=8B)
+
+# Reserva: nombres tal y como los tiene LM Studio.
+modelo_obrero_reserva = "qwen/qwen3-4b"
+modelo_criterio_reserva = "qwen/qwen3-4b"
+
+# Con 32 GB compartidos entre CPU y la 890M, el 14B (unos 9 GB en q4)
+# y ComfyUI (unos 7 GB) caben a la vez. No lances los dos con el 14B
+# cargado si además estás con SolidWorks abierto.
+
+[imagen]
+comfyui = "http://127.0.0.1:8188"
+
+# MEDIDO el 12/09/2026 (pruebas/prueba_directml.py): la Radeon 890M solo
+# admite unos 3 GB por DirectML. SDXL Turbo (UNet de ~5 GB en fp16) NO cabe
+# y hace que ComfyUI muera con un "UnicodeDecodeError ... byte 0xe1" que
+# parece un fallo de texto pero es falta de memoria de GPU disfrazada.
+# Por eso el checkpoint de trabajo es sd-turbo (SD 2.1, ~2,6 GB en fp16),
+# que sí entra. El de SDXL sigue en disco por si algún día se usa en CPU:
+#   sd_xl_turbo_1.0_fp16.safetensors
+checkpoint = "sd_turbo.safetensors"
+
+# sd-turbo está entrenado a 512 px y con muy pocos pasos; cfg alto lo
+# estropea (para eso está el "turbo"). No subas cfg por encima de 2.
+ancho = 512
+alto = 512
+pasos = 4
+cfg = 1.0
+
+[video]
+# Divulgación en vertical y corto: reels y shorts.
+vertical = true
+ancho = 1080
+alto = 1920
+
+[altavoz]
+# T697: oyente del altavoz "Damián" (extremidades/altavoz.py): al ver el volumen al 13 % lo devuelve al de antes
+# y cuenta el brief. Arranca con la web definitiva solo si esto es true. Apagado hasta la primera prueba real
+# con Damian delante (la lanza el coordinador).
+# 17/10 Damian: CONGELADO (la voz no le convence y no lo usa); se buscara otra forma.
+oyente = false
+hosts = ["192.168.0.104"]
+
+[voz]
+piper = "piper\\piper.exe"
+modelo = "piper\\es_ES-sharvard-medium.onnx"
+
+[navegador]
+puerto_cdp = 9333
+perfil = "C:\\Users\\damia\\Desktop\\AI\\agente\\chrome-perfil"
+chrome = "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe"
+
+[papers]
+# OpenAlex pide un correo para darte prioridad en la cola. No es una clave.
+correo_cortesia = "tu_correo@ejemplo.com"
+
+[nvidia]
+# La clave va en secretos.toml [nvidia] api_key. Esta lista no es secreta:
+# ids exactos comprobados contra /models el 27-28/09/2026 (documentacion/proveedores/NVIDIA_MODELOS_GRATIS.md).
+# 04/10 (T667, Damian): fuera mistral-nemotron (HTTP 410, retirado) y glm-5.3-flash (sin respuesta en 120 s);
+# dentro nemotron-3-ultra (Free Endpoint, banco herramientas_nube/_banco_tribunal_0410.py OK).
+# 24/10 (bloque 18): super-120b da 404 y gpt-oss-20b no responde; ultra primero, el resto con "Free Endpoint" y
+# respondiendo (registros/probar_nvidia_1024.txt). step-5-preview el ultimo: tarda ~34 s.
+modelos = ["nvidia/nemotron-3-ultra-550b-a55b", "nvidia/nemotron-3.5-lightning-30b-a3b", "minimaxai/minimax-m3.1-flash", "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning", "stepfun-ai/step-5-preview"]
+
+[canal]
+# El token del bot va en secretos.toml
+# T751: interruptor del bot de Telegram. false = el vigilante no lo relanza y el bot sale en su siguiente
+# vuelta (no se borra codigo; true lo vuelve a encender). Las aprobaciones ambar avisan por push y se deciden
+# en la web (Bandejas).
+bot_activo = false
+chat_id = 0
+
+# Desde el 11/09: cuando llega un mensaje suelto (no contesta a una
+# pregunta abierta), el bot manda ademas una lectura rapida de Qwen
+# (categoria, urgencia, resumen de una frase) en un segundo mensaje
+# sin sonido. Qwen NO decide ni da de alta nada por su cuenta, solo
+# informa mientras Nexo no esta mirando. Ponlo a false si molesta.
+qwen_responde_libres = true
+
+# T073 (14/09): ademas de esa lectura informativa, un mensaje suelto
+# que Qwen clasifica como "resumen" se intenta de verdad con el
+# Router (router.py, T067/T044), con la misma verificacion mecanica.
+# N01 (H11, 26/09): SOLO con Qwen local (solo_local=True): nunca sale
+# a ChatGPT ni a Gemini, y con la PARADA activa no se intenta. Una "extraccion" no puede resolverse desde un mensaje
+# suelto (no hay claves que pedirle a Telegram) y siempre escala sin
+# mandar nada. Ponlo a false si prefieres que TODO mensaje suelto
+# quede solo para que Nexo (Claude) lo revise a mano.
+router_responde_libres = true

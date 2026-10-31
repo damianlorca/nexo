@@ -1,0 +1,93 @@
+{# Ficha + acciones + detalle tecnico. Todo sale del core tal cual esta ahora (nunca optimista).
+   El SSE solo repinta #ficha-tarea y #tecnico-tarea: los formularios no se tocan mientras escribes. #}
+<div id="ficha-tarea" hx-get="/tareas/{{ t.id }}/ficha" hx-trigger="nexo:tareas from:body throttle:1s, nexo:reconciliar from:body">
+  {% include "_tarea_ficha.html" %}
+</div>
+
+{% include "_tarea_aparcar.html" %}
+
+{% include "_tarea_chat.html" %}
+
+<section class="panel" aria-labelledby="t-acciones-tarea">
+  <h2 id="t-acciones-tarea">Qué puedes hacer</h2>
+  <div class="rejilla-acciones">
+    <form hx-post="/tareas/{{ t.id }}/nota" hx-target="#detalle-tarea" hx-disabled-elt="find button[type=submit]">
+      <label for="nota-{{ t.id }}"><strong>Añadir nota</strong></label>
+      <textarea id="nota-{{ t.id }}" name="nota" rows="3" maxlength="8000" required></textarea>
+      <button type="submit" class="boton-sutil">Anotar</button>
+      <div id="error-nota" aria-live="assertive"></div>
+    </form>
+
+    {% if t.estado != "hecha" %}
+    <form hx-post="/tareas/{{ t.id }}/completar" hx-target="#detalle-tarea" hx-disabled-elt="find button[type=submit]">
+      {% if es_investigacion %}
+      {# T674: una investigacion no se cierra con "esta bien/mal": RESULTADO + motivo #}
+      <label for="decision-{{ t.id }}"><strong>Resultado de la investigación</strong></label>
+      <select id="decision-{{ t.id }}" name="decision" required>
+        <option value="">Elige…</option>
+        {% for d in decisiones %}<option value="{{ d }}">{{ d }}</option>{% endfor %}
+      </select>
+      <label for="motivo-{{ t.id }}">Motivo (obligatorio)</label>
+      <textarea id="motivo-{{ t.id }}" name="motivo" rows="3" maxlength="8000" minlength="15" required
+                placeholder="Por qué se adopta, se adapta o se descarta"></textarea>
+      <p class="nota">ADOPTAR o ADAPTAR crea la tarea de integración y la investigación espera a que se verifique. Instalar algo externo sigue pasando por la cola de aprobaciones.</p>
+      <button type="submit">Decidir</button>
+      {% else %}
+      <label for="cierre-{{ t.id }}"><strong>Cerrar como hecha</strong></label>
+      <textarea id="cierre-{{ t.id }}" name="nota" rows="2" maxlength="8000" placeholder="Cómo quedó (opcional)"></textarea>
+      <label for="evidencia-cierre-{{ t.id }}">Evidencia del cierre (obligatoria)</label>
+      <textarea id="evidencia-cierre-{{ t.id }}" name="evidencia" rows="2" maxlength="8000" minlength="10" required
+                placeholder="Qué se hizo y qué se comprobó">cerrada a mano por Damián desde la web</textarea>
+      <label for="estado-real-{{ t.id }}">Estado real</label>
+      <select id="estado-real-{{ t.id }}" name="estado_real">
+        <option value="HECHO SIN TESTEAR">HECHO SIN TESTEAR (falta probarlo)</option>
+        <option value="HECHO Y TESTEADO">HECHO Y TESTEADO (la evidencia es una prueba ejecutada)</option>
+      </select>
+      <label for="despues-{{ t.id }}">Después (obligatorio)</label>
+      <input id="despues-{{ t.id }}" name="despues" required maxlength="300" autocomplete="off"
+             value="nada: cerrada por Damián"
+             placeholder="T123 si hay otra tarea siguiente, o «nada: motivo»">
+      <button type="submit">Marcar hecha</button>
+      {% endif %}
+      <div id="error-completar" aria-live="assertive"></div>
+    </form>
+    {% endif %}
+
+    {% if t.estado == "hecha" and not t.testeado %}
+    <form hx-post="/tareas/{{ t.id }}/verificar" hx-target="#detalle-tarea" hx-disabled-elt="find button[type=submit]">
+      <label for="evidencia-{{ t.id }}"><strong>Verificar con evidencia</strong> (obligatoria)</label>
+      <textarea id="evidencia-{{ t.id }}" name="evidencia" rows="3" maxlength="8000" minlength="10" required
+                placeholder="Qué se probó y qué salida dio"></textarea>
+      <button type="submit">Verificar</button>
+      <div id="error-verificar" aria-live="assertive"></div>
+    </form>
+    {% endif %}
+  </div>
+
+  <details class="editar-tarea">
+    <summary>Editar campos</summary>
+    <form class="form-tarea" hx-post="/tareas/{{ t.id }}/editar" hx-target="#detalle-tarea" hx-disabled-elt="find button[type=submit]">
+      {# Lo que se vio al abrir el formulario: si la tarea cambia entre medias, no se pisa. #}
+      <input type="hidden" name="visto" value="{{ version }}">
+      {% set prefijo = "editar" %}
+      {% include "_tarea_campos.html" %}
+      <div class="campos">
+        <label>Estado
+          <select name="estado">
+            {% for e in estados %}<option value="{{ e }}"{% if t.estado == e %} selected{% endif %}>{{ e }}</option>{% endfor %}
+          </select>
+        </label>
+        <label>Bloqueada por (id de tarea)
+          <input name="bloqueada_por" value="{{ t.bloqueada_por or '' }}" maxlength="60" autocomplete="off">
+        </label>
+      </div>
+      <p class="nota">Reabrir una tarea hecha le quita el «testeado»: habrá que verificarla otra vez.</p>
+      <div class="fila-botones"><button type="submit">Guardar cambios</button></div>
+      <div id="error-editar" aria-live="assertive"></div>
+    </form>
+  </details>
+</section>
+<div id="tecnico-tarea" hx-get="/tareas/{{ t.id }}/tecnico" hx-trigger="nexo:tareas from:body throttle:1s, nexo:reconciliar from:body">
+  {% include "_tarea_tecnico.html" %}
+</div>
+{% if aviso %}<div hx-swap-oob="innerHTML:#avisos">{{ aviso }}</div>{% endif %}

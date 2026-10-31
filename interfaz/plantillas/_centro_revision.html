@@ -1,0 +1,32 @@
+{# T192: lo que NEXO ha investigado y espera el veredicto de Claude. Nada se implementa ni se cierra sin él. #}
+{% set c = cola %}
+{% if c.alerta %}
+<p class="estado-parado" role="status"><strong>Revisión atrasada:</strong> {{ c.motivos|join("; ") }}.</p>
+{% endif %}
+{% if c.revisiones or c.propuestas %}
+<p>{{ c.revisiones|length }} borrador{{ "es" if c.revisiones|length != 1 else "" }} y {{ c.propuestas|length }} propuesta{{ "s" if c.propuestas|length != 1 else "" }} esperando · aviso con {{ umbral }} o más, o si alguno pasa de {{ dias_max }} días.</p>
+<ul class="lista-acciones">
+  {% for r in c.revisiones %}
+  <li>
+    <strong class="{{ 'estado-parado' if r.dias > dias_max else '' }}">{{ "%.1f"|format(r.dias) }} d</strong>
+    <a href="/tareas/{{ r.id }}">{{ r.id }}</a> revisa <a href="/tareas/{{ r.origen }}">{{ r.origen }}</a>
+    · <a href="/borrador?f={{ r.borrador|urlencode }}">{{ r.borrador }}</a>
+    · {{ r.propuestas }} propuesta{{ "s" if r.propuestas != 1 else "" }}
+    {% set mias = c.propuestas|selectattr("revision", "equalto", r.id)|list %}
+    {% if mias %}
+    <ul>
+      {% for p in mias %}<li><a href="/tareas/{{ p.id }}">{{ p.id }}</a> {{ p.titulo[:90] }} · valor {{ p.valor }} · esfuerzo {{ p.esfuerzo }}{% if p.riesgo %} · riesgo {{ p.riesgo[:60] }}{% endif %}</li>{% endfor %}
+    </ul>
+    {% endif %}
+  </li>
+  {% endfor %}
+</ul>
+{% if c.huerfanas %}
+<h3>Propuestas sin revisión abierta</h3>
+<ul class="lista-acciones">
+  {% for p in c.huerfanas %}<li><strong>{{ "%.1f"|format(p.dias) }} d</strong> <a href="/tareas/{{ p.id }}">{{ p.id }}</a> {{ p.titulo[:90] }} · valor {{ p.valor }} · esfuerzo {{ p.esfuerzo }}</li>{% endfor %}
+</ul>
+{% endif %}
+{% else %}
+<p class="vacio">Nada esperando la revisión de Claude.</p>
+{% endif %}

@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block titulo %}Bandejas{% endblock %}
+{% block encabezado %}Bandejas{% endblock %}
+{% block contenido %}
+{# T691 fase 1: todo lo que necesita una decision de Damian en una pagina. Fase 2 lo une en una sola cola con
+   las acciones en la tarjeta; de momento cada bandeja es el panel de siempre (mismas acciones, mismo CSRF). #}
+<div data-panel id="te-toca" hx-get="/centro/te_toca?todas=1"
+     hx-trigger="load, nexo:tareas from:body throttle:3s, nexo:reconciliar from:body">
+  {% include "_esqueleto.html" %}
+</div>
+
+{# T691 escritorio: los paneles de cada bandeja en dos columnas cuando caben (desde 1100 px). #}
+<div class="rejilla-paneles">
+<section class="panel" aria-labelledby="t-tribunal" id="bandeja-tribunal">
+  <h2 id="t-tribunal">Tribunal de revisión</h2>
+  <div data-panel id="panel-tribunal" hx-get="/centro/tribunal" hx-trigger="load, nexo:tareas from:body throttle:5s, nexo:reconciliar from:body">
+    {% include "_esqueleto.html" %}
+  </div>
+</section>
+
+<section class="panel" aria-labelledby="t-riesgo" id="bandeja-riesgo">
+  <h2 id="t-riesgo">Aprobaciones por riesgo (R1 / R2)</h2>
+  <div data-panel id="panel-riesgo" hx-get="/centro/riesgo" hx-trigger="load, every 60s, nexo:tareas from:body throttle:5s, nexo:reconciliar from:body">
+    {% include "_esqueleto.html" %}
+  </div>
+</section>
+
+<section class="panel" aria-labelledby="t-ambar" id="bandeja-ambar">
+  <h2 id="t-ambar">Aprobaciones ámbar</h2>
+  <div data-panel id="panel-ambar" hx-get="/centro/ambar" hx-trigger="load, every 60s, nexo:aprobacion from:body, nexo:reconciliar from:body">
+    {% include "_esqueleto.html" %}
+  </div>
+</section>
+
+<section class="panel" aria-labelledby="t-reels" id="bandeja-reels">
+  <h2 id="t-reels">Reels: lo que solo puedes conseguir tú</h2>
+  <div data-panel id="panel-reels-huecos" hx-get="/centro/reels_huecos" hx-trigger="load, nexo:reconciliar from:body">
+    {% include "_esqueleto.html" %}
+  </div>
+</section>
+
+<section class="panel" aria-labelledby="t-revision" id="bandeja-revision">
+  <h2 id="t-revision">Cola de revisión de Claude</h2>
+  <div data-panel hx-get="/centro/revision" hx-trigger="load, nexo:tareas from:body throttle:2s, nexo:reconciliar from:body">
+    {% include "_esqueleto.html" %}
+  </div>
+</section>
+</div>
+{% endblock %}

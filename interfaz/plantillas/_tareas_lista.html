@@ -1,0 +1,29 @@
+{# T230: tarjetas (igual en PC y movil). Id siempre junto al titulo; lo tecnico, en la ficha. #}
+<p class="bc-cuenta" role="status">
+  <strong>{{ total }}</strong> tarea{{ "s" if total != 1 }}{% if recortada %} (se ven las {{ filas|length }} primeras){% endif %}
+  {% for c in chips %}<a class="bc-chip" href="{{ c.url }}" aria-label="Quitar filtro {{ c.texto }}">{{ c.texto }} <span aria-hidden="true">×</span></a>{% endfor %}
+</p>
+{% if not filas %}
+<p class="vacio">Ninguna tarea con estos filtros. <a href="/tareas">Ver las pendientes</a>.</p>
+{% else %}
+<ul class="bc-tarjetas">
+  {% for v in filas %}
+  <li class="bc-tarjeta">
+    <div class="bc-tarjeta-cabeza">
+      {% set e = v.estado %}{% include "_estado_tarea.html" %}
+      <span class="bc-prio {{ v.clase_prio }}" title="Puntuación {{ v.puntuacion }}">{{ v.prioridad }}</span>
+      {% if v.t.depende == "damian" and v.t.estado in ("pendiente", "en_curso", "esperando", "bloqueada") %}<span class="bc-te-toca">Te toca a ti</span>{% endif %}
+      {% if v.plazo %}<span class="{{ 'bc-vencida' if v.vencida else 'bc-plazo' }}">{{ v.plazo }}</span>{% endif %}
+      {% if v.vuelve %}<span class="bc-plazo">{{ v.vuelve }}</span>{% endif %}
+    </div>
+    <h2 class="bc-tarjeta-titulo"><a href="/tareas/{{ v.t.id }}"><span class="bc-id">{{ v.t.id }}</span> · {{ v.t.titulo }}</a></h2>
+    {% if v.resumen.texto %}<p class="bc-resumen">{{ v.resumen.texto }}</p>{% endif %}
+    <p class="bc-meta">
+      {{ v.quien }}{% if v.et.categoria %} · {{ v.et.categoria }}{% endif %}{% if v.et.tema %} · {{ v.et.tema }}{% endif %}
+      · movida {{ v.actualizada }}
+      {% if v.claude %}· <span title="Modelo y esfuerzo para abrir la sesión de Claude Code (T005)">Claude: {{ v.claude.texto }}</span>{% endif %}
+    </p>
+  </li>
+  {% endfor %}
+</ul>
+{% endif %}

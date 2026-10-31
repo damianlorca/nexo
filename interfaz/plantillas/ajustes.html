@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block titulo %}Ajustes{% endblock %}
+{% block encabezado %}Ajustes{% endblock %}
+{% block contenido %}
+<section class="panel" aria-labelledby="t-notif" x-data="notificaciones">
+  <h2 id="t-notif">Notificaciones en este dispositivo</h2>
+  <p role="status" aria-live="polite"><strong x-text="etiqueta">Comprobando…</strong>
+    <span x-text="mensaje"></span></p>
+  <div class="acciones">
+    <button type="button" class="boton" hidden x-bind:hidden="ocultoActivar" x-bind:disabled="ocupado"
+            x-on:click="activar">Activar notificaciones</button>
+    <button type="button" class="boton-sutil" hidden x-bind:hidden="ocultoActivas" x-bind:disabled="ocupado"
+            x-on:click="probar">Enviar prueba</button>
+    <button type="button" class="boton-sutil" hidden x-bind:hidden="ocultoActivas" x-bind:disabled="ocupado"
+            x-on:click="desactivar">Desactivar</button>
+  </div>
+  <p class="nota">Dispositivos suscritos: {{ suscritos }}. Avisa de: órdenes de la web terminadas o con error,
+    PARADA activada o quitada y fallos del turno nocturno. Como mucho 5 por minuto; si hay más, llegan agrupados.</p>
+  <details class="nota">
+    <summary>Si los avisos llegan tarde (Xiaomi / HyperOS)</summary>
+    <ol>
+      <li>Ajustes → Aplicaciones → Chrome → Notificaciones: activadas (y también las de NEXO si aparece como app).</li>
+      <li>Ajustes → Aplicaciones → Chrome → <strong>Inicio automático</strong>: activado.</li>
+      <li>Ajustes → Aplicaciones → Chrome → Ahorro de batería: <strong>Sin restricciones</strong>.</li>
+    </ol>
+  </details>
+</section>
+
+<section class="panel" aria-labelledby="t-guardian" id="ajustes-guardian">
+  {% include "_ajustes_guardian.html" %}
+</section>
+
+<section class="panel" aria-labelledby="t-orden" id="orden-proveedores">
+  {% include "_ajustes_orden.html" %}
+</section>
+
+<section class="panel" aria-labelledby="t-movil">
+  <h2 id="t-movil">Acceso desde el móvil</h2>
+  {% if direccion %}
+  <p>Dirección (solo dentro de tu red Tailscale): <code>{{ direccion }}</code></p>
+  <p class="nota">{% if por_tailnet %}Has entrado con tu identidad de Tailscale.{% else %}Desde el móvil se entra sin
+    token con tu identidad de Tailscale.{% endif %} Si el móvil se queda sin internet con Tailscale activo, pon el
+    «DNS privado» de Android en Automático o Desactivado.</p>
+  {% else %}
+  <p>Tailscale no está en marcha (o sin HTTPS): NEXO solo se ve desde este PC.</p>
+  {% endif %}
+</section>
+{% endblock %}

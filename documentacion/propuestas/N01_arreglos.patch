@@ -1,0 +1,1041 @@
+diff --git a/.claude/settings.json b/.claude/settings.json
+index 257b937..f81ff3f 100644
+--- a/.claude/settings.json
++++ b/.claude/settings.json
+@@ -13,7 +13,7 @@
+       "Bash(git log:*)",
+       "Bash(git add:*)",
+       "Bash(git commit:*)",
+-      "Bash(.venv\\Scripts\\python.exe prueba_*:*)",
++      "Bash(.venv\\Scripts\\python.exe correr_pruebas.py:*)",
+       "Bash(.venv\\Scripts\\python.exe -m nucleo.tareas:*)",
+       "Bash(.venv\\Scripts\\python.exe -m nucleo.catalogo:*)",
+       "Bash(ollama list:*)",
+@@ -31,6 +31,10 @@
+       "Write(./nucleo/instancia.py)",
+       "Write(./nucleo/config.py)",
+       "Write(./manos/**)",
++      "Edit(./.claude/**)",
++      "Write(./.claude/**)",
++      "Edit(./nucleo/guardia_python.py)",
++      "Write(./nucleo/guardia_python.py)",
+       "Bash(git push:*)",
+       "Bash(rm:*)",
+       "Bash(del:*)",
+diff --git a/CLAUDE.md b/CLAUDE.md
+index a2816e3..2e23c85 100644
+--- a/CLAUDE.md
++++ b/CLAUDE.md
+@@ -20,7 +20,9 @@ La Constitución completa está en el proyecto NEXO de claude.ai; esto es el res
+ - **Antes de trabajar en un tema** (modelos, memoria, interfaz, seguridad...): `.venv\Scripts\python.exe -m nucleo.mapa <tema>` y el bloque del tema en `..\contexto\proyectos\nexo\mapa-ideas-nexo.md` (tareas y herramientas relacionadas, decisiones ya tomadas).
+ - Cola de tareas: `memoria/tareas.json` (API `nucleo/tareas.py`; CLI `.venv\Scripts\python.exe -m nucleo.tareas siguiente`). `tareas.md` se genera solo: no editar a mano.
+ - Estado vivo: `memoria/estado.json` (`siguiente_turno`). Catálogo de herramientas: `memoria/catalogo.json` (`python -m nucleo.catalogo`).
+-- Router: `router.py` (Qwen → Gemini → ChatGPT → escalado). Proveedores: `proveedores.py`. Roles: `roles/`.
++- Router: `router.py` (Qwen → Gemini → ChatGPT → escalado; los mensajes sueltos de Telegram, solo Qwen). Proveedores: `proveedores.py`. Roles: `roles/`.
++- Borradores delegables (`nucleo/trabajo.py`, diseño del 23/09): ChatGPT web → Gemini API → Groq → Gemini web → Qwen, con revisor de otro proveedor. Las tareas con etiqueta `privado` no salen a proveedores externos.
++- Tests: `pytest` a secas recoge solo lo de `pytest.ini`; las suites `prueba_*.py` se lanzan con `correr_pruebas.py`.
+ - Turno sin Claude: `turno_nexo.py`. Parada de emergencia: `nucleo/parada.py` (`/parar`, `/seguir` en Telegram).
+ - Bot de Telegram: `canal/bot.py` (lo relanza `canal/vigilante.py` si muere).
+ - Vault (documentación): `..\contexto\proyectos\nexo\`. Incidentes técnicos conocidos: `referencia-incidentes-tecnicos.md`.
+diff --git a/README.md b/README.md
+index 8a7daca..7ab008c 100644
+--- a/README.md
++++ b/README.md
+@@ -43,5 +43,5 @@ Luego `docs/ARRANQUE.md`.
+ 
+ ## Estado
+ 
+-Escrito, sin probar. Nada de esto se ha ejecutado todavía en el equipo:
+-la comprobación real es el primer paso de `docs/ARRANQUE.md`.
++En uso diario desde septiembre de 2026. El estado vivo está en `memoria/estado.json`
++y la cola en `memoria/tareas.json`; la última auditoría, en `documentacion/nube/N01_2026-09-25.md`.
+diff --git a/canal/bot.py b/canal/bot.py
+index fd551c7..76d745b 100644
+--- a/canal/bot.py
++++ b/canal/bot.py
+@@ -141,6 +141,19 @@ ROUTER_RESPONDE_LIBRES = bool(valor("canal.router_responde_libres", True))
+ # que ningun mensaje suelto se convierta en tarea sin que lo pidas tu.
+ CONSUMIDOR_LIBRES_RESPONDE = bool(valor("canal.consumidor_libres_responde", True))
+ 
++# N01 (H11): los tres hilos de un mensaje suelto (triaje, Router, consumidor_libres)
++# usan Qwen. Con este candado van de uno en uno: un modelo trabajando cada vez, no
++# tres peticiones a la vez contra Ollama. Y ninguno arranca con la PARADA activa.
++_UN_MODELO = threading.Lock()
++
++
++def _parado() -> bool:
++    try:
++        from nucleo import parada
++        return parada.activa() is not None
++    except Exception:
++        return False
++
+ # T039: disparar un turno de Claude bajo demanda por API, sin esperar
+ # al cron. Documentacion oficial: POST a este endpoint con un token
+ # PROPIO DE LA RUTINA (no la API key normal), generado a mano una vez
+@@ -650,7 +663,8 @@ def _texto_triaje(texto: str) -> str | None:
+ def _avisar_con_qwen(chat_id: int, texto: str) -> None:
+     """Corre en un hilo aparte: Qwen tarda segundos, Telegram no debe esperar."""
+ 
+-    mensaje = _texto_triaje(texto)
++    with _UN_MODELO:
++        mensaje = None if _parado() else _texto_triaje(texto)
+ 
+     if not mensaje:
+         return
+@@ -703,7 +717,9 @@ def _texto_router(texto: str) -> str | None:
+         return None
+ 
+     try:
+-        resultado = router_mod.procesar(texto)
++        # N01 (H11/H17): un mensaje suelto se resuelve SOLO con Qwen local. Antes podia
++        # acabar en Gemini o ChatGPT web por cualquier mensaje, sin pedirlo nadie.
++        resultado = router_mod.procesar(texto, solo_local=True)
+     except Exception as e:
+         log.warning(
+             "el Router fallo con el mensaje suelto: %s", _sin_token(str(e)),
+@@ -725,7 +741,8 @@ def _avisar_con_router(chat_id: int, texto: str) -> None:
+     hace falta, Gemini de verdad), y Telegram no debe esperar.
+     """
+ 
+-    mensaje = _texto_router(texto)
++    with _UN_MODELO:
++        mensaje = None if _parado() else _texto_router(texto)
+ 
+     if not mensaje:
+         return
+@@ -770,10 +787,11 @@ def _avisar_con_consumidor_libres(chat_id: int, mensaje_libre: dict) -> None:
+         return
+ 
+     try:
+-        if not qwen.disponible():
+-            return
++        with _UN_MODELO:
++            if _parado() or not qwen.disponible():
++                return
+ 
+-        resultado = consumidor_libres.procesar_uno(mensaje_libre)
++            resultado = consumidor_libres.procesar_uno(mensaje_libre)
+     except Exception as e:
+         log.warning(
+             "consumidor_libres fallo con el mensaje suelto: %s",
+@@ -829,6 +847,41 @@ RENDIRSE_TRAS_401 = 5
+ _401_seguidos = 0
+ 
+ 
++def _chat_de(update: dict) -> int:
++    """Chat del que viene un update (mensaje o boton). 0 si no se sabe."""
++
++    if "callback_query" in update:
++        chat = ((update["callback_query"].get("message") or {}).get("chat") or {})
++    else:
++        chat = ((update.get("message") or {}).get("chat") or {})
++
++    try:
++        return int(chat.get("id") or 0)
++    except (TypeError, ValueError):
++        return 0
++
++
++def _autorizado(estado: dict, chat_id: int, texto: str) -> bool:
++    """N01 (H01): solo el chat de Damian manda.
++
++    El chat bueno es canal.chat_id de config.toml si esta puesto; si no, el que
++    aprendio el primer /start. Sin ninguno de los dos, solo se acepta /start
++    (primer arranque). Todo lo demas se ignora sin contestar: ni /start de otro
++    chat cambia el canal, ni /ahora, /orden, /seguir, /hecha o un boton de otro
++    chat hacen nada.
++    """
++
++    fijo = int(valor("canal.chat_id", 0) or 0)
++    esperado = fijo or int(estado.get("chat_id") or 0)
++
++    ok = (chat_id == esperado) if esperado else texto.startswith("/start")
++
++    if not ok:
++        log.warning("update de un chat no autorizado (%s): ignorado", chat_id)
++
++    return ok
++
++
+ def procesar_updates(cliente: httpx.Client, estado: dict) -> None:
+     global _conflictos, _401_seguidos
+ 
+@@ -904,6 +957,11 @@ def procesar_updates(cliente: httpx.Client, estado: dict) -> None:
+     for update in datos.get("result", []):
+         estado["offset"] = update["update_id"] + 1
+ 
++        texto_update = ((update.get("message") or {}).get("text") or "").strip()
++
++        if not _autorizado(estado, _chat_de(update), texto_update):
++            continue
++
+         if "callback_query" in update:
+             cq = update["callback_query"]
+             id_pregunta, _, indice = cq["data"].partition("|")
+diff --git a/config.toml b/config.toml
+index e3d7f31..3c6bbb5 100644
+--- a/config.toml
++++ b/config.toml
+@@ -16,6 +16,10 @@ zona_verde = [
+ # Todo lo de fuera es ámbar. El rojo no se configura: está fijo en el código.
+ 
+ [qwen]
++# N01 (H13): contexto fijo de 4096 (regla de CLAUDE.md). Sin esta linea
++# extremidades/qwen.py usaba 8192 por defecto.
++num_ctx = 4096
++
+ # Ollama primero: arranca como servicio y funciona sin que haya
+ # ninguna ventana abierta, que es lo que hace falta para trabajar
+ # cuando Damián no está. LM Studio queda de reserva.
+diff --git a/correr_pruebas.py b/correr_pruebas.py
+index 567697c..ad05920 100644
+--- a/correr_pruebas.py
++++ b/correr_pruebas.py
+@@ -1,18 +1,24 @@
+ # -*- coding: utf-8 -*-
+ """Ejecuta suites de prueba A TRAVES de la guardia y resume: rc + ultimas lineas.
+ Uso: .venv\\Scripts\\python.exe correr_pruebas.py prueba_a.py prueba_b.py ..."""
++import re
+ import subprocess
+ import sys
+ from pathlib import Path
+ 
+ RAIZ = Path(__file__).resolve().parent
++
++# N01 (H10): 12 suites prueba_*.py imprimen "N FALLOS" (o lineas "MAL ...") y aun asi
++# salen con rc 0. Mirar solo el rc daba falsos verdes.
++FALLOS_EN_SALIDA = re.compile(r"^\s*(?:[1-9]\d* FALLOS\b|MAL\s)", re.M)
+ malas = 0
+ for s in sys.argv[1:]:
+     r = subprocess.run([sys.executable, str(RAIZ / "nucleo" / "guardia_python.py"), s], cwd=RAIZ, capture_output=True,
+                        text=True, encoding="utf-8", errors="replace", timeout=600)
+     lineas = [l for l in (r.stdout + r.stderr).splitlines() if l.strip()]
+-    malas += r.returncode != 0
+-    print(("OK " if r.returncode == 0 else "MAL"), s, "rc", r.returncode, flush=True)
++    mal = r.returncode != 0 or bool(FALLOS_EN_SALIDA.search(r.stdout + r.stderr))
++    malas += mal
++    print(("MAL" if mal else "OK "), s, "rc", r.returncode, flush=True)
+     for l in ([l for l in lineas if l.startswith(("MAL", "[MAL", "FALLO", "Traceback", "GUARDIA"))][:5] + lineas[-2:]):
+         print("    ", l[:220])
+ print("SUITES MAL:", malas)
+diff --git a/documentacion/nube/N01_evidencias/test_evidencias_n01.py b/documentacion/nube/N01_evidencias/test_evidencias_n01.py
+index 85dad0d..a34e4ea 100644
+--- a/documentacion/nube/N01_evidencias/test_evidencias_n01.py
++++ b/documentacion/nube/N01_evidencias/test_evidencias_n01.py
+@@ -9,6 +9,10 @@ quitar la marca xfail y mover el test a su sitio.
+ Todo va con mocks y carpetas temporales: no toca Telegram, Ollama, Chrome, memoria/ ni
+ registros/ reales, y no mata ni lanza ningun proceso.
+ 
++Los hallazgos ya arreglados (H01, H08, H09, H11, H12, H15, H17) pasaron a tests normales en
++tests/test_n01_regresiones.py. Aqui quedan solo los que dependen de los blindados
++(documentacion/propuestas/N01.patch): cuando se aplique, estos pasaran a XPASS y hay que moverlos.
++
+ Ejecutar (desde la raiz del repo):
+     .venv/bin/python -m pytest documentacion/nube/N01_evidencias -q -rxX
+ """
+@@ -24,73 +28,6 @@ if str(RAIZ) not in sys.path:
+     sys.path.insert(0, str(RAIZ))
+ 
+ 
+-# ---------------------------------------------------------------- bot de Telegram (H01)
+-
+-class _Resp:
+-    def __init__(self, datos):
+-        self._datos = datos
+-
+-    def raise_for_status(self):
+-        pass
+-
+-    def json(self):
+-        return self._datos
+-
+-
+-class _ClienteFalso:
+-    """Imita httpx.Client: getUpdates devuelve los updates dados; los POST se apuntan."""
+-
+-    def __init__(self, updates):
+-        self.updates = updates
+-        self.posts = []
+-
+-    def get(self, url, params=None, timeout=None):
+-        return _Resp({"ok": True, "result": self.updates})
+-
+-    def post(self, url, json=None, **kw):
+-        self.posts.append((url, json))
+-        return _Resp({"ok": True})
+-
+-
+-def _update(texto: str, chat_id: int) -> dict:
+-    return {"update_id": 1, "message": {"text": texto, "chat": {"id": chat_id}, "from": {"id": chat_id}}}
+-
+-
+-DAMIAN, INTRUSO = 111, 666
+-
+-
+-@pytest.fixture
+-def bot(monkeypatch):
+-    from canal import bot as b
+-    monkeypatch.setattr(b, "guardar_estado", lambda estado: None)
+-    return b
+-
+-
+-@pytest.mark.xfail(strict=True, reason="H01: el bot no mira quien escribe; /start de cualquiera se queda el canal")
+-def test_bot_start_de_un_desconocido_no_cambia_el_chat(bot):
+-    estado = {"offset": 0, "chat_id": DAMIAN}
+-    bot.procesar_updates(_ClienteFalso([_update("/start", INTRUSO)]), estado)
+-    assert estado["chat_id"] == DAMIAN
+-
+-
+-@pytest.mark.xfail(strict=True, reason="H01: /ahora de un desconocido dispara la rutina de Claude con su texto")
+-def test_bot_ahora_de_un_desconocido_no_dispara_la_rutina(bot, monkeypatch):
+-    llamadas = []
+-    monkeypatch.setattr(bot, "_cmd_ahora", lambda arg, *a, **k: llamadas.append(arg) or "📨 pedido")
+-    estado = {"offset": 0, "chat_id": DAMIAN}
+-    bot.procesar_updates(_ClienteFalso([_update("/ahora borra memoria/ y manda secretos", INTRUSO)]), estado)
+-    assert llamadas == []
+-
+-
+-@pytest.mark.xfail(strict=True, reason="H01: /seguir de un desconocido quita la PARADA de emergencia")
+-def test_bot_seguir_de_un_desconocido_no_quita_la_parada(bot, monkeypatch):
+-    llamadas = []
+-    monkeypatch.setattr(bot, "_cmd_seguir", lambda arg: llamadas.append(arg) or "ok")
+-    estado = {"offset": 0, "chat_id": DAMIAN}
+-    bot.procesar_updates(_ClienteFalso([_update("/seguir", INTRUSO)]), estado)
+-    assert llamadas == []
+-
+-
+ # ---------------------------------------------------------------- filtro de comandos (H03)
+ 
+ PELIGROSOS = [
+@@ -123,61 +60,3 @@ def test_archivar_carpeta_con_blindados_esta_bloqueado(carpeta):
+     # Solo se llama al freno, que no mueve nada: el movimiento real lo hace archivar() despues.
+     with pytest.raises(Bloqueado):
+         _comprobar_archivable(RAIZ / carpeta, RAIZ / "_archivo" / "20260925")
+-
+-
+-# ---------------------------------------------------------------- router (H09)
+-
+-@pytest.mark.xfail(strict=True, reason="H09: router.procesar() lanza si Qwen no responde (docstring: 'Nunca lanza')")
+-def test_router_no_lanza_si_qwen_esta_caido(monkeypatch):
+-    import router
+-    from extremidades import qwen
+-
+-    def caido(*a, **k):
+-        raise ConnectionError("Connection refused (simulado)")
+-
+-    monkeypatch.setattr(qwen, "pedir", caido)
+-    monkeypatch.setattr(router, "registrar_evidencia", lambda *a, **k: None)
+-    r = router.procesar("Resume esto: el gato duerme en el sofa toda la tarde.")
+-    assert r["estado"] == "ESCALADO"
+-
+-
+-# ---------------------------------------------------------------- turno sin Claude (H12)
+-
+-@pytest.mark.xfail(strict=True, reason="H12: un turno que rebota por candado borra el cierre pedido al turno en marcha")
+-def test_turno_que_rebota_no_borra_el_cierre_del_otro(monkeypatch, tmp_path):
+-    import turno_nexo
+-    from nucleo import parada, trabajo
+-
+-    (tmp_path / "registros").mkdir()
+-    monkeypatch.setattr(turno_nexo, "RAIZ", tmp_path)
+-    monkeypatch.setattr(turno_nexo, "ram_libre_gb", lambda: 16.0)
+-    monkeypatch.setattr(turno_nexo, "CANDADO", tmp_path / "candado.lock")
+-    monkeypatch.setattr(parada, "BANDERA", tmp_path / "PARADA_NEXO")
+-    monkeypatch.setattr(parada, "CIERRE", tmp_path / "CIERRE_TURNO")
+-    monkeypatch.setattr(trabajo, "handoff", lambda filas, origen="": tmp_path / "handoff.md")
+-
+-    (tmp_path / "candado.lock").write_text("1234 0")      # turno A en marcha (candado reciente)
+-    parada.pedir_cierre("vigilante 04:20: ir acabando")    # el vigilante le pide cierre a A
+-
+-    reg = turno_nexo.turno(simular=True, sin_web=True, avisar=False)  # turno B: rebota
+-
+-    assert "candado" in reg.get("abortado", "")
+-    assert parada.cierre_pedido(), "la peticion de cierre era para el turno A y B la ha borrado"
+-
+-
+-# ---------------------------------------------------------------- Principio de Verdad (H15)
+-
+-@pytest.mark.xfail(strict=True, reason="H15: verificar() marca testeado=True sin ninguna evidencia")
+-def test_verificar_sin_evidencia_no_marca_testeado(monkeypatch, tmp_path):
+-    from nucleo import tareas as T
+-    monkeypatch.setattr(T, "ALMACEN", tmp_path / "tareas.json")
+-    monkeypatch.setattr(T, "VISTA", tmp_path / "tareas.md")
+-    monkeypatch.setattr(T, "VISTA_VAULT", tmp_path / "no_existe" / "vault.md")
+-    monkeypatch.setattr(T, "CANDADO", tmp_path / ".candado")
+-    t = T.anadir("tarea de prueba N01")
+-    T.completar(t["id"])
+-    try:
+-        r = T.verificar(t["id"], "")
+-    except ValueError:
+-        return  # rechazarlo con un error tambien vale
+-    assert r is None or not r["testeado"]
+diff --git a/extremidades/imagen.py b/extremidades/imagen.py
+index 66c23c3..7adb96c 100644
+--- a/extremidades/imagen.py
++++ b/extremidades/imagen.py
+@@ -50,7 +50,7 @@ from pathlib import Path
+ import httpx
+ 
+ from manos.shell import ejecutar
+-from nucleo.config import salidas, valor
++from nucleo.config import RAIZ, salidas, valor
+ from nucleo.registro import logger
+ 
+ 
+@@ -69,6 +69,10 @@ ARRANQUE = [
+     "--fp32-vae",
+ ]
+ 
++# N01 (H08): el ComfyUI que lanzamos nosotros. Solo ese se mata, y solo si el PID
++# sigue teniendo exactamente la misma linea de comando (CLAUDE.md: Windows reutiliza PIDs).
++PID_COMFY = RAIZ / "registros" / "comfyui_pid.json"
++
+ # Un PNG de 512x512 con algo dibujado pesa cientos de KB. Si sale por
+ # debajo de esto, es el cuadro negro del VAE roto, no una imagen.
+ MINIMO_CREIBLE = 20 * 1024
+@@ -117,31 +121,54 @@ def liberar() -> bool:
+         return False
+ 
+ 
+-def _matar_comfyui() -> None:
+-    """Mata los ComfyUI que haya vivos.
++def _linea_de_comando(pid: int) -> str | None:
++    """Linea de comando real del proceso `pid` (Win32_Process), o None."""
++
++    r = ejecutar(
++        f"(Get-CimInstance Win32_Process -Filter 'ProcessId={int(pid)}').CommandLine",
++        timeout=20,
++    )
++
++    linea = (r.salida or "").strip()
++
++    return linea or None
+ 
+-    Se busca por linea de comando y no por el PID que devuelve lanzar():
+-    ese PID es el del envoltorio, no el del proceso de verdad (comprobado
+-    el 12/09, matarlo dejaba el puerto 8188 ocupado igualmente).
+ 
+-    T048: pasa por manos.shell.ejecutar() (y por tanto por
+-    nucleo.permisos) en vez de subprocess.run() directo. El comando
+-    exacto clasifica Nivel.VERDE bajo nivel_de_comando() (Stop-Process
+-    no esta en ningun patron ROJO/BORRADO/AMBAR), asi que no cambia el
+-    comportamiento observable salvo un aviso en el log si falla.
++def _matar_comfyui() -> bool:
++    """Mata el ComfyUI que lanzo reiniciar_comfyui(), y ninguno mas.
++
++    N01 (H08). Antes se mataban todos los python.exe cuya linea de comando
++    contuviera 'ComfyUI': justo lo que prohibe CLAUDE.md desde el 25/09 (nunca
++    por patron ni por nombre). Ahora, igual que interfaz/vigia.py: solo el PID
++    anotado al lanzarlo, y solo si ese PID sigue teniendo EXACTAMENTE la misma
++    linea de comando. Si no hay anotacion (un ComfyUI arrancado a mano), no se
++    toca: el arranque nuevo no podra coger el puerto y generar() lo dira.
++
++    El PID es el del Popen de ARRANQUE (sin envoltorio de PowerShell), no el de
++    lanzar(): ese era el problema del 12/09.
+     """
+ 
+-    r = ejecutar(
+-        "Get-CimInstance Win32_Process -Filter \"Name='python.exe'\" | "
+-        "Where-Object { $_.CommandLine -like '*ComfyUI*' -and "
+-        "($_.CommandLine -like '*main.py*' -or "
+-        "$_.CommandLine -like '*arrancar_comfyui*') } | "
+-        "ForEach-Object { Stop-Process -Id $_.ProcessId -Force }",
+-        timeout=45,
+-    )
++    try:
++        anotado = json.loads(PID_COMFY.read_text(encoding="utf-8"))
++        pid, linea = int(anotado["pid"]), str(anotado["linea"])
++    except (OSError, ValueError, KeyError, TypeError):
++        log.warning("no hay PID anotado de ComfyUI: no mato nada (solo por PID exacto)")
++        return False
++
++    if linea != subprocess.list2cmdline(ARRANQUE):
++        log.warning("la anotacion de ComfyUI es de otro arranque: no mato nada")
++        return False
++
++    if _linea_de_comando(pid) != linea:
++        log.info("el PID %s ya no es nuestro ComfyUI (o ya murio): no lo toco", pid)
++        return False
++
++    r = ejecutar(f"Stop-Process -Id {pid} -Force", timeout=30)
+ 
+     if not r.ok:
+-        log.warning("matar ComfyUI: codigo %s: %s", r.codigo, r.error.strip())
++        log.warning("matar ComfyUI %s: codigo %s: %s", pid, r.codigo, r.error.strip())
++
++    return r.ok
+ 
+ 
+ def reiniciar_comfyui(espera_max: int = 90) -> bool:
+@@ -153,7 +180,7 @@ def reiniciar_comfyui(espera_max: int = 90) -> bool:
+ 
+     time.sleep(4)
+ 
+-    subprocess.Popen(
++    proceso = subprocess.Popen(
+         ARRANQUE,
+         cwd=str(COMFY),
+         stdout=subprocess.DEVNULL,
+@@ -161,6 +188,15 @@ def reiniciar_comfyui(espera_max: int = 90) -> bool:
+         creationflags=getattr(subprocess, "CREATE_NEW_PROCESS_GROUP", 0),
+     )
+ 
++    try:
++        PID_COMFY.parent.mkdir(parents=True, exist_ok=True)
++        PID_COMFY.write_text(
++            json.dumps({"pid": proceso.pid, "linea": subprocess.list2cmdline(ARRANQUE)}),
++            encoding="utf-8",
++        )
++    except OSError as e:
++        log.warning("no pude anotar el PID de ComfyUI (%s): el proximo reinicio no lo matara", e)
++
+     limite = time.time() + espera_max
+ 
+     while time.time() < limite:
+diff --git a/herramientas_modelos/test_modelos_supervisado.py b/herramientas_modelos/modelos_supervisado.py
+similarity index 94%
+rename from herramientas_modelos/test_modelos_supervisado.py
+rename to herramientas_modelos/modelos_supervisado.py
+index 8c39d67..4701aba 100644
+--- a/herramientas_modelos/test_modelos_supervisado.py
++++ b/herramientas_modelos/modelos_supervisado.py
+@@ -10,7 +10,10 @@
+     * parada de emergencia (/parar) -> corta todo.
+ - Antes de cada modelo: si no hay RAM para su tamano (+3 GB), se salta.
+ - Al final: resumen en registros/test_modelos_<fecha>.json, nota en el vault y en T134.
+-Uso: python herramientas_modelos/test_modelos_supervisado.py [--hasta=05:58] [--simular]
++Uso: python herramientas_modelos/modelos_supervisado.py [--hasta=05:58] [--simular]
++
++N01 (H05): antes se llamaba test_modelos_supervisado.py. Con el prefijo test_ y todo el
++codigo a nivel de modulo, un `pytest` a secas lo importaba y arrancaba el test de verdad.
+ """
+ from __future__ import annotations
+ 
+diff --git a/herramientas_modelos/registrar_test_modelos.ps1 b/herramientas_modelos/registrar_test_modelos.ps1
+index df8ea5c..ea87451 100644
+--- a/herramientas_modelos/registrar_test_modelos.ps1
++++ b/herramientas_modelos/registrar_test_modelos.ps1
+@@ -2,7 +2,7 @@
+ # Quitar: schtasks /Delete /TN "NEXO test modelos" /F
+ $raiz = "C:\Users\damia\Desktop\AI\agente"
+ $py = Join-Path $raiz ".venv\Scripts\python.exe"
+-$accion = New-ScheduledTaskAction -Execute $py -Argument "nucleo\guardia_python.py herramientas_modelos\test_modelos_supervisado.py --hasta=05:58" -WorkingDirectory $raiz
++$accion = New-ScheduledTaskAction -Execute $py -Argument "nucleo\guardia_python.py herramientas_modelos\modelos_supervisado.py --hasta=05:58" -WorkingDirectory $raiz
+ $disparo = New-ScheduledTaskTrigger -Once -At ([datetime]"2026-09-24T05:00:00")
+ $aj = New-ScheduledTaskSettingsSet -StartWhenAvailable -ExecutionTimeLimit (New-TimeSpan -Minutes 62) -MultipleInstances IgnoreNew
+ Register-ScheduledTask -TaskName "NEXO test modelos" -Action $accion -Trigger $disparo -Settings $aj -Force -Description "Test supervisado de modelos locales (T134), una vez." | Out-Null
+diff --git a/interfaz/trabajador.py b/interfaz/trabajador.py
+index bd8add4..ff208a9 100644
+--- a/interfaz/trabajador.py
++++ b/interfaz/trabajador.py
+@@ -61,9 +61,12 @@ class Trabajador:
+                      "creada": _ahora(), "terminada": "", "resultado": None, "error": ""}
+             self._ordenes[orden["id"]] = orden
+             self._recortar()
+-        self._publicar(orden)
++            # N01 (H31): la copia se toma ANTES del submit. Despues, el hilo podia haberla
++            # pasado ya a "en_curso" y la tarjeta de respuesta se saltaba el "En cola".
++            copia = dict(orden)
++        self._publicar(copia)
+         self._pool.submit(self._ejecutar, orden["id"])
+-        return dict(orden)
++        return copia
+ 
+     # ------------------------------------------------------------- leer
+     def orden(self, id_orden: str) -> dict | None:
+diff --git a/nucleo/tareas.py b/nucleo/tareas.py
+index 545ca84..c55eebe 100644
+--- a/nucleo/tareas.py
++++ b/nucleo/tareas.py
+@@ -471,10 +471,15 @@ def verificar(tarea_id: str, evidencia: str = "") -> dict | None:
+     tarea — no es un tick sin mas. No cambia `estado`; si la tarea no
+     estaba "hecha" queda testeada igualmente, pero lo normal es
+     llamarla despues de completar().
++
++    N01 (H15): sin evidencia no hay verificado (Principio de Verdad). Antes
++    `verificar(id)` dejaba HECHO Y TESTEADO sin nada anotado.
+     """
+ 
+-    if evidencia:
+-        anotar(tarea_id, f"[verificado] {evidencia}")
++    if not (evidencia or "").strip():
++        raise ValueError("sin evidencia no hay verificado: di que se probo y que salio")
++
++    anotar(tarea_id, f"[verificado] {evidencia.strip()}")
+ 
+     return actualizar(tarea_id, testeado=True)
+ 
+@@ -751,7 +756,11 @@ def _cli(argv: list[str]) -> int:
+         print(f"cerrada {t['id']} (sin testear todavia)" if t else "no encontrada")
+ 
+     elif accion in ("testeada", "testeado", "verificar", "verificada"):
+-        t = verificar(resto[0], resto[1] if len(resto) > 1 else "")
++        try:
++            t = verificar(resto[0], resto[1] if len(resto) > 1 else "")
++        except ValueError as e:
++            print(f"NO verificada: {e}. Uso: verificar <id> \"evidencia\"")
++            return 1
+ 
+         print(f"{t['id']} -> HECHO Y TESTEADO" if t else "no encontrada")
+ 
+diff --git a/nucleo/trabajo.py b/nucleo/trabajo.py
+index 625ccb4..76e0f5b 100644
+--- a/nucleo/trabajo.py
++++ b/nucleo/trabajo.py
+@@ -78,9 +78,15 @@ def _cat(t: dict) -> str | None:
+     return None
+ 
+ 
++# N01 (H17): una tarea con esta etiqueta no sale nunca a proveedores externos (ChatGPT,
++# Gemini, Groq): el bucle de trabajo, que la mandaria fuera, no la toca.
++PRIVADO = "privado"
++
++
+ def candidatas() -> list[dict]:
+     vivas = T.ordenadas([t for t in T.cargar()["tareas"] if t["estado"] in ("pendiente", "en_curso")])
+     return [t for t in vivas if t.get("depende") == "ia" and _cat(t) in DELEGABLES
++            and PRIVADO not in (t.get("etiquetas") or [])
+             and not any(e.startswith("borrador:") for e in t.get("etiquetas") or [])]
+ 
+ 
+diff --git a/pytest.ini b/pytest.ini
+new file mode 100644
+index 0000000..32d5f4d
+--- /dev/null
++++ b/pytest.ini
+@@ -0,0 +1,4 @@
++[pytest]
++# N01 (H05/H21): `pytest` a secas solo recoge estas carpetas. Las suites prueba_*.py de la
++# raiz no son de pytest (van con correr_pruebas.py), y herramientas_modelos/ no se toca.
++testpaths = interfaz/tests tests documentacion/nube/N01_evidencias
+diff --git a/router.py b/router.py
+index 086ff85..85f66d2 100644
+--- a/router.py
++++ b/router.py
+@@ -50,9 +50,10 @@ por evidencia), ni un watchdog general, ni un pipeline multi-IA. No
+ anade categorias nuevas ni un Model Router que elija entre Qwen/Gemini
+ por criterio -- Gemini solo entra cuando Qwen ya ha fallado dos veces
+ (intento + reintento) en una tarea que de todas formas ya iba a Qwen.
+-No esta conectado a canal/bot.py ni a ningun flujo de Telegram en vivo
+--- sigue siendo un modulo de produccion aislado y controlado, probado
+-con prueba_router_minimo.py.
++Desde T073 SI esta conectado a canal/bot.py: los mensajes sueltos de
++Telegram pasan por aqui (config canal.router_responde_libres), pero con
++solo_local=True (N01, 25/09): esos nunca salen a Gemini ni a ChatGPT.
++Probado con prueba_router_minimo.py y prueba_router_libre_bot.py.
+ 
+ Mapeo del ciclo pedido por Damian sobre el vocabulario YA EXISTENTE de
+ nucleo/registro.py (FASES_VALIDAS/ORIGENES_VALIDOS/ROLES_VALIDOS, sin
+@@ -198,7 +199,11 @@ def _verificar_extraccion(claves: list[str], resultado: str) -> tuple[bool, str]
+     return True, f"JSON valido con las {len(esperadas)} claves esperadas"
+ 
+ 
+-def procesar(texto: str, claves_extraccion: list[str] | None = None) -> dict:
++def procesar(
++    texto: str,
++    claves_extraccion: list[str] | None = None,
++    solo_local: bool = False,
++) -> dict:
+     """Ciclo completo TAREA -> ... -> EVIDENCIA para una tarea.
+ 
+     `texto` es la peticion en lenguaje natural, incluyendo ya el
+@@ -214,6 +219,10 @@ def procesar(texto: str, claves_extraccion: list[str] | None = None) -> dict:
+     `proveedor` (quien la resolvio: "qwen" o, tras el fallback, "gemini")
+     y `texto`. Nunca lanza: cualquier fallo termina en escalado,
+     registrado como evidencia, nunca en una excepcion sin registrar.
++
++    `solo_local=True` (N01): si Qwen no lo resuelve, se escala en vez de
++    probar Gemini/ChatGPT. Para texto que no debe salir del PC (p. ej. un
++    mensaje suelto de Telegram).
+     """
+ 
+     execution_id = nuevo_execution_id()
+@@ -242,13 +251,29 @@ def procesar(texto: str, claves_extraccion: list[str] | None = None) -> dict:
+             motivo="tarea de extraccion sin claves_extraccion: peticion mal formada",
+         )
+ 
+-    return _ejecutar_con_watchdog(execution_id, categoria, texto, claves_extraccion)
++    return _ejecutar_con_watchdog(
++        execution_id, categoria, texto, claves_extraccion, solo_local=solo_local,
++    )
+ 
+ 
+ def _clasificar(texto: str, execution_id: str) -> str:
+     from extremidades import qwen
+ 
+-    categoria = qwen.clasificar(texto, CATEGORIAS_TAREA, por_defecto="otro")
++    # N01 (H09): si Qwen no responde (Ollama parado, timeout...), clasificar
++    # lanzaba y procesar() reventaba sin dejar evidencia de escalado, aunque el
++    # docstring promete "Nunca lanza". Ahora cuenta como "otro" -> escalado.
++    try:
++        categoria = qwen.clasificar(texto, CATEGORIAS_TAREA, por_defecto="otro")
++    except Exception as e:
++        registrar_evidencia(
++            "error",
++            execution_id=execution_id,
++            actor="tool_ejecuto",
++            proveedor="qwen",
++            accion="clasificar",
++            error=f"clasificador no disponible: {type(e).__name__}: {e}"[:300],
++        )
++        categoria = "otro"
+ 
+     registrar_evidencia(
+         "decision",
+@@ -382,6 +407,7 @@ def _ejecutar_con_watchdog(
+     categoria: str,
+     texto: str,
+     claves_extraccion: list[str] | None,
++    solo_local: bool = False,
+ ) -> dict:
+     if categoria == "extraccion":
+         claves = list(claves_extraccion or [])
+@@ -430,6 +456,12 @@ def _ejecutar_con_watchdog(
+             error=motivo_qwen,
+         )
+ 
++    if solo_local:
++        return _escalar(
++            execution_id, categoria,
++            motivo=f"Qwen agoto sus intentos ({motivo_qwen}); solo_local: no se prueba fuera del PC",
++        )
++
+     # --- Qwen agoto sus intentos: UN fallback a Gemini, sin reintento ---
+     registrar_evidencia(
+         "reintento",
+diff --git a/tests/test_n01_regresiones.py b/tests/test_n01_regresiones.py
+new file mode 100644
+index 0000000..b4a52f0
+--- /dev/null
++++ b/tests/test_n01_regresiones.py
+@@ -0,0 +1,302 @@
++# -*- coding: utf-8 -*-
++"""Regresiones de los arreglos de la auditoria N01 (T084, 25/09/2026).
++
++Cada test fija un hallazgo ya arreglado (Hxx en documentacion/nube/N01_2026-09-25.md).
++Solo mocks y carpetas temporales: no toca Telegram, Ollama, Chrome, memoria/ ni
++registros/ reales, y no mata ni lanza ningun proceso.
++"""
++from __future__ import annotations
++
++import json
++import subprocess
++import sys
++from pathlib import Path
++
++import pytest
++
++RAIZ = Path(__file__).resolve().parents[1]
++if str(RAIZ) not in sys.path:
++    sys.path.insert(0, str(RAIZ))
++
++
++# ---------------------------------------------------------------- bot de Telegram (H01, H11)
++
++class _Resp:
++    def __init__(self, datos):
++        self._datos = datos
++
++    def raise_for_status(self):
++        pass
++
++    def json(self):
++        return self._datos
++
++
++class _ClienteFalso:
++    def __init__(self, updates):
++        self.updates = updates
++        self.posts = []
++
++    def get(self, url, params=None, timeout=None):
++        return _Resp({"ok": True, "result": self.updates})
++
++    def post(self, url, json=None, **kw):
++        self.posts.append((url, json))
++        return _Resp({"ok": True})
++
++
++def _update(texto: str, chat_id: int) -> dict:
++    return {"update_id": 1, "message": {"text": texto, "chat": {"id": chat_id}, "from": {"id": chat_id}}}
++
++
++DAMIAN, INTRUSO = 111, 666
++
++
++@pytest.fixture
++def bot(monkeypatch):
++    from canal import bot as b
++    monkeypatch.setattr(b, "guardar_estado", lambda estado: None)
++    monkeypatch.setattr(b, "valor", lambda ruta, defecto=None: defecto)  # sin canal.chat_id fijo
++    return b
++
++
++def test_h01_start_de_un_desconocido_no_cambia_el_chat(bot):
++    estado = {"offset": 0, "chat_id": DAMIAN}
++    cliente = _ClienteFalso([_update("/start", INTRUSO)])
++    bot.procesar_updates(cliente, estado)
++    assert estado["chat_id"] == DAMIAN
++    assert cliente.posts == []  # al desconocido no se le contesta nada
++
++
++def test_h01_ahora_y_seguir_de_un_desconocido_no_hacen_nada(bot, monkeypatch):
++    llamadas = []
++    monkeypatch.setattr(bot, "_cmd_ahora", lambda arg, *a, **k: llamadas.append(("ahora", arg)) or "x")
++    monkeypatch.setattr(bot, "_cmd_seguir", lambda arg: llamadas.append(("seguir", arg)) or "x")
++    estado = {"offset": 0, "chat_id": DAMIAN}
++    bot.procesar_updates(_ClienteFalso([_update("/ahora haz algo", INTRUSO), _update("/seguir", INTRUSO)]), estado)
++    assert llamadas == []
++
++
++def test_h01_damian_sigue_mandando(bot, monkeypatch):
++    llamadas = []
++    monkeypatch.setattr(bot, "_cmd_seguir", lambda arg: llamadas.append(arg) or "ok")
++    estado = {"offset": 0, "chat_id": DAMIAN}
++    bot.procesar_updates(_ClienteFalso([_update("/seguir", DAMIAN)]), estado)
++    assert llamadas == [""]
++
++
++def test_h01_primer_arranque_solo_acepta_start(bot, monkeypatch):
++    llamadas = []
++    monkeypatch.setattr(bot, "_cmd_seguir", lambda arg: llamadas.append(arg) or "ok")
++    estado = {"offset": 0, "chat_id": 0}
++    bot.procesar_updates(_ClienteFalso([_update("/seguir", INTRUSO)]), estado)
++    assert llamadas == [] and estado["chat_id"] == 0
++    bot.procesar_updates(_ClienteFalso([_update("/start", DAMIAN)]), estado)
++    assert estado["chat_id"] == DAMIAN
++
++
++def test_h01_chat_fijo_en_config_manda_sobre_el_aprendido(monkeypatch):
++    from canal import bot as b
++    monkeypatch.setattr(b, "guardar_estado", lambda estado: None)
++    monkeypatch.setattr(b, "valor", lambda ruta, defecto=None: DAMIAN if ruta == "canal.chat_id" else defecto)
++    llamadas = []
++    monkeypatch.setattr(b, "_cmd_seguir", lambda arg: llamadas.append(arg) or "ok")
++    estado = {"offset": 0, "chat_id": INTRUSO}  # estado_bot.json ya secuestrado
++    b.procesar_updates(_ClienteFalso([_update("/seguir", INTRUSO)]), estado)
++    assert llamadas == []  # config manda: el chat aprendido (secuestrado) no vale
++    b.procesar_updates(_ClienteFalso([_update("/start", DAMIAN)]), estado)
++    assert estado["chat_id"] == DAMIAN
++
++
++def test_h11_con_parada_los_mensajes_sueltos_no_usan_modelos(bot, monkeypatch):
++    monkeypatch.setattr(bot, "_parado", lambda: True)
++    usados = []
++    monkeypatch.setattr(bot, "_texto_triaje", lambda t: usados.append("triaje"))
++    monkeypatch.setattr(bot, "_texto_router", lambda t: usados.append("router"))
++    bot._avisar_con_qwen(DAMIAN, "hola")
++    bot._avisar_con_router(DAMIAN, "hola")
++    assert usados == []
++
++
++def test_h11_el_router_de_mensajes_sueltos_es_solo_local(bot, monkeypatch):
++    import router
++    pedidos = []
++    monkeypatch.setattr(bot, "ROUTER_RESPONDE_LIBRES", True)
++    monkeypatch.setattr(router, "procesar", lambda texto, **k: pedidos.append(k) or {"estado": "ESCALADO"})
++    assert bot._texto_router("resume esto") is None
++    assert pedidos == [{"solo_local": True}]
++
++
++# ---------------------------------------------------------------- router (H09, H11)
++
++def test_h09_router_no_lanza_si_qwen_esta_caido(monkeypatch):
++    import router
++    from extremidades import qwen
++
++    def caido(*a, **k):
++        raise ConnectionError("Connection refused (simulado)")
++
++    monkeypatch.setattr(qwen, "pedir", caido)
++    monkeypatch.setattr(router, "registrar_evidencia", lambda *a, **k: None)
++    r = router.procesar("Resume esto: el gato duerme en el sofa toda la tarde.")
++    assert r["estado"] == "ESCALADO" and r["categoria"] == "otro"
++
++
++def test_h11_solo_local_no_sale_a_gemini_ni_chatgpt(monkeypatch):
++    import router
++    from extremidades import qwen
++    from proveedores import Resultado
++
++    monkeypatch.setattr(router, "registrar_evidencia", lambda *a, **k: None)
++    monkeypatch.setattr(qwen, "clasificar", lambda *a, **k: "resumen")
++
++    class QwenFalla:
++        nombre = "qwen"
++
++        def enviar(self, prompt):
++            return Resultado("ERROR", detalle="fallo simulado")
++
++    def prohibido(*a, **k):
++        raise AssertionError("con solo_local no se construye ningun proveedor externo")
++
++    monkeypatch.setattr(router, "QwenProvider", QwenFalla)
++    for nombre in ("GeminiAPIProvider", "GeminiProvider", "ChatGPTProvider"):
++        monkeypatch.setattr(router, nombre, prohibido)
++    r = router.procesar("Resume esto: uno dos tres cuatro cinco seis.", solo_local=True)
++    assert r["estado"] == "ESCALADO" and "solo_local" in r["motivo"]
++
++
++# ---------------------------------------------------------------- turno sin Claude (H12)
++
++@pytest.fixture
++def turno_aislado(monkeypatch, tmp_path):
++    import turno_nexo
++    from nucleo import parada, trabajo
++
++    (tmp_path / "registros").mkdir()
++    monkeypatch.setattr(turno_nexo, "RAIZ", tmp_path)
++    monkeypatch.setattr(turno_nexo, "ram_libre_gb", lambda: 16.0)
++    monkeypatch.setattr(turno_nexo, "CANDADO", tmp_path / "candado.lock")
++    monkeypatch.setattr(parada, "BANDERA", tmp_path / "PARADA_NEXO")
++    monkeypatch.setattr(parada, "CIERRE", tmp_path / "CIERRE_TURNO")
++    monkeypatch.setattr(trabajo, "handoff", lambda filas, origen="": tmp_path / "handoff.md")
++    return turno_nexo, parada, tmp_path
++
++
++def test_h12_turno_que_rebota_no_borra_el_cierre_del_otro(turno_aislado):
++    turno_nexo, parada, tmp = turno_aislado
++    (tmp / "candado.lock").write_text("1234 0")          # turno A en marcha
++    parada.pedir_cierre("vigilante 04:20: ir acabando")    # aviso para A
++    reg = turno_nexo.turno(simular=True, sin_web=True, avisar=False)  # turno B rebota
++    assert "candado" in reg.get("abortado", "")
++    assert parada.cierre_pedido()
++
++
++def test_h12_el_turno_que_tenia_el_candado_si_limpia_su_cierre(turno_aislado, monkeypatch):
++    turno_nexo, parada, tmp = turno_aislado
++    for paso in ("paso_libres", "paso_etiquetar", "paso_router", "paso_trabajo"):
++        monkeypatch.setattr(turno_nexo, paso, lambda *a, **k: {})
++    parada.pedir_cierre("vigilante 04:20")
++    reg = turno_nexo.turno(simular=True, sin_web=True, avisar=False)
++    assert not reg.get("abortado")
++    assert not parada.cierre_pedido() and not (tmp / "candado.lock").exists()
++
++
++# ---------------------------------------------------------------- Principio de Verdad (H15)
++
++@pytest.fixture
++def tareas_aisladas(monkeypatch, tmp_path):
++    from nucleo import tareas as T
++    monkeypatch.setattr(T, "ALMACEN", tmp_path / "tareas.json")
++    monkeypatch.setattr(T, "VISTA", tmp_path / "tareas.md")
++    monkeypatch.setattr(T, "VISTA_VAULT", tmp_path / "no_existe" / "vault.md")
++    monkeypatch.setattr(T, "CANDADO", tmp_path / ".candado")
++    return T
++
++
++def test_h15_verificar_sin_evidencia_se_rechaza(tareas_aisladas):
++    T = tareas_aisladas
++    t = T.anadir("tarea de prueba N01")
++    T.completar(t["id"])
++    for vacia in ("", "   "):
++        with pytest.raises(ValueError):
++            T.verificar(t["id"], vacia)
++    assert T.buscar(t["id"])["testeado"] is False
++    assert T.verificar(t["id"], "pytest 5 passed")["testeado"] is True
++
++
++def test_h15_la_cli_no_verifica_sin_evidencia(tareas_aisladas, capsys):
++    T = tareas_aisladas
++    t = T.anadir("otra")
++    assert T._cli(["verificar", t["id"]]) == 1
++    assert "NO verificada" in capsys.readouterr().out
++    assert T.buscar(t["id"])["testeado"] is False
++
++
++# ---------------------------------------------------------------- privado (H17)
++
++def test_h17_las_tareas_privadas_no_son_candidatas(monkeypatch):
++    from nucleo import trabajo
++    base = {"estado": "pendiente", "depende": "ia", "importancia": 3, "urgencia": 3,
++            "dificultad": 3, "coste": 2, "limite": None}
++    tareas = [dict(base, id="T001", titulo="a", etiquetas=["cat:resumen"]),
++              dict(base, id="T002", titulo="b", etiquetas=["cat:resumen", "privado"])]
++    monkeypatch.setattr(trabajo.T, "cargar", lambda: {"tareas": tareas})
++    assert [t["id"] for t in trabajo.candidatas()] == ["T001"]
++
++
++# ---------------------------------------------------------------- ComfyUI por PID exacto (H08)
++
++class _Res:
++    def __init__(self, salida="", codigo=0):
++        self.salida, self.codigo, self.error = salida, codigo, ""
++
++    @property
++    def ok(self):
++        return self.codigo == 0
++
++
++@pytest.fixture
++def imagen_aislada(monkeypatch, tmp_path):
++    from extremidades import imagen
++    monkeypatch.setattr(imagen, "PID_COMFY", tmp_path / "comfyui_pid.json")
++    ordenes = []
++    return imagen, ordenes, tmp_path
++
++
++def _con_linea(imagen, ordenes, monkeypatch, linea_real):
++    def ejecutar(comando, **k):
++        ordenes.append(comando)
++        return _Res(linea_real + "\r\n" if "CommandLine" in comando and linea_real else "")
++    monkeypatch.setattr(imagen, "ejecutar", ejecutar)
++
++
++def test_h08_sin_pid_anotado_no_se_mata_nada(imagen_aislada, monkeypatch):
++    imagen, ordenes, _ = imagen_aislada
++    _con_linea(imagen, ordenes, monkeypatch, "cualquiera")
++    assert imagen._matar_comfyui() is False
++    assert ordenes == []
++
++
++def test_h08_solo_el_pid_anotado_y_con_la_misma_linea(imagen_aislada, monkeypatch):
++    imagen, ordenes, tmp = imagen_aislada
++    linea = subprocess.list2cmdline(imagen.ARRANQUE)
++    (tmp / "comfyui_pid.json").write_text(json.dumps({"pid": 4321, "linea": linea}))
++    _con_linea(imagen, ordenes, monkeypatch, linea)
++    assert imagen._matar_comfyui() is True
++    assert ordenes[-1] == "Stop-Process -Id 4321 -Force"
++    assert not any("-like" in o or "-Name" in o for o in ordenes)
++
++
++def test_h08_pid_reutilizado_por_otro_proceso_no_se_toca(imagen_aislada, monkeypatch):
++    imagen, ordenes, tmp = imagen_aislada
++    linea = subprocess.list2cmdline(imagen.ARRANQUE)
++    (tmp / "comfyui_pid.json").write_text(json.dumps({"pid": 4321, "linea": linea}))
++    _con_linea(imagen, ordenes, monkeypatch, "C:\\Windows\\notepad.exe")
++    assert imagen._matar_comfyui() is False
++    assert not any(o.startswith("Stop-Process") for o in ordenes)
++
++
++def test_h08_el_comando_de_matar_es_verde():
++    from nucleo.permisos import Nivel, nivel_de_comando
++    assert nivel_de_comando("Stop-Process -Id 4321 -Force") is Nivel.VERDE
+diff --git a/turno_nexo.py b/turno_nexo.py
+index 1da1484..a253e72 100644
+--- a/turno_nexo.py
++++ b/turno_nexo.py
+@@ -20,7 +20,7 @@ web por turno. Deja registro en registros/turno_nexo_*.json y un aviso
+ SILENCIOSO a Telegram.
+ 
+ Uso:
+-  python turno_nexo.py --simular          # no escribe nada: solo mira
++  python turno_nexo.py --simular          # no toca tareas ni catalogo; si deja registro y handoff
+   python turno_nexo.py                    # turno real
+   python turno_nexo.py --arrancar-chrome  # abre el Chrome de NEXO si esta cerrado
+   python turno_nexo.py --sin-web          # salta el paso 4
+@@ -273,9 +273,12 @@ def turno(simular=False, sin_web=False, arrancar_chrome=False, avisar=True) -> d
+                         reg["pasos"][nombre] = {"error": f"{type(e).__name__}: {e}",
+                                                 "traza": traceback.format_exc()[-1500:]}
+         finally:
++            # N01 (H12): el cierre solo lo limpia el turno que tenia el candado. Antes lo
++            # limpiaba tambien un turno que rebotaba, y se comia el aviso de las 04:20
++            # que era para el turno en marcha.
++            parada.limpiar_cierre()
+             _soltar_candado()
+ 
+-    parada.limpiar_cierre()
+     reg["duracion_s"] = round(time.time() - inicio)
+     try:
+         from nucleo import trabajo

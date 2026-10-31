@@ -1,0 +1,52 @@
+{# T290: la conversacion. role=log: un lector de pantalla lee lo nuevo que llega. #}
+{% if chat %}
+<ol class="bc-chat-mensajes" role="log" aria-label="Conversación sobre {{ t.id }}">
+  {% for x in chat %}
+  {% if x.tipo == "mensaje" %}
+  <li class="bc-msg bc-msg-tu"><span class="bc-msg-quien">Tú{% if x.escalar %} · para Claude{% endif %}
+    <span class="bc-cuando" title="{{ x.cuando }}">{{ hace(x.cuando) }}</span></span>{{ x.texto }}</li>
+  {% elif x.tipo == "respuesta" %}
+  <li class="bc-msg bc-msg-ia{% if x.error %} bc-msg-error{% endif %}"><span class="bc-msg-quien">{{ x.quien_nombre }}
+    <span class="bc-cuando" title="{{ x.cuando }}{% if x.modelo %} · {{ x.modelo }}{% endif %}">{{ hace(x.cuando) }}</span></span>
+    <span class="texto-largo">{{ x.texto }}</span>
+    {% if x.solo_local %}<span class="nota">No ha salido de tu PC ({{ x.solo_local }}).</span>{% endif %}</li>
+  {% elif x.tipo == "accion" %}
+  <li class="bc-msg bc-msg-accion{% if x.deshecha %} bc-msg-deshecha{% endif %}">
+    <span aria-hidden="true">✓</span> Hecho sin preguntar: <strong>{{ x.texto }}</strong>
+    {% if x.deshecha %}<span class="nota">(deshecho)</span>
+    {% else %}
+    <form class="bc-en-linea" hx-post="/tareas/{{ t.id }}/chat/{{ x.n }}/deshacer" hx-target="#chat-mensajes" hx-disabled-elt="find button">
+      <button type="submit" class="boton-sutil">Deshacer</button>
+    </form>
+    {% endif %}</li>
+  {% elif x.tipo == "propuesta" %}
+  <li class="bc-msg bc-msg-propuesta"><span aria-hidden="true">?</span>
+    {% if x.estado == "pendiente" %}Necesita tu OK: {% endif %}<strong>{{ x.texto }}</strong>
+    {% if x.estado == "pendiente" %}
+    <span class="bc-botones-ok">
+      <form class="bc-en-linea" hx-post="/tareas/{{ t.id }}/chat/{{ x.n }}/aprobar" hx-target="#chat-mensajes" hx-disabled-elt="find button">
+        <button type="submit">Aprobar</button></form>
+      <form class="bc-en-linea" hx-post="/tareas/{{ t.id }}/chat/{{ x.n }}/denegar" hx-target="#chat-mensajes" hx-disabled-elt="find button">
+        <button type="submit" class="boton-sutil">No</button></form>
+    </span>
+    <span class="nota">Si no contestas en 24 h, caduca (el silencio cuenta como no).</span>
+    {% elif x.estado == "aprobada" %}<span class="nota">· Aprobado. {{ x.resultado }}</span>
+    {% elif x.estado == "denegada" %}<span class="nota">· No aprobado: no se ha hecho nada.</span>
+    {% elif x.estado == "caducada" %}<span class="nota">· Caducó sin respuesta: no se ha hecho nada.</span>
+    {% else %}<span class="nota">· {{ x.resultado }}</span>{% endif %}</li>
+  {% elif x.tipo == "escalado" %}
+  <li class="bc-msg bc-msg-accion"><span aria-hidden="true">↑</span> {{ x.texto }}</li>
+  {% endif %}
+  {% endfor %}
+  {% if pensando %}
+  <li class="bc-msg bc-msg-ia bc-pensando"><span class="bc-msg-quien">NEXO</span> Pensando… <span class="nota">(Qwen en tu PC o NVIDIA; puede tardar hasta un minuto)</span></li>
+  {% elif sin_contestar %}
+  <li class="bc-msg bc-msg-propuesta">Tu último mensaje se quedó sin respuesta (se reinició la web o falló la IA).
+    <form class="bc-en-linea" hx-post="/tareas/{{ t.id }}/chat/{{ sin_contestar.n }}/reintentar" hx-target="#chat-mensajes" hx-disabled-elt="find button">
+      <button type="submit" class="boton-sutil">Reintentar</button></form></li>
+  {% endif %}
+</ol>
+{% else %}
+<p class="vacio">Todavía no hay conversación. Pregunta lo que quieras de esta tarea o pide un cambio pequeño.</p>
+{% endif %}
+{% if form_oob %}{% include "_tarea_chat_form.html" %}<div id="error-chat" hx-swap-oob="innerHTML"></div>{% endif %}

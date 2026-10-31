@@ -1,0 +1,63 @@
+{# Centro v2 (T230, 18/10): «Te toca». Arriba las DECISIONES, cada una en su tarjeta con el plazo en palabras y los
+   botones de decidir (los mismos POST que Bandejas, con desde=centro para repintar esto); debajo «Tus tareas», una
+   fila por tarea. Los nombres tecnicos (R2, ambar, IDs) se quedan en Bandejas y en la ficha. #}
+{% if aviso %}<p class="nota nota-aviso" role="status">{{ aviso }}</p>{% endif %}
+{% if error %}<p class="estado-parado" role="alert">{{ error }}</p>{% endif %}
+{% if parada %}
+<p class="tt-vacio bc-mal"><span aria-hidden="true">■</span> NEXO está parado.</p>
+<p class="nota">Motivo: {{ parada }}. Pulsa «Seguir» arriba cuando quieras que vuelva a trabajar.</p>
+{% elif not total %}
+<p class="tt-vacio">Nada te espera: todo lo pendiente lo lleva NEXO.</p>
+{% else %}
+{% if tarjetas %}
+<ul class="tt-tarjetas">
+  {% for c in tarjetas %}
+  <li class="tt-tarjeta">
+    <span class="tt-chip{% if c.urgente %} urgente{% endif %}">{% if c.urgente %}<span aria-hidden="true">! </span>{% endif %}{{ c.chip_llano or c.chip }}</span>
+    {% if c.plazo_llano %}<p class="tt-plazo">{{ c.plazo_llano }}</p>{% endif %}
+    <h3>{{ (c.titulo_llano or c.titulo)|truncate(130) }}</h3>
+    {% if c.detalle_llano %}<p>{{ c.detalle_llano|truncate(260) }}</p>{% endif %}
+    {% if c.tipo in ("ambar", "r1", "r2", "tribunal") %}
+    <form class="tt-botones" hx-post="{{ {'ambar': '/ambar/decidir', 'r1': '/riesgo/decidir', 'r2': '/riesgo/decidir', 'tribunal': '/tribunal/decidir'}[c.tipo] }}"
+          hx-target="#te-toca" hx-disabled-elt="find button">
+      <input type="hidden" name="{{ 'nombre' if c.tipo == 'tribunal' else 'id' }}" value="{{ c.ref }}">
+      <input type="hidden" name="desde" value="centro">
+      <input type="hidden" name="todas" value="{{ todas }}">
+      {% if c.tipo == "tribunal" and c.es_inv %}
+      <label class="tt-resultado">Si apruebas, la investigación se queda en
+        <select name="resultado">{% for r in ["ADOPTAR", "ADAPTAR", "DESCARTAR"] %}<option value="{{ r }}"{% if r == c.resultado %} selected{% endif %}>{{ r|capitalize }}</option>{% endfor %}</select>
+      </label>
+      {% endif %}
+      {% if c.tipo == "r1" %}
+      <button type="submit" name="accion" value="aceptar">Aceptar</button>
+      <button type="submit" name="accion" value="denegar">Vetar</button>
+      {% elif c.tipo == "tribunal" %}
+      <button type="submit" name="accion" value="aprobar">Aprobar</button>
+      <button type="submit" name="accion" value="rechazar">Rechazar</button>
+      {% else %}
+      <button type="submit" name="accion" value="aprobar">Aprobar</button>
+      <button type="submit" name="accion" value="denegar">{{ "Rechazar" if c.tipo == "r2" else "Denegar" }}</button>
+      {% endif %}
+      <a class="boton boton-sutil" href="{{ c.ficha or c.enlace }}">{{ "Ver el cambio" if c.tipo in ("ambar", "r2") else "Ver" }}</a>
+      {% if c.ficha %}<a class="boton boton-sutil" href="{{ c.ficha }}#chat-aprobacion">Preguntar</a>{% endif %}
+    </form>
+    {% else %}
+    <a class="boton" href="{{ c.enlace }}">{{ c.accion }}</a>
+    {% endif %}
+  </li>
+  {% endfor %}
+</ul>
+{% if n_decisiones > tarjetas|length %}<p class="nota"><a href="/bandejas">Ver las {{ n_decisiones }} en Bandejas</a></p>{% endif %}
+{% endif %}
+
+{% if tareas %}
+<h3 class="tt-sub">Tus tareas</h3>
+<ul class="tt-filas">
+  {% for t in tareas %}
+  <li><span class="tt-fila-titulo">{{ t.titulo|truncate(110) }}</span>{% if t.plazo %} <span class="tt-fila-plazo">{{ t.plazo }}</span>{% endif %}
+      <a class="boton boton-sutil" href="{{ t.enlace }}">Abrir</a></li>
+  {% endfor %}
+</ul>
+{% if n_tareas > tareas|length %}<p class="nota"><a href="/tareas?depende=damian">Ver las {{ n_tareas }} tareas tuyas</a></p>{% endif %}
+{% endif %}
+{% endif %}

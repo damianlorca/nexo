@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "graft": {
+      "command": "C:\\Users\\damia\\Desktop\\AI\\herramientas\\node22\\node.exe",
+      "args": [
+        "C:\\Users\\damia\\Desktop\\AI\\herramientas\\graft\\node_modules\\@nanonets\\graft\\dist\\cli.js",
+        "mcp",
+        "C:\\Users\\damia\\Desktop\\AI\\agente"
+      ],
+      "env": { "DO_NOT_TRACK": "1" }
+    }
+  }
+}

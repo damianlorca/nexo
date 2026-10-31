@@ -1,0 +1,115 @@
+{
+ "thinkingmachines/inkling:free": {
+  "con_error": {
+   "ok": false,
+   "error": "BLOCKED",
+   "segundos": 0.6
+  },
+  "limpio": {
+   "ok": false,
+   "error": "BLOCKED",
+   "segundos": 0.4
+  },
+  "vale": false,
+  "detecta_error": false
+ },
+ "thinkingmachines/inkling-small:free": {
+  "con_error": {
+   "ok": false,
+   "error": "BLOCKED",
+   "segundos": 0.4
+  },
+  "limpio": {
+   "ok": false,
+   "error": "BLOCKED",
+   "segundos": 0.4
+  },
+  "vale": false,
+  "detecta_error": false
+ },
+ "poolside/laguna-s-2.1:free": {
+  "con_error": {
+   "ok": false,
+   "error": "ERROR",
+   "segundos": 0.5
+  },
+  "limpio": {
+   "ok": false,
+   "error": "ERROR",
+   "segundos": 0.5
+  },
+  "vale": false,
+  "detecta_error": false
+ },
+ "cohere/north-mini-code:free": {
+  "con_error": {
+   "ok": true,
+   "error": "",
+   "segundos": 14.9,
+   "global": "RECHAZAR",
+   "fallos": []
+  },
+  "limpio": {
+   "ok": true,
+   "error": "",
+   "segundos": 35.5,
+   "global": "APROBAR",
+   "fallos": []
+  },
+  "vale": true,
+  "detecta_error": true
+ },
+ "apodex/apodex-1.1-mini:free": {
+  "con_error": {
+   "ok": false,
+   "error": "ERROR",
+   "segundos": 15.8
+  },
+  "limpio": {
+   "ok": true,
+   "error": "",
+   "segundos": 15.1,
+   "global": "APROBAR",
+   "fallos": [
+    [
+     "NO VERIFICABLE",
+     "Aseguramiento del borrador sobre la existencia de .venv y pytest configurados en el PC de NEXO."
+    ]
+   ]
+  },
+  "vale": false,
+  "detecta_error": false
+ },
+ "dots-studio/dots-3-note-preview:free": {
+  "con_error": {
+   "ok": true,
+   "error": "",
+   "segundos": 39.5,
+   "global": "APROBAR",
+   "fallos": [
+    [
+     "NO VERIFICABLE",
+     "\"ya esta instalado en el PC\" porque no puedo confirmar si Python está instalado en el equipo de Damian."
+    ]
+   ]
+  },
+  "limpio": {
+   "ok": true,
+   "error": "",
+   "segundos": 47.0,
+   "global": "APROBAR",
+   "fallos": [
+    [
+     "NO VERIFICABLE",
+     "No se puede confirmar que Python esté instalado en el PC de NEXO (.venv)."
+    ],
+    [
+     "NO VERIFICABLE",
+     "No se puede confirmar que los tests ya corran con pytest."
+    ]
+   ]
+  },
+  "vale": true,
+  "detecta_error": false
+ }
+}

@@ -1,0 +1,561 @@
+diff --git a/auto_etiquetado_router.py b/auto_etiquetado_router.py
+index 5ba9acb..1f5c7c5 100644
+--- a/auto_etiquetado_router.py
++++ b/auto_etiquetado_router.py
+@@ -278,4 +278,5 @@ def _cli(argv: list[str]) -> int:
+ 
+ 
+ if __name__ == "__main__":
++    from nucleo import ayuda; ayuda.atender(__doc__)  # --help sin ejecutar nada (incidente 05/10)
+     raise SystemExit(_cli(sys.argv[1:]))
+diff --git a/banco_roles_v2.py b/banco_roles_v2.py
+index 58a50be..d976634 100644
+--- a/banco_roles_v2.py
++++ b/banco_roles_v2.py
+@@ -332,4 +332,5 @@ def main(argv: list[str]) -> int:
+ 
+ 
+ if __name__ == "__main__":
++    from nucleo import ayuda; ayuda.atender(__doc__)  # --help sin ejecutar nada (incidente 05/10)
+     raise SystemExit(main(sys.argv[1:]))
+diff --git a/canal/bot.py b/canal/bot.py
+index bbcc150..2f6d3bc 100644
+--- a/canal/bot.py
++++ b/canal/bot.py
+@@ -1329,6 +1329,7 @@ def main() -> None:
+ 
+ 
+ if __name__ == "__main__":
++    from nucleo import ayuda; ayuda.atender(__doc__)  # --help sin ejecutar nada (incidente 05/10)
+     try:
+         main()
+     except KeyboardInterrupt:
+diff --git a/canal/vigilante.py b/canal/vigilante.py
+index 12205c1..ed7afaf 100644
+--- a/canal/vigilante.py
++++ b/canal/vigilante.py
+@@ -169,6 +169,7 @@ def main() -> None:
+ 
+ 
+ if __name__ == "__main__":
++    from nucleo import ayuda; ayuda.atender(__doc__)  # --help sin ejecutar nada (incidente 05/10)
+     try:
+         main()
+     except KeyboardInterrupt:
+diff --git a/comprobar_secretos.py b/comprobar_secretos.py
+index 599b434..e1707c4 100644
+--- a/comprobar_secretos.py
++++ b/comprobar_secretos.py
+@@ -164,4 +164,5 @@ def informe(raiz: Path = RAIZ) -> int:
+ 
+ 
+ if __name__ == "__main__":
++    from nucleo import ayuda; ayuda.atender(__doc__)  # --help sin ejecutar nada (incidente 05/10)
+     sys.exit(informe())
+diff --git a/consumidor_libres.py b/consumidor_libres.py
+index 5bff05b..ad3acfb 100644
+--- a/consumidor_libres.py
++++ b/consumidor_libres.py
+@@ -219,4 +219,5 @@ def _cli(argv: list[str]) -> int:
+ 
+ 
+ if __name__ == "__main__":
++    from nucleo import ayuda; ayuda.atender(__doc__)  # --help sin ejecutar nada (incidente 05/10)
+     raise SystemExit(_cli(sys.argv[1:]))
+diff --git a/consumidor_router.py b/consumidor_router.py
+index c6f7cf4..ed925b0 100644
+--- a/consumidor_router.py
++++ b/consumidor_router.py
+@@ -252,4 +252,5 @@ def _cli(argv: list[str]) -> int:
+ 
+ 
+ if __name__ == "__main__":
++    from nucleo import ayuda; ayuda.atender(__doc__)  # --help sin ejecutar nada (incidente 05/10)
+     raise SystemExit(_cli(sys.argv[1:]))
+diff --git a/extremidades/base.py b/extremidades/base.py
+index 5da902a..6f1bc7c 100644
+--- a/extremidades/base.py
++++ b/extremidades/base.py
+@@ -146,4 +146,5 @@ def resumen() -> str:
+ 
+ 
+ if __name__ == "__main__":
++    from nucleo import ayuda; ayuda.atender(__doc__)  # --help sin ejecutar nada (incidente 05/10)
+     print(resumen())
+diff --git a/extremidades/papers.py b/extremidades/papers.py
+index 5492b6a..68b6a13 100644
+--- a/extremidades/papers.py
++++ b/extremidades/papers.py
+@@ -393,6 +393,7 @@ def cita(articulo: Articulo) -> str:
+ 
+ 
+ if __name__ == "__main__":
++    from nucleo import ayuda; ayuda.atender(__doc__)  # --help sin ejecutar nada (incidente 05/10)
+     import sys
+ 
+     consulta = " ".join(sys.argv[1:]) or "perovskite solar cell stability"
+diff --git a/extremidades/triaje.py b/extremidades/triaje.py
+index 304fdaa..834d679 100644
+--- a/extremidades/triaje.py
++++ b/extremidades/triaje.py
+@@ -140,6 +140,7 @@ def triar_pendientes(guardar: bool = True) -> dict:
+ 
+ 
+ if __name__ == "__main__":
++    from nucleo import ayuda; ayuda.atender(__doc__)  # --help sin ejecutar nada (incidente 05/10)
+     print("=" * 64)
+     print("TRIAJE CON QWEN")
+     print("=" * 64)
+diff --git a/herramientas_nube/_banco_openrouter_0410.py b/herramientas_nube/_banco_openrouter_0410.py
+index 6594e48..6c0de05 100644
+--- a/herramientas_nube/_banco_openrouter_0410.py
++++ b/herramientas_nube/_banco_openrouter_0410.py
+@@ -68,4 +68,5 @@ def main(modelos: list[str]) -> int:
+ 
+ 
+ if __name__ == "__main__":
++    from nucleo import ayuda; ayuda.atender(__doc__)  # --help sin ejecutar nada (incidente 05/10)
+     sys.exit(main([a for a in sys.argv[1:] if a.endswith(":free")]))
+diff --git a/herramientas_nube/_banco_tribunal_0410.py b/herramientas_nube/_banco_tribunal_0410.py
+index 57c35bb..f31aee8 100644
+--- a/herramientas_nube/_banco_tribunal_0410.py
++++ b/herramientas_nube/_banco_tribunal_0410.py
+@@ -86,4 +86,5 @@ def main() -> int:
+ 
+ 
+ if __name__ == "__main__":
++    from nucleo import ayuda; ayuda.atender(__doc__)  # --help sin ejecutar nada (incidente 05/10)
+     sys.exit(main())
+diff --git a/nucleo/aprobaciones.py b/nucleo/aprobaciones.py
+index 77578db..c38dedc 100644
+--- a/nucleo/aprobaciones.py
++++ b/nucleo/aprobaciones.py
+@@ -500,4 +500,5 @@ def main(argv: list[str]) -> int:
+ 
+ 
+ if __name__ == "__main__":
++    from nucleo import ayuda; ayuda.atender(__doc__)  # --help sin ejecutar nada (incidente 05/10)
+     sys.exit(main(sys.argv[1:]))
+diff --git a/nucleo/auditor.py b/nucleo/auditor.py
+index 8239b49..4ffcfed 100644
+--- a/nucleo/auditor.py
++++ b/nucleo/auditor.py
+@@ -617,6 +617,7 @@ def _cli(argv: list[str]) -> int:
+ 
+ 
+ if __name__ == "__main__":
++    from nucleo import ayuda; ayuda.atender(__doc__)  # --help sin ejecutar nada (incidente 05/10)
+     from nucleo import consola
+     consola.preparar()   # consola cp1252 de Windows: '?' en lo que no cabe, tildes intactas
+     import sys
+diff --git a/nucleo/auditoria_cierres.py b/nucleo/auditoria_cierres.py
+index 2df4484..9fe1b1c 100644
+--- a/nucleo/auditoria_cierres.py
++++ b/nucleo/auditoria_cierres.py
+@@ -273,4 +273,5 @@ def _cli(argv: list[str]) -> int:
+ 
+ 
+ if __name__ == "__main__":
++    from nucleo import ayuda; ayuda.atender(__doc__)  # --help sin ejecutar nada (incidente 05/10)
+     sys.exit(_cli(sys.argv[1:]))
+diff --git a/nucleo/brief.py b/nucleo/brief.py
+index 0d3f344..a445941 100644
+--- a/nucleo/brief.py
++++ b/nucleo/brief.py
+@@ -548,5 +548,6 @@ def _cli(argv: list[str]) -> int:
+ 
+ 
+ if __name__ == "__main__":
++    from nucleo import ayuda; ayuda.atender(__doc__)  # --help sin ejecutar nada (incidente 05/10)
+     sys.stdout.reconfigure(encoding="utf-8")
+     raise SystemExit(_cli(sys.argv[1:]))
+diff --git a/nucleo/catalogo.py b/nucleo/catalogo.py
+index e9aaeec..b0432e1 100644
+--- a/nucleo/catalogo.py
++++ b/nucleo/catalogo.py
+@@ -279,6 +279,7 @@ def _cli(argv: list[str]) -> int:
+ 
+ 
+ if __name__ == "__main__":
++    from nucleo import ayuda; ayuda.atender(__doc__)  # --help sin ejecutar nada (incidente 05/10)
+     from nucleo import consola
+     consola.preparar()   # consola cp1252 de Windows: '?' en lo que no cabe, tildes intactas
+     raise SystemExit(_cli(sys.argv[1:]))
+diff --git a/nucleo/chat_tarea.py b/nucleo/chat_tarea.py
+index 1880133..b71d445 100644
+--- a/nucleo/chat_tarea.py
++++ b/nucleo/chat_tarea.py
+@@ -835,6 +835,7 @@ def _cli(argv: list[str]) -> int:
+ 
+ 
+ if __name__ == "__main__":
++    from nucleo import ayuda; ayuda.atender(__doc__)  # --help sin ejecutar nada (incidente 05/10)
+     from nucleo import consola
+     consola.preparar()   # consola cp1252 de Windows: '?' en lo que no cabe, tildes intactas
+     sys.exit(_cli(sys.argv[1:]))
+diff --git a/nucleo/clasificador.py b/nucleo/clasificador.py
+index 79d764d..319bd9c 100644
+--- a/nucleo/clasificador.py
++++ b/nucleo/clasificador.py
+@@ -145,6 +145,7 @@ def aplicar_referencia() -> list[str]:
+ 
+ 
+ if __name__ == "__main__":
++    from nucleo import ayuda; ayuda.atender(__doc__)  # --help sin ejecutar nada (incidente 05/10)
+     a = sys.argv[1:]
+     if "--aplicar-referencia" in a:
+         print("etiquetadas:", aplicar_referencia())
+diff --git a/nucleo/enfriamiento.py b/nucleo/enfriamiento.py
+index 143cd37..dc0588c 100644
+--- a/nucleo/enfriamiento.py
++++ b/nucleo/enfriamiento.py
+@@ -101,6 +101,7 @@ def limpiar(proveedor: str) -> None:
+ 
+ 
+ if __name__ == "__main__":
++    from nucleo import ayuda; ayuda.atender(__doc__)  # --help sin ejecutar nada (incidente 05/10)
+     # T667: reactivar un proveedor parado a mano (p.ej. Claude web tras resolver Damian una verificacion).
+     #   .venv\Scripts\python.exe -m nucleo.enfriamiento limpiar claude_web
+     import sys
+diff --git a/nucleo/guardia_python.py b/nucleo/guardia_python.py
+index 93596c2..11889f4 100644
+--- a/nucleo/guardia_python.py
++++ b/nucleo/guardia_python.py
+@@ -187,4 +187,5 @@ def main(argv: list[str]) -> int:
+ 
+ 
+ if __name__ == "__main__":
++    from nucleo import ayuda; ayuda.atender(__doc__)  # --help sin ejecutar nada (incidente 05/10)
+     raise SystemExit(main(sys.argv[1:]))
+diff --git a/nucleo/implementador.py b/nucleo/implementador.py
+index 59c3777..522a92f 100644
+--- a/nucleo/implementador.py
++++ b/nucleo/implementador.py
+@@ -700,4 +700,5 @@ def _cli(argv: list[str]) -> int:
+ 
+ 
+ if __name__ == "__main__":
++    from nucleo import ayuda; ayuda.atender(__doc__)  # --help sin ejecutar nada (incidente 05/10)
+     raise SystemExit(_cli(sys.argv[1:]))
+diff --git a/nucleo/investigacion.py b/nucleo/investigacion.py
+index fe22979..af5735b 100644
+--- a/nucleo/investigacion.py
++++ b/nucleo/investigacion.py
+@@ -320,4 +320,5 @@ def _cli(argv: list[str]) -> int:
+ 
+ 
+ if __name__ == "__main__":
++    from nucleo import ayuda; ayuda.atender(__doc__)  # --help sin ejecutar nada (incidente 05/10)
+     sys.exit(_cli(sys.argv[1:]))
+diff --git a/nucleo/mapa.py b/nucleo/mapa.py
+index 1011ee9..8f94a7a 100644
+--- a/nucleo/mapa.py
++++ b/nucleo/mapa.py
+@@ -117,6 +117,7 @@ def aplicar() -> tuple[int, int]:
+ 
+ 
+ if __name__ == "__main__":
++    from nucleo import ayuda; ayuda.atender(__doc__)  # --help sin ejecutar nada (incidente 05/10)
+     from nucleo import consola
+     consola.preparar()   # consola cp1252 de Windows: '?' en lo que no cabe, tildes intactas
+     a = sys.argv[1:]
+diff --git a/nucleo/modelos_estado.py b/nucleo/modelos_estado.py
+index feca4a1..3ba4d87 100644
+--- a/nucleo/modelos_estado.py
++++ b/nucleo/modelos_estado.py
+@@ -164,6 +164,7 @@ def sondear(fabrica=None, pausa: float = 3.0) -> list[dict]:
+ 
+ 
+ if __name__ == "__main__":
++    from nucleo import ayuda; ayuda.atender(__doc__)  # --help sin ejecutar nada (incidente 05/10)
+     a = sys.argv[1:]
+     if a[:1] == ["sondear"]:
+         for f in sondear():
+diff --git a/nucleo/piloto_serie.py b/nucleo/piloto_serie.py
+index d1b8bbf..d7acb59 100644
+--- a/nucleo/piloto_serie.py
++++ b/nucleo/piloto_serie.py
+@@ -378,4 +378,5 @@ def _cli(argv: list[str]) -> int:
+ 
+ 
+ if __name__ == "__main__":
++    from nucleo import ayuda; ayuda.atender(__doc__)  # --help sin ejecutar nada (incidente 05/10)
+     raise SystemExit(_cli(sys.argv[1:]))
+diff --git a/nucleo/radar.py b/nucleo/radar.py
+index 14345f0..e36cd06 100644
+--- a/nucleo/radar.py
++++ b/nucleo/radar.py
+@@ -506,5 +506,6 @@ def _cli(argv: list[str]) -> int:
+ 
+ 
+ if __name__ == "__main__":
++    from nucleo import ayuda; ayuda.atender(__doc__)  # --help sin ejecutar nada (incidente 05/10)
+     import sys
+     raise SystemExit(_cli(sys.argv[1:]))
+diff --git a/nucleo/reconsiderar.py b/nucleo/reconsiderar.py
+index 1ca0c89..bdc97e2 100644
+--- a/nucleo/reconsiderar.py
++++ b/nucleo/reconsiderar.py
+@@ -220,4 +220,5 @@ def _cli(argv: list[str]) -> int:
+ 
+ 
+ if __name__ == "__main__":
++    from nucleo import ayuda; ayuda.atender(__doc__)  # --help sin ejecutar nada (incidente 05/10)
+     raise SystemExit(_cli(sys.argv[1:]))
+diff --git a/nucleo/responsables.py b/nucleo/responsables.py
+index 19e356c..60a8e8d 100644
+--- a/nucleo/responsables.py
++++ b/nucleo/responsables.py
+@@ -143,5 +143,6 @@ def _cli(argv: list[str]) -> int:
+ 
+ 
+ if __name__ == "__main__":
++    from nucleo import ayuda; ayuda.atender(__doc__)  # --help sin ejecutar nada (incidente 05/10)
+     import sys
+     raise SystemExit(_cli(sys.argv[1:]))
+diff --git a/nucleo/revision.py b/nucleo/revision.py
+index 76e89b1..cb0a03f 100644
+--- a/nucleo/revision.py
++++ b/nucleo/revision.py
+@@ -592,6 +592,7 @@ def _cli(argv: list[str]) -> int:
+ 
+ 
+ if __name__ == "__main__":
++    from nucleo import ayuda; ayuda.atender(__doc__)  # --help sin ejecutar nada (incidente 05/10)
+     from nucleo import consola
+     consola.preparar()   # consola cp1252 de Windows: '?' en lo que no cabe, tildes intactas
+     raise SystemExit(_cli(sys.argv[1:]))
+diff --git a/nucleo/revisor.py b/nucleo/revisor.py
+index e400b7c..614200b 100644
+--- a/nucleo/revisor.py
++++ b/nucleo/revisor.py
+@@ -240,4 +240,5 @@ def main(argv: list[str]) -> int:
+ 
+ 
+ if __name__ == "__main__":
++    from nucleo import ayuda; ayuda.atender(__doc__)  # --help sin ejecutar nada (incidente 05/10)
+     sys.exit(main(sys.argv[1:]))
+diff --git a/nucleo/riesgo.py b/nucleo/riesgo.py
+index 0064578..7e3d920 100644
+--- a/nucleo/riesgo.py
++++ b/nucleo/riesgo.py
+@@ -434,4 +434,5 @@ def _cli(argv: list[str]) -> int:
+ 
+ 
+ if __name__ == "__main__":
++    from nucleo import ayuda; ayuda.atender(__doc__)  # --help sin ejecutar nada (incidente 05/10)
+     raise SystemExit(_cli(sys.argv[1:]))
+diff --git a/nucleo/tareas.py b/nucleo/tareas.py
+index 0022f7e..e8d16f9 100644
+--- a/nucleo/tareas.py
++++ b/nucleo/tareas.py
+@@ -1215,6 +1215,7 @@ def _cli(argv: list[str]) -> int:
+ 
+ 
+ if __name__ == "__main__":
++    from nucleo import ayuda; ayuda.atender(__doc__)  # --help sin ejecutar nada (incidente 05/10)
+     from nucleo import consola
+     consola.preparar()   # consola cp1252 de Windows: '?' en lo que no cabe, tildes intactas
+     raise SystemExit(_cli(sys.argv[1:]))
+diff --git a/nucleo/terminos.py b/nucleo/terminos.py
+index 939a416..0cf3b87 100644
+--- a/nucleo/terminos.py
++++ b/nucleo/terminos.py
+@@ -180,5 +180,6 @@ def _cli(argv: list[str]) -> int:
+ 
+ 
+ if __name__ == "__main__":
++    from nucleo import ayuda; ayuda.atender(__doc__)  # --help sin ejecutar nada (incidente 05/10)
+     sys.stdout.reconfigure(encoding="utf-8")
+     raise SystemExit(_cli(sys.argv[1:]))
+diff --git a/nucleo/tribunal.py b/nucleo/tribunal.py
+index 1853b43..f862c07 100644
+--- a/nucleo/tribunal.py
++++ b/nucleo/tribunal.py
+@@ -1168,6 +1168,7 @@ def _cli(argv: list[str]) -> int:
+ 
+ 
+ if __name__ == "__main__":
++    from nucleo import ayuda; ayuda.atender(__doc__)  # --help sin ejecutar nada (incidente 05/10)
+     try:
+         sys.stdout.reconfigure(encoding="utf-8")
+     except Exception:
+diff --git a/nucleo/turnos.py b/nucleo/turnos.py
+index 474071d..1e37f15 100644
+--- a/nucleo/turnos.py
++++ b/nucleo/turnos.py
+@@ -399,6 +399,7 @@ def contexto(turno: dict | None = None, plantilla: str | None = None, manual: bo
+ 
+ 
+ if __name__ == "__main__":
++    from nucleo import ayuda; ayuda.atender(__doc__)  # --help sin ejecutar nada (incidente 05/10)
+     from nucleo import consola
+     consola.preparar()   # consola cp1252 de Windows: '?' en lo que no cabe, tildes intactas
+     args = sys.argv[1:] or ["estado"]
+diff --git a/nucleo/uso.py b/nucleo/uso.py
+index c6cf8bd..593dacf 100644
+--- a/nucleo/uso.py
++++ b/nucleo/uso.py
+@@ -152,4 +152,5 @@ def _cli() -> None:
+ 
+ 
+ if __name__ == "__main__":
++    from nucleo import ayuda; ayuda.atender(__doc__)  # --help sin ejecutar nada (incidente 05/10)
+     _cli()
+diff --git a/nucleo/uso_claude.py b/nucleo/uso_claude.py
+index 05b511c..cc96fc5 100644
+--- a/nucleo/uso_claude.py
++++ b/nucleo/uso_claude.py
+@@ -257,4 +257,5 @@ def _cli(argv: list[str]) -> int:
+ 
+ 
+ if __name__ == "__main__":
++    from nucleo import ayuda; ayuda.atender(__doc__)  # --help sin ejecutar nada (incidente 05/10)
+     sys.exit(_cli(sys.argv[1:]))
+diff --git a/prueba_bot_arranque.py b/prueba_bot_arranque.py
+index fae0236..4e67f6e 100644
+--- a/prueba_bot_arranque.py
++++ b/prueba_bot_arranque.py
+@@ -75,4 +75,5 @@ def main() -> int:
+ 
+ 
+ if __name__ == "__main__":
++    from nucleo import ayuda; ayuda.atender(__doc__)  # --help sin ejecutar nada (incidente 05/10)
+     sys.exit(main())
+diff --git a/prueba_directml.py b/prueba_directml.py
+index b7bfa11..3a205d1 100644
+--- a/prueba_directml.py
++++ b/prueba_directml.py
+@@ -90,4 +90,5 @@ def main() -> int:
+ 
+ 
+ if __name__ == "__main__":
++    from nucleo import ayuda; ayuda.atender(__doc__)  # --help sin ejecutar nada (incidente 05/10)
+     raise SystemExit(main())
+diff --git a/prueba_imagen_viva.py b/prueba_imagen_viva.py
+index fd74074..805fe3f 100644
+--- a/prueba_imagen_viva.py
++++ b/prueba_imagen_viva.py
+@@ -79,4 +79,5 @@ def main() -> int:
+ 
+ 
+ if __name__ == "__main__":
++    from nucleo import ayuda; ayuda.atender(__doc__)  # --help sin ejecutar nada (incidente 05/10)
+     raise SystemExit(main())
+diff --git a/prueba_instancia.py b/prueba_instancia.py
+index 94601a2..91e5a4c 100644
+--- a/prueba_instancia.py
++++ b/prueba_instancia.py
+@@ -61,4 +61,5 @@ def padre() -> int:
+ 
+ 
+ if __name__ == "__main__":
++    from nucleo import ayuda; ayuda.atender(__doc__)  # --help sin ejecutar nada (incidente 05/10)
+     sys.exit(hijo() if len(sys.argv) > 1 and sys.argv[1] == "hijo" else padre())
+diff --git a/prueba_tareas.py b/prueba_tareas.py
+index 13d53cc..ee3df09 100644
+--- a/prueba_tareas.py
++++ b/prueba_tareas.py
+@@ -329,4 +329,5 @@ def main() -> int:
+ 
+ 
+ if __name__ == "__main__":
++    from nucleo import ayuda; ayuda.atender(__doc__)  # --help sin ejecutar nada (incidente 05/10)
+     raise SystemExit(main())
+diff --git a/turno_nexo.py b/turno_nexo.py
+index 1821f65..3f1a439 100644
+--- a/turno_nexo.py
++++ b/turno_nexo.py
+@@ -384,6 +384,7 @@ def _turno(simular, sin_web, arrancar_chrome, avisar, plantilla, turno_id, manua
+ 
+ 
+ if __name__ == "__main__":
++    from nucleo import ayuda; ayuda.atender(__doc__)  # --help sin ejecutar nada (incidente 05/10)
+     a = sys.argv[1:]
+     elegida = next((x.split("=", 1)[1] for x in a if x.startswith("--plantilla=")), None)
+     if elegida and elegida not in turnos.PLANTILLAS:
+diff --git a/tests/test_ayuda_entradas.py b/tests/test_ayuda_entradas.py
+new file mode 100644
+index 0000000..c767701
+--- /dev/null
++++ b/tests/test_ayuda_entradas.py
+@@ -0,0 +1,79 @@
++# -*- coding: utf-8 -*-
++"""--help / -h en los scripts de entrada sin ejecutar nada (incidente 05/10/2026, 17:01).
++
++No ejecuta ningun script de verdad: prueba el helper nucleo.ayuda y comprueba con AST que el primer
++statement de cada bloque `if __name__ == "__main__":` llama a ayuda.atender (o que el script usa argparse,
++que ya responde a -h sin ejecutar nada).
++"""
++from __future__ import annotations
++
++import ast
++import subprocess
++from pathlib import Path
++
++import pytest
++
++from nucleo import ayuda
++
++RAIZ = Path(__file__).resolve().parents[1]
++# Fuera: blindados (manos/), datos, tests y dos scripts que no pueden importar nucleo.
++EXCLUIDOS_PREFIJO = ("manos/", "memoria/", "tests/", "interfaz/tests/", "_archivo/", "_respaldos/")
++EXCLUIDOS = {"nucleo/ayuda.py", "extremidades/arrancar_comfyui.py", "documentacion/propuestas/aplicar_n01.py"}
++
++
++def _entradas() -> list[str]:
++    r = subprocess.run(["git", "ls-files", "*.py"], cwd=RAIZ, capture_output=True, text=True)
++    salida = []
++    for f in r.stdout.split():
++        if f in EXCLUIDOS or f.startswith(EXCLUIDOS_PREFIJO):
++            continue
++        texto = (RAIZ / f).read_text(encoding="utf-8-sig")
++        if "__main__" in texto and _bloque_main(ast.parse(texto)) is not None:
++            salida.append(f)
++    return salida
++
++
++def _bloque_main(arbol: ast.Module) -> ast.If | None:
++    for nodo in arbol.body:
++        if (isinstance(nodo, ast.If) and isinstance(nodo.test, ast.Compare)
++                and isinstance(nodo.test.left, ast.Name) and nodo.test.left.id == "__name__"):
++            return nodo
++    return None
++
++
++def _atiende_ayuda(texto: str) -> bool:
++    if "argparse" in texto or 'in ("-h", "--help")' in texto:
++        return True
++    primero = _bloque_main(ast.parse(texto)).body
++    # "from nucleo import ayuda; ayuda.atender(__doc__)" son dos statements en la misma linea
++    codigo = "\n".join(ast.unparse(s) for s in primero[:2])
++    return "ayuda.atender(__doc__)" in codigo
++
++
++def test_hay_entradas():
++    assert "turno_nexo.py" in _entradas()
++
++
++@pytest.mark.parametrize("ruta", _entradas())
++def test_cada_entrada_responde_a_help_antes_de_nada(ruta):
++    assert _atiende_ayuda((RAIZ / ruta).read_text(encoding="utf-8-sig")), (
++        f"{ruta}: su bloque __main__ debe empezar por 'from nucleo import ayuda; ayuda.atender(__doc__)'")
++
++
++@pytest.mark.parametrize("arg", ["-h", "--help", "/?"])
++def test_atender_imprime_y_sale(arg, capsys):
++    with pytest.raises(SystemExit) as e:
++        ayuda.atender("Uso: prueba", [arg])
++    assert e.value.code == 0
++    assert "Uso: prueba" in capsys.readouterr().out
++
++
++def test_atender_no_hace_nada_sin_ayuda(capsys):
++    ayuda.atender("Uso: prueba", ["--simular", "--turno=noche"])
++    assert capsys.readouterr().out == ""
++
++
++def test_atender_sin_docstring(capsys):
++    with pytest.raises(SystemExit):
++        ayuda.atender(None, ["--help"])
++    assert "no tiene ayuda" in capsys.readouterr().out

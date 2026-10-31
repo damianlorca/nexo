@@ -1,0 +1,23 @@
+{
+ "poolside/laguna-s-2.1:free": {
+  "con_error": {
+   "ok": true,
+   "error": "",
+   "segundos": 4.0,
+   "global": "APROBAR",
+   "fallos": [
+    [
+     "FALSO",
+     "prueba concreta \"Python fue publicado por primera vez en 1995\" — Python 1.0 se lanzó en 1994, no en 1995."
+    ]
+   ]
+  },
+  "limpio": {
+   "ok": false,
+   "error": "ERROR",
+   "segundos": 0.4
+  },
+  "vale": false,
+  "detecta_error": true
+ }
+}

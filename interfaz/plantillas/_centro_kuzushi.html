@@ -1,0 +1,25 @@
+{# T1011 fase 1 (apartado 4 del diseno): el resumen semanal de Kuzushi en el Centro. Nada de hallazgos sueltos: lo
+   visto, lo arreglado y lo descartado (con su porque), y un enlace a cada caso en /kuzushi. #}
+{% if not r.ultima %}
+<p class="nota">Kuzushi todavía no ha pasado. Lo hace cada noche, sin IA, y aquí saldrá el resumen de la semana.</p>
+{% else %}
+<p>Del {{ r.desde }} al {{ r.hasta }} Kuzushi vio <strong>{{ r.visto|length }}</strong> cosa{{ "s" if r.visto|length != 1 }} nueva{{ "s" if r.visto|length != 1 }}:
+  se arreglaron <strong>{{ r.arreglado|length }}</strong>, se descartaron <strong>{{ r.descartado|length }}</strong>,
+  {{ r.en_espera }} esperan turno y {{ r.para_claude }} las está mirando Claude.</p>
+{% if r.calibrando %}<p class="nota">Semana de prueba (hasta el {{ r.calibracion_hasta }}): Claude repasa cada hallazgo antes de que se convierta en tarea.</p>{% endif %}
+{% if r.para_damian %}
+<p><strong>Te toca decidir:</strong></p>
+<ul class="lista-llana">{% for c in r.para_damian %}<li><a href="{{ c.url }}">{{ c.titulo|truncate(90) }}</a></li>{% endfor %}</ul>
+{% endif %}
+{% if r.arreglado %}
+<details><summary>Arreglado ({{ r.arreglado|length }})</summary>
+<ul class="lista-llana">{% for c in r.arreglado %}<li><a href="{{ c.url }}">{{ c.titulo|truncate(90) }}</a> <span class="nota">{{ c.motivo }}</span></li>{% endfor %}</ul>
+</details>
+{% endif %}
+{% if r.descartado %}
+<details><summary>Descartado y por qué ({{ r.descartado|length }})</summary>
+<ul class="lista-llana">{% for c in r.descartado %}<li><a href="{{ c.url }}">{{ c.titulo|truncate(90) }}</a> <span class="nota">{{ c.motivo }}</span></li>{% endfor %}</ul>
+</details>
+{% endif %}
+<p class="nota"><a href="/kuzushi">Ver todos los casos</a> · última pasada {{ r.ultima[:16] }}</p>
+{% endif %}

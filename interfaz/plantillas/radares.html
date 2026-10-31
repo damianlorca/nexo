@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block titulo %}Radares{% endblock %}
+{% block encabezado %}Radares{% endblock %}
+{% block contenido %}
+{# T693 R2: pestana PROVISIONAL (solo lectura). Las acciones me gusta / guardar / descartar llegan en R3 y el diseno
+   definitivo de pestanas con T691. Nada de aqui sale del PC: la nota se calcula en local. #}
+<section class="panel tt-estado" aria-labelledby="r-estado">
+  <p id="r-estado" class="tt-frase">Radares (provisional): lo que encuentran las búsquedas periódicas.</p>
+  <p>La nota se calcula en este PC con tus criterios; nada de tu perfil sale de aquí. Los botones «me gusta»,
+    «guardar» y «descartar» llegan en la próxima fase.</p>
+  {% if error %}<p class="bc-aviso bc-aviso-frenado">No se han podido leer los radares ({{ error }}).</p>{% endif %}
+  {% if not radares and not error %}<p>Todavía no hay ningún radar configurado.</p>{% endif %}
+</section>
+
+{% for r in radares %}
+<section class="panel" aria-labelledby="radar-{{ r.id }}">
+  <h2 id="radar-{{ r.id }}">{{ r.nombre }}{% if r.simular %} <span class="bc-cuando">· en simulación</span>{% endif %}{% if not r.activo %} <span class="bc-cuando">· apagado</span>{% endif %}</h2>
+  {% if r.error %}
+  <p class="bc-aviso bc-aviso-frenado">Configuración ilegible ({{ r.error }}).</p>
+  {% else %}
+  <p>{% if r.ultima %}Última pasada: {{ r.ultima[:16]|replace("T", " ") }} · {{ r.ultimo.leidos or 0 }} leídos, {{ r.ultimo.repetidos or 0 }} repetidos.{% else %}Aún no ha pasado.{% endif %}</p>
+  <ul class="bc-lista-simple">
+    {% for f in r.fuentes %}<li>{{ f.id }}{% if f.motivo %} — <strong>no se lee:</strong> {{ f.motivo }}{% else %} — se lee{% endif %}</li>{% endfor %}
+  </ul>
+
+  {% if r.tarjetas %}
+  <h3>Tarjetas</h3>
+  <ul class="bc-lista-simple">
+    {% for a in r.tarjetas %}
+    <li><a href="{{ a.url }}" rel="noopener noreferrer" target="_blank">{{ a.titulo }}</a>
+      <span class="bc-cuando">{{ a.fuente }}{% if a.fecha %} · {{ a.fecha }}{% endif %}{% if a.nota is not none %} · nota {{ a.nota }}{% endif %}</span>
+      {% if a.motivo %}<br><small>Por qué te lo enseño: {{ a.motivo }}</small>{% endif %}
+      {% if a.descartado_antes %}<br><small>Ojo: se parece a algo que ya descartaste ({{ a.descartado_antes }}).</small>{% endif %}</li>
+    {% endfor %}
+  </ul>
+  {% else %}
+  <p>Sin tarjetas todavía.{% if r.n_base %} La primera lectura de cada fuente solo aprende lo que ya había (no publica nada); las tarjetas salen a partir de la siguiente pasada.{% endif %}</p>
+  {% endif %}
+
+  {% if r.base %}
+  <details>
+    <summary>Vistos en la primera lectura ({{ r.n_base }}), con la nota que les daría el filtro</summary>
+    <ul class="bc-lista-simple">
+      {% for a in r.base %}<li>{{ a.nota if a.nota is not none else "—" }} · <a href="{{ a.url }}" rel="noopener noreferrer" target="_blank">{{ a.titulo }}</a>{% if a.motivo %} <small>({{ a.motivo }})</small>{% endif %}</li>{% endfor %}
+    </ul>
+  </details>
+  {% endif %}
+  {% endif %}
+</section>
+{% endfor %}
+{% endblock %}

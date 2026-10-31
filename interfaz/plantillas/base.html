@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="es" data-tema="oscuro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="192x192" href="/estatico/iconos/nexo-192.png">
+{# Bloque 5 (Damian 12/10): modo oscuro por defecto; el claro, con el boton de la cabecera. #}
+<meta name="theme-color" content="#0f1115">
+{# Sin eval ni estilos inline de htmx: la CSP no deja (script-src/style-src 'self'). #}
+<meta name="htmx-config" content='{"includeIndicatorStyles":false,"allowEval":false,"allowScriptTags":false,"selfRequestsOnly":true,"historyCacheSize":0}'>
+<title>{% block titulo %}NEXO{% endblock %} · NEXO</title>
+<link rel="stylesheet" href="/estatico/nexo.css">
+<link rel="stylesheet" href="/estatico/humano.css">
+{# nexo.js sin defer: aplica el tema antes de pintar y registra los componentes Alpine. #}
+<script src="/estatico/nexo.js"></script>
+<script src="/estatico/vendor/htmx.min.js" defer></script>
+<script src="/estatico/vendor/sse.min.js" defer></script>
+<script src="/estatico/vendor/alpine-csp.min.js" defer></script>
+</head>
+{# SSE: ?desde= con el ultimo id al pintar, para no perder lo que pase hasta que conecte. #}
+<body hx-headers='{{ {"X-CSRF-Token": csrf}|tojson }}' hx-ext="sse" sse-connect="/eventos?desde={{ ultimo_evento|urlencode }}">
+<a class="saltar" href="#principal">Saltar al contenido</a>
+<header class="cabecera">
+  <a class="marca" href="/">NEXO</a>
+  {# T691 fase 1: lo que no esta en los cinco destinos vive en "Mas" (sin JS: <details>). #}
+  <details class="menu-mas">
+    <summary{% if not seccion %} class="mas-actual"{% endif %}>Más</summary>
+    <ul aria-label="Más secciones">
+      {% for ruta, etiqueta in nav_mas %}
+      <li><a href="{{ ruta }}"{% if actual == ruta %} aria-current="page"{% endif %}>{{ etiqueta }}</a></li>
+      {% endfor %}
+    </ul>
+  </details>
+  <div class="acciones">
+    {% include "_parada.html" %}
+    <button type="button" class="boton-sutil" x-data="tema" x-on:click="cambiar" x-text="etiqueta">Tema</button>
+    {# Entrando por Tailscale, Salir no sirve: al recargar se vuelve a entrar con tu identidad. #}
+    {% if not sesion or sesion.via != "tailnet" %}
+    <button type="button" class="boton-sutil" hx-post="/salir">Salir</button>
+    {% endif %}
+  </div>
+</header>
+{# T691 fase 1: cinco destinos. Movil: barra inferior fija (zona del pulgar). Desde 900 px: barra lateral.
+   T691 escritorio (05/10): desde 1100 px la envoltura es la barra lateral fija y lleva tambien "Mas" a la vista. #}
+<aside class="barra-lateral">
+<nav class="nav-principal" aria-label="Principal">
+  <ul>
+    {% for ruta, etiqueta, icono in nav %}
+    <li><a href="{{ ruta }}"{% if actual == ruta %} aria-current="page"{% elif seccion == ruta %} aria-current="true"{% endif %}>
+      <span class="nav-icono" aria-hidden="true">{{ icono }}</span><span class="nav-texto">{{ etiqueta }}</span>
+      {% if ruta == "/bandejas" and n_bandejas %}<span class="nav-contador"><span class="solo-lector">, </span>{{ n_bandejas }}<span class="solo-lector"> pendientes</span></span>{% endif %}
+    </a></li>
+    {% endfor %}
+  </ul>
+</nav>
+{# Bloque 5 (opcion A): "Mas" abajo del todo de la barra lateral, plegado, con el Detalle tecnico el primero.
+   En el movil "Mas" sigue en la cabecera y esto no se ve. #}
+<nav class="nav-mas-lateral" aria-label="Más">
+  <details{% if not seccion %} open{% endif %}>
+    <summary>Más</summary>
+    <ul>
+      {% for ruta, etiqueta in nav_mas if ruta == "/tecnico" %}
+      <li><a href="{{ ruta }}"{% if actual == ruta %} aria-current="page"{% endif %}>{{ etiqueta }}</a></li>
+      {% endfor %}
+      {% for ruta, etiqueta in nav_mas if ruta != "/tecnico" %}
+      <li><a href="{{ ruta }}"{% if actual == ruta %} aria-current="page"{% endif %}>{{ etiqueta }}</a></li>
+      {% endfor %}
+    </ul>
+  </details>
+</nav>
+</aside>
+{# WCAG 4.1.3: los cambios de estado se anuncian aqui sin mover el foco. #}
+<div id="avisos" class="solo-lector" role="status" aria-live="polite"></div>
+{# Errores de red/servidor en peticiones HTMX (nexo.js lo rellena). #}
+<div id="error-global" class="banner banner-error" role="alert" hidden></div>
+<div id="conexion" class="banner banner-conexion" hidden>
+  <span data-causa="red"><strong><span aria-hidden="true">⚠</span> Conexión en tiempo real perdida.</strong>
+  Lo que ves puede estar desfasado; reintentando cada pocos segundos…</span>
+  <span data-causa="sesion" hidden><strong><span aria-hidden="true">⚠</span> Sesión caducada.</strong>
+  La web de NEXO se ha reiniciado: vuelve a abrirla con interfaz\scripts\abrir_nexo.bat.</span>
+</div>
+<main id="principal" tabindex="-1">
+  {% include "_banner_parada.html" %}
+  <h1>{% block encabezado %}{% endblock %}</h1>
+  {% block contenido %}{% endblock %}
+</main>
+</body>
+</html>

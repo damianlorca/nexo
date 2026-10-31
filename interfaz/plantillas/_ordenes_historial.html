@@ -1,0 +1,19 @@
+{% if filas %}
+<div class="tabla-desplazable">
+<table class="tabla tabla-apilable">
+  <thead><tr><th scope="col">Tarea</th><th scope="col">Vía</th><th scope="col">Tipo</th><th scope="col">Estado</th><th scope="col">Orden</th><th scope="col">Borrador</th></tr></thead>
+  <tbody>
+  {% for f in filas %}
+  <tr>
+    <td data-etiqueta="Tarea">{{ f.id }}</td><td data-etiqueta="Vía">{{ f.canal }}</td>
+    <td data-etiqueta="Tipo">{{ f.categoria }}</td><td data-etiqueta="Estado">{{ f.estado }}</td>
+    <td data-etiqueta="Orden">{{ f.titulo|truncate(90) }}</td>
+    <td data-etiqueta="Borrador">{% if f.borrador %}<a href="/borrador?f={{ f.borrador|urlencode }}">ver</a>{% else %}—{% endif %}</td>
+  </tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+{% else %}
+<p class="vacio">Aún no hay órdenes registradas (ni por la web ni por Telegram).</p>
+{% endif %}

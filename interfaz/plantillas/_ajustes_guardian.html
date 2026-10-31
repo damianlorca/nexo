@@ -1,0 +1,16 @@
+{# T1020: interruptor del guardian de aprobaciones (nucleo/guardian.py). POST a /ajustes/guardian. #}
+<h2 id="t-guardian">Permisos que resuelve NEXO (guardián)</h2>
+{% if aviso %}<p class="nota nota-aviso" role="status">{{ aviso }}</p>{% endif %}
+{% if error %}<p class="estado-parado" role="alert">{{ error }}</p>{% endif %}
+<p role="status"><strong>{{ "Encendido" if guardian_activo else "Apagado" }}.</strong>
+  {% if guardian_activo %}NEXO aprueba solo lo que únicamente lee (sin secretos ni datos privados) y manda al tribunal de
+  3 IAs lo que se puede deshacer. Lo que toca claves, datos privados, archivos de control, dinero o borra de verdad te
+  llega siempre a ti.{% else %}NEXO no decide ningún permiso: todos te llegan a ti, con su ficha y el botón «Preguntar».{% endif %}</p>
+<form hx-post="/ajustes/guardian" hx-target="#ajustes-guardian" hx-disabled-elt="find button">
+  {% if guardian_activo %}
+  <button type="submit" name="accion" value="apagar" class="boton-sutil">Apagar: que me llegue todo</button>
+  {% else %}
+  <button type="submit" name="accion" value="encender">Encender</button>
+  {% endif %}
+</form>
+<p class="nota">Lo que NEXO resuelve sale en el Centro, en «Hecho desde tu última visita» → «Permisos que ha resuelto NEXO».</p>

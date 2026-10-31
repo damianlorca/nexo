@@ -1,0 +1,830 @@
+/* NEXO interfaz: tokens + componentes. Desde el 12/10 (Damian) el tema por defecto es el OSCURO (data-tema="oscuro"
+   en base.html y nexo.js); el claro, con el boton de la cabecera. */
+:root {
+  --fondo: #f6f7f9;
+  --superficie: #ffffff;
+  --borde: #d5d9e0;
+  --texto: #1b1f27;
+  --texto-suave: #545c6b;
+  --acento: #1f5fbf;
+  --acento-texto: #ffffff;
+  --ok: #1d7a3e;
+  --aviso: #8a5a00;
+  --peligro: #b3261e;
+  --peligro-texto: #ffffff;
+  --foco: #1f5fbf;
+  --radio: 8px;
+  --sombra: 0 1px 2px rgb(0 0 0 / 0.06);
+  --fuente: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --mono: ui-monospace, "Cascadia Mono", Consolas, monospace;
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-tema="claro"]) {
+    --fondo: #0f1115;
+    --superficie: #181b22;
+    --borde: #2c313b;
+    --texto: #e6e8ec;
+    --texto-suave: #a3aab6;
+    --acento: #7fb0ff;
+    --acento-texto: #0b1220;
+    --ok: #6fd08f;
+    --aviso: #f0c060;
+    --peligro: #ff8a80;
+    --peligro-texto: #1a0605;
+    --foco: #9cc2ff;
+    color-scheme: dark;
+  }
+}
+
+:root[data-tema="oscuro"] {
+  --fondo: #0f1115;
+  --superficie: #181b22;
+  --borde: #2c313b;
+  --texto: #e6e8ec;
+  --texto-suave: #a3aab6;
+  --acento: #7fb0ff;
+  --acento-texto: #0b1220;
+  --ok: #6fd08f;
+  --aviso: #f0c060;
+  --peligro: #ff8a80;
+  --peligro-texto: #1a0605;
+  --foco: #9cc2ff;
+  color-scheme: dark;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--fondo);
+  color: var(--texto);
+  font: 15px/1.5 var(--fuente);
+}
+
+a { color: var(--acento); }
+
+:focus-visible {
+  outline: 3px solid var(--foco);
+  outline-offset: 2px;
+}
+
+.saltar {
+  position: absolute;
+  left: 8px;
+  top: -48px;
+  padding: 8px 12px;
+  background: var(--superficie);
+  border: 1px solid var(--borde);
+  border-radius: var(--radio);
+  z-index: 10;
+}
+.saltar:focus { top: 8px; }
+
+.solo-lector {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+/* ---------------------------------------------------------------- cabecera */
+.cabecera {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 20px;
+  padding: 10px 16px;
+  background: var(--superficie);
+  border-bottom: 1px solid var(--borde);
+}
+
+.marca {
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--texto);
+  text-decoration: none;
+}
+
+.cabecera nav ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.cabecera nav a {
+  display: block;
+  padding: 6px 10px;
+  border-radius: var(--radio);
+  color: var(--texto-suave);
+  text-decoration: none;
+}
+.cabecera nav a:hover { color: var(--texto); background: var(--fondo); }
+.cabecera nav a[aria-current="page"] {
+  color: var(--texto);
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 6px;
+}
+
+.acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-left: auto;
+}
+
+/* ------------------------------------------------------------------ botones */
+button, .boton {
+  font: inherit;
+  cursor: pointer;
+  padding: 6px 14px;
+  border-radius: var(--radio);
+  border: 1px solid var(--acento);
+  background: var(--acento);
+  color: var(--acento-texto);
+  min-height: 36px;
+}
+
+.boton-sutil {
+  background: transparent;
+  color: var(--texto);
+  border-color: var(--borde);
+}
+
+.boton-peligro {
+  background: var(--peligro);
+  border-color: var(--peligro);
+  color: var(--peligro-texto);
+  font-weight: 600;
+}
+
+button[disabled] { opacity: 0.6; cursor: not-allowed; }
+
+/* ---------------------------------------------------------------- contenido */
+main {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 16px;
+}
+main:focus { outline: none; }
+
+h1 { font-size: 1.4rem; margin: 8px 0 16px; }
+h2 { font-size: 1.1rem; margin: 0 0 8px; }
+
+.panel {
+  background: var(--superficie);
+  border: 1px solid var(--borde);
+  border-radius: var(--radio);
+  box-shadow: var(--sombra);
+  padding: 16px;
+  margin-bottom: 16px;
+}
+
+/* Paginas sueltas (entrar, sin sesion, errores sin sesion) */
+.suelta {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+}
+.tarjeta-suelta {
+  max-width: 480px;
+  width: 100%;
+  background: var(--superficie);
+  border: 1px solid var(--borde);
+  border-radius: var(--radio);
+  padding: 24px;
+}
+
+code, pre { font-family: var(--mono); font-size: 0.9em; }
+
+[x-cloak] { display: none !important; }
+
+/* htmx con includeIndicatorStyles=false (CSP): los indicadores los pinta este CSS. */
+.htmx-indicator { display: none; }
+.htmx-request .htmx-indicator, .htmx-request.htmx-indicator { display: inline; }
+
+/* ------------------------------------------------------------------ PARADA */
+.parada {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.insignia {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid currentColor;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+.insignia-activo { color: var(--ok); }
+.insignia-parada { color: var(--peligro); }
+
+.confirmar {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 8px);
+  z-index: 20;
+  width: min(340px, calc(100vw - 32px));
+  padding: 14px;
+  background: var(--superficie);
+  border: 1px solid var(--borde);
+  border-radius: var(--radio);
+  box-shadow: 0 8px 24px rgb(0 0 0 / 0.18);
+}
+.confirmar p { margin: 0 0 10px; }
+.confirmar label { display: block; font-size: 0.9rem; margin-bottom: 4px; }
+.confirmar input[type="text"], .confirmar input:not([type]) {
+  width: 100%;
+  margin-bottom: 10px;
+  padding: 6px 8px;
+  font: inherit;
+  color: var(--texto);
+  background: var(--fondo);
+  border: 1px solid var(--borde);
+  border-radius: var(--radio);
+}
+
+/* Movil (T290 bis, 28/09): el panel iba anclado a la derecha del boton PARADA, que en el movil queda a
+   la izquierda, y se salia por la izquierda (el boton de confirmar en x=-240). En pantallas estrechas
+   es una hoja fija arriba, a lo ancho, con el boton de confirmar lo primero: el teclado (abajo) no la tapa. */
+@media (max-width: 640px) {
+  .confirmar, .error-parada {
+    position: fixed;
+    left: 12px;
+    right: 12px;
+    top: calc(env(safe-area-inset-top, 0px) + 12px);
+    width: auto;
+    max-height: calc(100dvh - 24px);
+    overflow-y: auto;
+    z-index: 1000;
+  }
+  .confirmar { box-shadow: 0 0 0 100vmax rgb(0 0 0 / 0.45), 0 8px 24px rgb(0 0 0 / 0.3); }
+  .confirmar .fila-botones { margin-bottom: 10px; }
+  .confirmar button { min-height: 44px; }
+  /* 16px: con menos, iOS amplia la pagina al tocar el campo y descoloca todo */
+  .confirmar input:not([type]), .confirmar input[type="text"], .confirmar textarea, .confirmar select { font-size: 16px; }
+}
+.confirmar .fila-botones + label { margin-top: 4px; }
+
+.fila-botones {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.error-parada {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 8px);
+  width: min(340px, calc(100vw - 32px));
+  margin: 0;
+  padding: 8px 10px;
+  background: var(--superficie);
+  color: var(--peligro);
+  border: 1px solid var(--peligro);
+  border-radius: var(--radio);
+}
+
+/* ------------------------------------------------------------------ banners */
+.banner {
+  padding: 10px 14px;
+  border-radius: var(--radio);
+  border: 1px solid;
+  margin-bottom: 16px;
+}
+.banner-parada {
+  color: var(--texto);
+  border-color: var(--peligro);
+  border-left-width: 6px;
+  background: var(--superficie);
+}
+.banner-conexion {
+  max-width: 1200px;
+  margin: 12px auto 0;
+  color: var(--texto);
+  border-color: var(--aviso);
+  border-left-width: 6px;
+  background: var(--superficie);
+}
+.banner-error {
+  max-width: 1200px;
+  margin: 12px auto 0;
+  color: var(--peligro);
+  border-color: var(--peligro);
+  background: var(--superficie);
+}
+
+/* ---------------------------------------------------------- Command Center */
+.rejilla-centro {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 16px;
+  align-items: start;
+}
+.rejilla-centro .panel { margin-bottom: 0; }
+.panel-ancho { grid-column: 1 / -1; }
+
+h3 { font-size: 0.95rem; margin: 0 0 8px; color: var(--texto-suave); }
+
+.nota { color: var(--texto-suave); font-size: 0.9rem; margin: 8px 0 0; }
+.nota-aviso { color: var(--texto); border-left: 4px solid var(--aviso); padding-left: 8px; }
+.vacio { color: var(--texto-suave); font-style: italic; margin: 0; }
+
+.estado-grande { font-size: 1.5rem; font-weight: 700; margin: 0 0 8px; letter-spacing: 0.04em; }
+.estado-activo { color: var(--ok); }
+.estado-parado { color: var(--peligro); }
+
+.datos { display: grid; grid-template-columns: max-content 1fr; gap: 2px 12px; margin: 0; }
+.datos dt { color: var(--texto-suave); }
+.datos dd { margin: 0; overflow-wrap: anywhere; }
+
+.estado-error {
+  border: 1px solid var(--peligro);
+  border-radius: var(--radio);
+  padding: 10px 12px;
+}
+.estado-error p { margin: 0 0 8px; color: var(--peligro); }
+
+/* Estado loading: bloques grises, sin animacion si el sistema pide menos movimiento. */
+.esqueleto { display: grid; gap: 8px; }
+.esqueleto-linea {
+  display: block;
+  height: 0.9em;
+  border-radius: 4px;
+  background: var(--borde);
+  animation: latido 1.4s ease-in-out infinite;
+}
+.esqueleto-linea.corta { width: 60%; }
+@keyframes latido { 50% { opacity: 0.45; } }
+
+.lista-salud { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.salud {
+  display: grid;
+  grid-template-columns: minmax(90px, max-content) 1fr;
+  gap: 0 10px;
+  padding: 6px 8px;
+  border-radius: var(--radio);
+  background: var(--fondo);
+}
+.salud-nombre { font-weight: 600; font-family: var(--mono); }
+.salud-motivo { grid-column: 1 / -1; color: var(--texto-suave); font-size: 0.85rem; overflow-wrap: anywhere; }
+.salud-disponible .salud-estado { color: var(--ok); }
+.salud-enfriamiento .salud-estado { color: var(--aviso); }
+.salud-no_disponible .salud-estado, .salud-error .salud-estado, .salud-apagado .salud-estado { color: var(--peligro); }
+.form-interruptor { display: flex; flex-wrap: wrap; gap: 0.4rem; align-items: center; }
+
+.tabla-compacta { border-collapse: collapse; width: 100%; }
+.tabla-compacta th, .tabla-compacta td { padding: 4px 6px; border-bottom: 1px solid var(--borde); text-align: left; }
+.tabla-compacta th { font-weight: 500; }
+.numero { text-align: right; font-variant-numeric: tabular-nums; font-weight: 600; }
+
+.dos-columnas { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; }
+.lista-acciones { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.lista-acciones li { overflow-wrap: anywhere; }
+.hora { color: var(--texto-suave); font-family: var(--mono); font-size: 0.85rem; }
+.insignia-texto {
+  font-size: 0.75rem;
+  padding: 0 6px;
+  border: 1px solid var(--borde);
+  border-radius: 999px;
+  color: var(--texto-suave);
+  white-space: nowrap;
+}
+.recorte { display: block; color: var(--texto-suave); white-space: pre-wrap; overflow-wrap: anywhere; }
+
+/* ------------------------------------------------------------------ Ordenes */
+.form-orden fieldset { border: 0; margin: 0; padding: 0; display: grid; gap: 10px; }
+.form-orden fieldset[disabled] { opacity: 0.55; }
+.form-orden label[for] { font-weight: 600; }
+.form-orden textarea {
+  width: 100%;
+  padding: 8px 10px;
+  font: inherit;
+  color: var(--texto);
+  background: var(--fondo);
+  border: 1px solid var(--borde);
+  border-radius: var(--radio);
+  resize: vertical;
+}
+.modos { display: grid; gap: 6px; }
+.modos label { display: flex; gap: 8px; align-items: baseline; }
+.etiqueta-grupo { font-weight: 600; }
+.nota-bloqueo { color: var(--texto); border-left: 4px solid var(--peligro); padding-left: 8px; margin: 0 0 12px; }
+.estado-error-texto { color: var(--peligro); margin: 8px 0 0; }
+
+.lista-ordenes { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.orden {
+  border: 1px solid var(--borde);
+  border-left-width: 5px;
+  border-radius: var(--radio);
+  padding: 10px 12px;
+  background: var(--fondo);
+}
+.orden-en_cola, .orden-en_curso { border-left-color: var(--aviso); }
+.orden-hecha { border-left-color: var(--ok); }
+.orden-error, .orden-cancelada { border-left-color: var(--peligro); }
+.orden-cabecera { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.orden-texto { margin: 8px 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+.orden-resultado { margin: 8px 0 4px; }
+
+.tabla-desplazable { overflow-x: auto; }
+.tabla { border-collapse: collapse; width: 100%; font-size: 0.92rem; }
+.tabla th, .tabla td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--borde); vertical-align: top; }
+.tabla th { color: var(--texto-suave); font-weight: 600; }
+
+.texto-borrador { white-space: pre-wrap; overflow-wrap: anywhere; font-size: 0.9rem; }
+
+@media (max-width: 640px) {
+  .acciones { margin-left: 0; width: 100%; }
+  main { padding: 12px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * { animation: none !important; transition: none !important; }
+}
+
+/* El aviso de "sin ordenes" se oculta solo en cuanto hay alguna tarjeta en la lista. */
+.lista-ordenes > #ordenes-vacio:not(:only-child) { display: none; }
+
+/* ------------------------------------------------------------------- Tareas */
+.filtros { display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: end; }
+.filtros label, .campos label { display: grid; gap: 4px; font-size: 0.9rem; color: var(--texto-suave); }
+.filtros select, .filtros input, .campos select, .campos input, .campos textarea,
+.rejilla-acciones textarea {
+  font: inherit;
+  color: var(--texto);
+  background: var(--fondo);
+  border: 1px solid var(--borde);
+  border-radius: var(--radio);
+  padding: 6px 8px;
+  min-height: 36px;
+}
+.campos { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px 14px; margin: 12px 0; }
+.campo-ancho { grid-column: 1 / -1; }
+.campos textarea, .rejilla-acciones textarea { width: 100%; resize: vertical; }
+
+.en-linea { display: inline; }
+details > summary { cursor: pointer; }
+.editar-tarea { margin-top: 16px; border-top: 1px solid var(--borde); padding-top: 12px; }
+
+.rejilla-tarea { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 16px; align-items: start; }
+.rejilla-tarea .panel { margin-bottom: 16px; }
+.rejilla-acciones { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; }
+.rejilla-acciones form { display: grid; gap: 6px; align-content: start; }
+.rejilla-acciones button { justify-self: start; }
+
+.estado-tarea { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 0 0 10px; }
+.texto-largo { white-space: pre-wrap; overflow-wrap: anywhere; margin: 0; }
+.lista-notas { margin: 0; padding-left: 1.4em; display: grid; gap: 8px; }
+.lista-notas li { overflow-wrap: anywhere; }
+.nota-evidencia { border-left: 4px solid var(--ok); padding-left: 8px; }
+.etiquetas { color: var(--texto-suave); font-size: 0.85rem; }
+
+/* Estado real: el texto siempre dice el estado; el color solo lo refuerza. */
+.estado-hecho-y-testeado { color: var(--ok); border-color: var(--ok); }
+.estado-hecho-sin-testear { color: var(--aviso); border-color: var(--aviso); }
+.estado-bloqueado { color: var(--peligro); border-color: var(--peligro); }
+.estado-en-proceso { color: var(--acento); border-color: var(--acento); }
+
+/* ---- Proveedores */
+.cabecera-panel { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; }
+.cabecera-panel h2 { margin: 0; }
+.periodos { border: 0; margin: 0 0 12px; padding: 0; display: flex; flex-wrap: wrap; gap: 6px 16px; }
+.periodos legend { font-size: 0.9rem; color: var(--texto-suave); padding: 0; margin-bottom: 4px; }
+.periodos label { display: flex; gap: 6px; align-items: center; color: var(--texto); }
+.celda-motivo { color: var(--texto-suave); overflow-wrap: anywhere; }
+
+/* ---- Logs */
+.tabla-logs td { font-size: 0.88rem; }
+.celda-detalle { min-width: 16rem; max-width: 48rem; }
+.celda-detalle summary { cursor: pointer; overflow-wrap: anywhere; font-family: var(--mono); }
+.celda-detalle pre { white-space: pre-wrap; overflow-wrap: anywhere; font-size: 0.82rem; margin: 6px 0 0;
+  padding: 8px; background: var(--fondo); border: 1px solid var(--borde); border-radius: 6px; }
+
+/* ---- Tablas apilables: en movil cada fila es una ficha con la etiqueta delante de cada dato */
+.tabla-logs .hora { white-space: nowrap; }
+@media (max-width: 640px) {
+  .tabla-apilable thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+  .tabla-apilable, .tabla-apilable tbody, .tabla-apilable tr, .tabla-apilable td, .tabla-apilable th[scope="row"] {
+    display: block; width: auto; min-width: 0; max-width: none; }
+  .tabla-apilable tr { padding: 8px 0; border-bottom: 1px solid var(--borde); }
+  .tabla-apilable td, .tabla-apilable th[scope="row"] { border: 0; padding: 2px 0; text-align: left; }
+  .tabla-apilable td[data-etiqueta]::before { content: attr(data-etiqueta) ": "; color: var(--texto-suave); font-weight: 600; }
+  .tabla-apilable .hora { white-space: normal; }
+}
+
+/* T231: turnos (tabla). Las casillas nunca heredan el estilo de campo de texto: con padding y min-height de
+   .campos input se montaban unas encima de otras (bloque "Lanzar un turno ya", 28/09). */
+.campos input[type="checkbox"], .campos input[type="radio"] { min-height: 0; padding: 0; width: auto; }
+.turno-dias, .turno-casillas { display: flex; flex-wrap: wrap; gap: 6px 16px; margin: 12px 0; border: 0; padding: 0; }
+.turno-dias legend { font-size: 0.9rem; color: var(--texto-suave); margin-bottom: 4px; }
+.turno-dias label, .turno-casillas label { display: inline-flex; align-items: center; gap: 6px; }
+.turnos-general { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; }
+.turnos-general p { margin: 0; }
+.tabla-turnos td, .tabla-turnos th { vertical-align: top; }
+.acciones-fila { display: flex; flex-wrap: wrap; gap: 6px; }
+.turno-inactivo { opacity: 0.65; }
+.chip { display: inline-block; font-size: 0.8rem; border: 1px solid var(--borde); border-radius: 999px; padding: 0 8px;
+  margin-left: 6px; font-weight: 400; }
+.chip-marcha { border-color: var(--aviso); }
+.turno-form { margin-top: 12px; }
+.turno-registro { border-top: 1px solid var(--borde); padding: 8px 0; }
+.turno-registro summary { cursor: pointer; }
+.turnos-centro dl { display: grid; grid-template-columns: max-content 1fr; gap: 4px 12px; margin: 0; }
+.turnos-centro dt { color: var(--texto-suave); }
+.turnos-centro dd { margin: 0; }
+.en-curso h3 { font-size: 1rem; margin: 12px 0 4px; }
+.en-curso-fila { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 6px 12px; padding: 6px 0;
+  border-top: 1px solid var(--borde); }
+.en-curso-fila p { margin: 0; flex: 1 1 16rem; }
+.lista-cola { list-style: none; margin: 0; padding: 0; }
+.posponer summary { display: inline-block; list-style: none; }
+.posponer summary::-webkit-details-marker { display: none; }
+.posponer-opciones { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; align-items: center; }
+.posponer-hora { display: inline-flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.posponer-hora input { font: inherit; min-height: 32px; }
+#msg-turnos:empty { display: none; }
+/* 28/09: la pildora "Activo" se partia en dos lineas en una columna estrecha (y en movil salia "Activo: Activo") */
+.estado-turno { display: inline-block; white-space: nowrap; font-size: 0.85rem; border: 1px solid var(--borde);
+  border-radius: 999px; padding: 1px 10px; color: var(--texto-suave); }
+.estado-turno-on { color: var(--ok); border-color: var(--ok); font-weight: 600; }
+.tabla-turnos th[scope="row"] { min-width: 8rem; }
+.aviso-pausa { border-left: 4px solid var(--aviso); padding: 8px 12px; margin: 8px 0; display: flex; flex-wrap: wrap;
+  align-items: center; gap: 8px 16px; }
+.aviso-pausa p { margin: 0; flex: 1 1 18rem; }
+.boton-grande { font-size: 1rem; padding: 10px 18px; min-height: 44px; font-weight: 600; }
+
+/* T667: bandeja de Damian del tribunal y orden para Claude */
+.lista-limpia { list-style: none; padding: 0; margin: 0; }
+#orden-claude { width: 100%; font-family: inherit; }
+
+/* ------------------------------------------------------- indicador de la bandeja de Claude (Centro, 04/10) */
+.claude-fijo {
+  position: fixed;
+  right: max(16px, env(safe-area-inset-right, 0px));
+  bottom: max(16px, env(safe-area-inset-bottom, 0px));
+  z-index: 30;
+  display: flex;
+  flex-direction: column-reverse;   /* el aviso "Copiado" sale ENCIMA y el boton no se mueve */
+  align-items: flex-end;
+  gap: 6px;
+}
+.claude-indicador {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 48px;                 /* objetivo tactil comodo en el movil */
+  padding: 8px 16px 8px 12px;
+  border-radius: 999px;
+  border: 2px solid transparent;
+  font: inherit;
+  font-weight: 700;
+  box-shadow: 0 2px 8px rgb(0 0 0 / 0.25);
+}
+.claude-encendido {
+  background: #c15f3c;              /* naranja de Claude; blanco sobre el da >= 4,5:1 */
+  color: #ffffff;
+  cursor: pointer;
+}
+.claude-encendido:hover { background: #a94e2f; }
+.claude-encendido:focus-visible { outline: 3px solid var(--foco); outline-offset: 2px; }
+.claude-apagado {
+  background: var(--superficie);
+  color: var(--texto-suave);
+  border-color: var(--borde);
+  box-shadow: none;
+  opacity: 1;                       /* opaco: el contenido de debajo no debe transparentarse */
+  cursor: default;
+}
+.claude-numero {
+  min-width: 26px;
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: #ffffff;
+  color: #8f3f22;
+  text-align: center;
+  font-size: 0.95rem;
+}
+.claude-estado {
+  padding: 2px 10px;
+  border-radius: var(--radio);
+  background: var(--superficie);
+  border: 1px solid var(--borde);
+  color: var(--texto);
+  font-size: 0.85rem;
+}
+.claude-estado:empty { display: none; }
+@media (max-width: 480px) {
+  .claude-texto { font-size: 0.95rem; }
+}
+/* button[disabled] (opacity .6) y button (min-height 36) tienen mas peso que una sola clase: se sube la especificidad. */
+.claude-fijo .claude-indicador { min-height: 48px; }
+.claude-fijo .claude-indicador.claude-apagado[disabled] { opacity: 1; cursor: default; }
+
+/* ------------------------------------------- T691 fase 1: navegacion de cinco destinos + "Mas" */
+.menu-mas { position: relative; }
+.menu-mas > summary {
+  list-style: none; cursor: pointer; padding: 6px 12px; min-height: 44px; display: flex; align-items: center;
+  border-radius: var(--radio); color: var(--texto-suave);
+}
+.menu-mas > summary::-webkit-details-marker { display: none; }
+.menu-mas > summary::after { content: " ▾"; }
+.menu-mas > summary.mas-actual { color: var(--texto); font-weight: 600; }
+.menu-mas > ul {
+  position: absolute; z-index: 30; top: calc(100% + 4px); left: 0; min-width: 13rem; margin: 0; padding: 6px;
+  list-style: none; background: var(--superficie); border: 1px solid var(--borde); border-radius: var(--radio);
+  box-shadow: 0 8px 24px rgb(0 0 0 / 0.18);
+}
+.menu-mas a {
+  display: flex; align-items: center; min-height: 44px; padding: 0 12px; border-radius: var(--radio);
+  color: var(--texto); text-decoration: none;
+}
+.menu-mas a:hover { background: var(--fondo); }
+.menu-mas a[aria-current="page"] { font-weight: 600; text-decoration: underline; text-underline-offset: 5px; }
+
+.nav-principal {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 20;
+  background: var(--superficie); border-top: 1px solid var(--borde);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+.nav-principal ul { display: grid; grid-template-columns: repeat(5, 1fr); margin: 0; padding: 0; list-style: none; }
+.nav-principal a {
+  position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
+  min-height: 60px; padding: 4px 2px; color: var(--texto-suave); text-decoration: none; font-size: 0.78rem;
+}
+.nav-principal .nav-icono { font-size: 1.3rem; line-height: 1; }
+.nav-principal a[aria-current] { color: var(--acento); font-weight: 700; }
+/* el color no es la unica senal: el destino actual lleva ademas una raya */
+.nav-principal a[aria-current]::before {
+  content: ""; position: absolute; top: 0; left: 25%; right: 25%; height: 3px; border-radius: 0 0 3px 3px;
+  background: var(--acento);
+}
+.nav-contador {
+  position: absolute; top: 6px; left: calc(50% + 8px); min-width: 1.3rem; padding: 0 5px; border-radius: 999px;
+  background: var(--aviso); color: #fff; font-size: 0.72rem; font-weight: 700; text-align: center;
+}
+main { padding-bottom: calc(84px + env(safe-area-inset-bottom, 0px)); }
+
+@media (min-width: 900px) {
+  .nav-principal {
+    top: 0; right: auto; bottom: 0; width: 7.5rem; padding: 64px 0 0; border-top: 0;
+    border-right: 1px solid var(--borde); z-index: 5;
+  }
+  .nav-principal ul { grid-template-columns: 1fr; grid-auto-rows: 76px; }
+  .nav-principal a { font-size: 0.85rem; }
+  .nav-principal a[aria-current]::before { top: 20%; bottom: 20%; left: 0; right: auto; width: 3px; height: auto;
+    border-radius: 0 3px 3px 0; }
+  .cabecera { position: relative; z-index: 10; }
+  main { padding: 16px 16px 32px calc(7.5rem + 16px); }
+}
+
+/* Centro nuevo: frase de estado y tarjetas "Te toca" */
+.tt-estado { padding: 14px 16px; background: var(--superficie); }
+.tt-frase { font-size: 1.15rem; font-weight: 600; margin: 0 0 4px; }
+.tt-tarjetas { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
+.tt-tarjeta { background: var(--superficie); border: 1px solid var(--borde); border-radius: 14px; padding: 14px 16px; }
+.tt-tarjeta h3 { margin: 6px 0 4px; font-size: 1rem; }
+.tt-tarjeta p { margin: 4px 0; color: var(--texto-suave); }
+.tt-chip { display: inline-block; border: 1px solid var(--borde); border-radius: 999px; padding: 1px 10px;
+  font-size: 0.8rem; color: var(--texto-suave); }
+.tt-chip.urgente { border-color: var(--aviso); color: var(--aviso); font-weight: 600; }
+.tt-tarjeta .boton { display: inline-flex; align-items: center; min-height: 44px; margin-top: 8px; text-decoration: none; }
+/* ------------------------------------------- T691 escritorio (Damian 05/10 13:38): desde 1100 px la web tiene
+   diseno de pantalla ancha y no es la del movil estirada: barra lateral con texto (y "Mas" a la vista), el
+   contenido usa el ancho y las tarjetas van en rejilla. Por debajo de 1100 px no cambia nada. */
+.nav-mas-lateral { display: none; }
+@media (min-width: 1100px) {
+  .menu-mas { display: none; }
+  .barra-lateral { position: fixed; top: 0; left: 0; bottom: 0; z-index: 5; width: 220px; padding: 76px 12px 16px;
+    overflow-y: auto; background: var(--superficie); border-right: 1px solid var(--borde); }
+  .nav-principal { position: static; width: auto; padding: 0; border: 0; background: none; }
+  .nav-principal ul { grid-auto-rows: auto; gap: 2px; }
+  .nav-principal a {
+    flex-direction: row; justify-content: flex-start; gap: 12px; min-height: 44px; padding: 8px 12px;
+    border-radius: var(--radio); font-size: 0.95rem; color: var(--texto);
+  }
+  .nav-principal a:hover { background: var(--fondo); }
+  .nav-principal a[aria-current] { background: var(--fondo); color: var(--acento); }
+  .nav-principal .nav-icono { width: 1.4rem; text-align: center; font-size: 1.1rem; }
+  .nav-principal a[aria-current]::before { top: 20%; bottom: 20%; left: 0; right: auto; width: 3px; height: auto;
+    border-radius: 0 3px 3px 0; }
+  .nav-contador { position: static; margin-left: auto; }
+  .nav-mas-lateral { display: block; margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--borde); }
+  .nav-mas-lateral h2 { margin: 0 12px 6px; font-size: 0.75rem; letter-spacing: 0.06em; text-transform: uppercase;
+    color: var(--texto-suave); }
+  .nav-mas-lateral ul { margin: 0; padding: 0; list-style: none; }
+  .nav-mas-lateral a { display: flex; align-items: center; border-radius: var(--radio); text-decoration: none; min-height: 38px; padding: 6px 12px; font-size: 0.9rem; color: var(--texto-suave); }
+  .nav-mas-lateral a[aria-current="page"] { color: var(--acento); font-weight: 700; }
+
+  main { max-width: calc(1680px + 220px + 64px); margin: 0; padding: 24px 32px 40px calc(220px + 32px); }
+
+  .centro-rejilla { display: grid; grid-template-columns: minmax(0, 1.7fr) minmax(320px, 1fr); gap: 24px;
+    align-items: start; }
+  .tt-tarjetas { grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); }
+  .tt-tarjeta { display: flex; flex-direction: column; align-items: flex-start; }
+  .tt-tarjeta .boton { min-height: 36px; padding: 6px 14px; margin-top: auto; }
+  .tt-tarjeta h3 { margin-bottom: 10px; }
+
+  .rejilla-paneles { display: grid; grid-template-columns: repeat(auto-fit, minmax(520px, 1fr)); gap: 0 24px;
+    align-items: start; }
+  main .bc-tarjetas { grid-template-columns: repeat(auto-fill, minmax(560px, 1fr)); }   /* main: gana a humano.css */
+}
+
+/* Damian 05/10: aprobaciones explicadas en lenguaje claro (_centro_ambar.html) */
+.explica-aprobacion { display: grid; grid-template-columns: max-content 1fr; gap: .2rem .8rem; margin: .4rem 0; }
+.explica-aprobacion dt { font-weight: 600; }
+.explica-aprobacion dd { margin: 0; }
+@media (max-width: 30rem) { .explica-aprobacion { grid-template-columns: 1fr; } .explica-aprobacion dd { margin-bottom: .3rem; } }
+
+/* ------------------------------------------- Bloque 5 (opcion A de Damian, 12/10): Centro en tres columnas, barra
+   lateral con "Mas" abajo y la PARADA siempre a la vista (cabecera fija arriba, tambien en el movil). */
+.cabecera { position: sticky; top: 0; z-index: 25; }
+/* En el movil la cabecera fija cabe en UNA fila: la insignia "Activo" sobra (el boton PARADA ya lo dice) y los
+   botones van mas pequenos. La PARADA nunca se esconde. */
+@media (max-width: 640px) {
+  .cabecera { flex-wrap: nowrap; gap: 6px; padding: 6px 10px; }
+  .cabecera .acciones { flex-wrap: nowrap; gap: 6px; }
+  .cabecera .insignia-activo { display: none; }
+  .cabecera .acciones > button, .cabecera .parada > button { min-height: 36px; padding: 4px 10px; font-size: 0.85rem; }
+  .menu-mas > summary { padding: 6px 6px; }
+}
+.nav-mas-lateral details > summary { list-style: none; cursor: pointer; margin: 0 0 4px; padding: 6px 12px;
+  border-radius: var(--radio); font-size: 0.8rem; letter-spacing: 0.06em; text-transform: uppercase;
+  color: var(--texto-suave); }
+.nav-mas-lateral details > summary::-webkit-details-marker { display: none; }
+.nav-mas-lateral details > summary::after { content: " ▸"; }
+.nav-mas-lateral details[open] > summary::after { content: " ▾"; }
+@media (min-width: 1100px) {
+  .barra-lateral { display: flex; flex-direction: column; }
+  .nav-mas-lateral { margin-top: auto; }
+}
+
+.centro-columnas { display: grid; gap: 16px; align-items: start; margin-top: 12px; }
+.centro-col { min-width: 0; background: var(--superficie); border: 1px solid var(--borde); border-radius: 14px;
+  padding: 12px 14px; }
+.centro-col > h2, .centro-radares > h2 { margin: 0 0 10px; font-size: 1.05rem; }
+.centro-col .tt-tarjeta { background: var(--fondo); }
+.tt-vacio { margin: 4px 0 8px; font-weight: 600; }
+.em-turno p { margin: 2px 0; }
+.em-sub { margin: 14px 0 4px; font-size: 0.9rem; color: var(--texto-suave); }
+.lista-llana { margin: 4px 0; padding-left: 1.1rem; }
+.lista-llana li { margin: 4px 0; }
+.hh-ok { color: var(--ok); font-weight: 700; }
+.brief-centro { margin-top: 12px; }
+.controles-turnos { margin-top: 12px; }
+.controles-turnos > summary { cursor: pointer; color: var(--acento); }
+.centro-radares { margin-top: 20px; }
+.centro-radares > h2 a { color: inherit; }
+.radares-fila { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); }
+.radar-mini { background: var(--superficie); border: 1px solid var(--borde); border-radius: 14px; padding: 10px 14px; }
+.radar-mini h3 { margin: 0 0 4px; font-size: 0.95rem; }
+/* Centro v2 (T230, 18/10): dos columnas (3fr | 2fr) en ordenador; una en movil, en orden Te toca, Hecho, En marcha, Avisos. */
+.centro-lado { display: grid; gap: 16px; align-content: start; min-width: 0; }
+@media (min-width: 861px) {
+  .centro-columnas { grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); }
+  main .centro-columnas .tt-tarjetas { grid-template-columns: 1fr; }
+}
+.ultima-visita { margin: 4px 0 0; }
+.tt-plazo { margin: 6px 0 0; font-weight: 600; color: var(--aviso); }
+.tt-botones { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 10px; }
+.tt-botones button, .tt-botones .boton { min-height: 44px; margin-top: 0; }
+.tt-resultado { flex-basis: 100%; font-size: 0.9rem; }
+.tt-sub { margin: 16px 0 6px; font-size: 0.95rem; color: var(--texto-suave); }
+.tt-filas { list-style: none; margin: 0; padding: 0; }
+.tt-filas li { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; padding: 6px 0;
+  border-top: 1px solid var(--borde); }
+.tt-filas li:first-child { border-top: 0; }
+.tt-fila-titulo { flex: 1 1 14rem; min-width: 0; overflow-wrap: anywhere; }
+.tt-fila-plazo { color: var(--aviso); font-size: 0.85rem; font-weight: 600; }
+.hh-lista { list-style: none; margin: 8px 0 0; padding: 0; }
+.hh-grupo { padding: 8px 0; border-top: 1px solid var(--borde); }
+.hh-grupo:first-child { border-top: 0; }
+.hh-grupo p { margin: 2px 0; }
+.hh-frase a { color: inherit; font-weight: 600; text-decoration: none; }
+.hh-nuevo { display: inline-block; margin-left: 6px; padding: 0 8px; border: 1px solid var(--acento); border-radius: 999px;
+  color: var(--acento); font-size: 0.75rem; font-weight: 600; }
+.em-lineas { margin: 0; }
+.em-lineas dt { margin-top: 10px; font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em;
+  color: var(--texto-suave); }
+.em-lineas dd { margin: 2px 0 0; overflow-wrap: anywhere; }
+.em-botones { margin: 12px 0 0; }
+.em-botones .boton { display: inline-flex; align-items: center; min-height: 44px; text-decoration: none; }
+@media (max-width: 860px) {
+  .tt-botones button, .tt-botones .boton, .tt-filas .boton, .em-botones .boton, .centro-col .tt-tarjeta .boton {
+    min-height: 48px !important; padding-inline: 16px; }   /* !important: la regla general de 44px del movil lo es */
+}

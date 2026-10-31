@@ -1,0 +1,58 @@
+--- a/manos/archivos.py	2026-10-12 13:49:27.528398200 +0200
++++ b/manos/archivos.py	2026-10-12 13:49:39.269009900 +0200
+@@ -79,10 +79,14 @@
+     return p.read_text(encoding="utf-8", errors="replace")
+ 
+ 
+-def escribir(ruta: str | Path, contenido: str, sobrescribir: bool = True) -> str:
++def escribir(ruta: str | Path, contenido: str, sobrescribir: bool = True, aprobado: bool = False) -> str:
++    """aprobado=True (T861) solo lo pone servidor_mcp tras consumir una aprobacion ambar de Damian para ESTA ruta y
++    ESTE contenido: salta el ambar, NUNCA el rojo."""
+     p = _resolver(ruta)
+ 
+-    exigir(nivel_de_ruta(p, escritura=True), "escribir", str(p))
++    nivel = nivel_de_ruta(p, escritura=True)
++    if not (aprobado and nivel is Nivel.AMBAR):
++        exigir(nivel, "escribir", str(p))
+ 
+     if p.exists() and not sobrescribir:
+         raise FileExistsError(str(p))
+--- a/manos/servidor_mcp.py	2026-10-12 13:49:27.451477200 +0200
++++ b/manos/servidor_mcp.py	2026-10-12 16:12:03.237657600 +0200
+@@ -27,6 +27,7 @@
+ if str(RAIZ) not in sys.path:
+     sys.path.insert(0, str(RAIZ))
+ 
++import hashlib     # noqa: E402
+ import os          # noqa: E402
+ import subprocess  # noqa: E402
+ import time        # noqa: E402
+@@ -162,10 +163,25 @@
+ 
+ 
+ @mcp.tool()
+-def escribir(ruta: str, contenido: str) -> str:
+-    """Escribe un archivo. Si ya existia, guarda respaldo antes."""
++def escribir(ruta: str, contenido: str, aprobacion_id: str = "") -> str:
++    """Escribe un archivo. Si ya existia, guarda respaldo antes.
+ 
+-    return _envuelto(archivos.escribir, ruta, contenido)
++    Si devuelve NECESITA APROBACION con una SOLICITUD, espera a que
++    Damian la apruebe y repite la llamada con aprobacion_id=<id> y el
++    MISMO contenido (T861: la aprobacion va atada a la ruta y al sha256
++    del contenido; otro contenido pide otra aprobacion).
++    """
++
++    def _escribir() -> str:
++        p = archivos._resolver(ruta)
++        nivel = nivel_de_ruta(p, escritura=True)
++        detalle = f"{p} sha256:{hashlib.sha256(contenido.encode('utf-8')).hexdigest()[:16]}"
++        aprobado, respuesta = _puerta("escribir", detalle, nivel, aprobacion_id, False)
++        if respuesta:
++            return respuesta
++        return archivos.escribir(ruta, contenido, aprobado=aprobado)
++
++    return _envuelto(_escribir)
+ 
+ 
+ @mcp.tool()

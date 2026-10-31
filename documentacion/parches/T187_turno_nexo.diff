@@ -1,0 +1,19 @@
+--- turno_nexo.py	2026-10-04 11:03:02.543217700 +0200
++++ C:\Users\damia\AppData\Local\Temp/turno_nexo_nuevo.py	2026-10-04 11:54:28.427808700 +0200
+@@ -218,6 +218,7 @@
+     if not simular:
+         planificador.progreso(pid_turno=os.getpid(), turno=ctx["turno_id"], nombre=ctx["nombre"], paso="comprobando",
+                               max_minutos=ctx["max_minutos"], inicio=reg["inicio"])
++        latido = planificador.iniciar_latido()   # T187: un latido por minuto; si se para, la web avisa
+ 
+     if parada.activa():
+         reg["abortado"] = f"PARADA DE EMERGENCIA activa: {parada.activa()}"
+@@ -289,6 +290,8 @@
+     elif not reg.get("explicacion") and "preparar" in reg["pasos"] and not filas and not reg.get("abortado"):
+         reg["explicacion"] = "no quedó ninguna tarea que trabajar"
+     parada.limpiar_cierre()
++    if not simular:
++        latido.set()   # T187: el turno acabo con normalidad: se acaba el latido (terminar() borra el fichero)
+     reg["duracion_s"] = round(time.time() - inicio)
+     try:
+         from nucleo import trabajo

@@ -1,0 +1,3 @@
+{# Bloque 5: el estado de NEXO en una frase, en llano. #}
+<p class="tt-frase{% if parada %} bc-mal{% endif %}" role="status"><span aria-hidden="true">{{ "■" if parada else "●" }}</span> {{ frase }}</p>
+{% if cierre %}<p class="nota-aviso">Has pedido cerrar el turno: NEXO termina lo que tiene entre manos y no empieza nada nuevo.</p>{% endif %}

@@ -1,0 +1,14 @@
+{% set etiquetas = {"disponible": ("●", "Disponible"), "enfriamiento": ("◐", "En enfriamiento"),
+                    "no_disponible": ("○", "No disponible"), "error": ("✖", "Error al comprobar")} %}
+<ul class="lista-salud">
+  {% for p in salud.lista %}
+  {% set icono, texto = etiquetas[p.salud] %}
+  <li class="salud salud-{{ p.salud }}">
+    <span class="salud-nombre">{{ p.nombre }}</span>
+    <span class="salud-estado"><span aria-hidden="true">{{ icono }}</span> {{ texto }}</span>
+    {% if p.enfriamiento %}<span class="salud-motivo">{{ p.enfriamiento }}</span>
+    {% elif p.motivo %}<span class="salud-motivo">{{ p.motivo }}</span>{% endif %}
+  </li>
+  {% endfor %}
+</ul>
+<p class="nota">Comprobación barata (no gasta modelo), hecha a las {{ salud.cuando|hora }}; se repite cada minuto.</p>

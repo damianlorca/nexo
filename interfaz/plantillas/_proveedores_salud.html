@@ -1,0 +1,39 @@
+{% set etiquetas = {"disponible": ("●", "Disponible"), "enfriamiento": ("◐", "En enfriamiento"),
+                    "no_disponible": ("○", "No disponible"), "error": ("✖", "Error al comprobar"),
+                    "apagado": ("⏻", "Apagado a mano")} %}
+{% if aviso %}<p class="nota nota-aviso" role="status">{{ aviso }}</p>{% endif %}
+{% if error %}<p class="estado-parado" role="alert">{{ error }}</p>{% endif %}
+{% if not salud.lista %}
+<p class="vacio">No hay proveedores configurados.</p>
+{% else %}
+<div class="tabla-desplazable">
+<table class="tabla tabla-apilable">
+  <thead><tr><th scope="col">Proveedor</th><th scope="col">Estado</th><th scope="col">Enfriamiento</th><th scope="col">Motivo</th><th scope="col">Interruptor</th></tr></thead>
+  <tbody>
+  {% for p in salud.lista %}
+  {% set icono, texto = etiquetas[p.salud] %}
+  <tr class="salud-{{ p.salud }}">
+    <th scope="row" class="salud-nombre">{{ p.nombre }}</th>
+    <td class="salud-estado" data-etiqueta="Estado"><span aria-hidden="true">{{ icono }}</span> {{ texto }}</td>
+    <td data-etiqueta="Enfriamiento">{{ p.enfriamiento or "—" }}</td>
+    <td class="celda-motivo" data-etiqueta="Motivo">{{ p.motivo or "—" }}</td>
+    <td data-etiqueta="Interruptor">
+      {# T549: apagado manual; no caduca. Lo respetan las cascadas, el router, el tribunal y el implementador. #}
+      <form class="form-interruptor" hx-post="/proveedores/interruptor" hx-target="#salud-proveedores" hx-disabled-elt="find button">
+        <input type="hidden" name="nombre" value="{{ p.nombre }}">
+        {% if p.salud == "apagado" %}
+        <button type="submit" name="accion" value="encender">Encender</button>
+        {% else %}
+        <label class="solo-lector" for="motivo-{{ p.nombre }}">Motivo para apagar {{ p.nombre }}</label>
+        <input id="motivo-{{ p.nombre }}" name="motivo" placeholder="motivo (opcional)" maxlength="200" size="14">
+        <button type="submit" name="accion" value="apagar">Apagar</button>
+        {% endif %}
+      </form>
+    </td>
+  </tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+{% endif %}
+<p class="nota">Comprobación barata (no gasta modelo), hecha a las {{ salud.cuando|hora }}; se repite cada minuto.</p>

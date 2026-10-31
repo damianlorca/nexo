@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>NEXO · maqueta T691</title>
+<style>
+:root{--fondo:#f6f5f2;--panel:#fff;--texto:#1d1d1f;--suave:#5f6368;--linea:#e3e1dc;--acento:#2f5d50;--aviso:#a1460b;--peligro:#b3261e;--ok:#2e7d32;color-scheme:light}
+@media (prefers-color-scheme:dark){:root{--fondo:#141513;--panel:#1e201d;--texto:#ecebe7;--suave:#a6a8a3;--linea:#30332e;--acento:#7fbfa9;--aviso:#e8a05c;--peligro:#f2867d;--ok:#8fd19a;color-scheme:dark}}
+*{box-sizing:border-box}
+body{margin:0;font:16px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:var(--fondo);color:var(--texto)}
+header{position:sticky;top:0;z-index:2;display:flex;align-items:center;gap:.75rem;padding:.6rem 1rem;padding-top:calc(.6rem + env(safe-area-inset-top,0px));background:var(--panel);border-bottom:1px solid var(--linea)}
+header .marca{font-weight:700;letter-spacing:.04em}
+header .parada{margin-left:auto;border:2px solid var(--peligro);color:var(--peligro);background:none;border-radius:999px;padding:.35rem .9rem;font-weight:700;min-height:44px}
+main{max-width:46rem;margin:0 auto;padding:1rem 1rem 6.5rem}
+.vista{display:none}.vista.activa{display:block}
+h1{font-size:1.35rem;margin:.25rem 0 1rem}
+.estado{background:var(--panel);border:1px solid var(--linea);border-radius:16px;padding:1rem}
+.estado strong{font-size:1.1rem}
+.fila{display:flex;gap:.5rem;flex-wrap:wrap;margin-top:.5rem;color:var(--suave);font-size:.92rem}
+.tarjeta{background:var(--panel);border:1px solid var(--linea);border-radius:16px;padding:1rem;margin:.75rem 0}
+.tarjeta h3{margin:.1rem 0 .35rem;font-size:1.02rem}
+.tarjeta p{margin:.25rem 0;color:var(--suave)}
+.chip{display:inline-block;border:1px solid var(--linea);border-radius:999px;padding:.1rem .6rem;font-size:.8rem;color:var(--suave)}
+.chip.urgente{border-color:var(--aviso);color:var(--aviso)}
+.acciones{display:flex;gap:.5rem;flex-wrap:wrap;margin-top:.75rem}
+.acciones button{min-height:44px;border-radius:12px;border:1px solid var(--linea);background:var(--fondo);color:var(--texto);padding:.4rem .9rem;font:inherit}
+.acciones .si{background:var(--acento);border-color:var(--acento);color:#fff}
+.pestanas{display:flex;gap:.4rem;overflow-x:auto;padding-bottom:.25rem}
+.pestanas button{flex:none;min-height:40px;border-radius:999px;border:1px solid var(--linea);background:var(--panel);color:var(--texto);padding:.3rem .9rem;font:inherit}
+.pestanas button[aria-selected=true]{background:var(--acento);border-color:var(--acento);color:#fff}
+.lista{list-style:none;padding:0;margin:0}
+.lista li{display:flex;justify-content:space-between;gap:.75rem;padding:.75rem 0;border-bottom:1px solid var(--linea)}
+.caja{width:100%;min-height:7rem;border-radius:14px;border:1px solid var(--linea);background:var(--panel);color:var(--texto);padding:.75rem;font:inherit}
+nav.abajo{position:fixed;left:0;right:0;bottom:0;z-index:3;display:grid;grid-template-columns:repeat(5,1fr);background:var(--panel);border-top:1px solid var(--linea);padding-bottom:env(safe-area-inset-bottom,0px)}
+nav.abajo button{background:none;border:0;color:var(--suave);font:inherit;font-size:.75rem;min-height:60px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.15rem;position:relative}
+nav.abajo button[aria-current=page]{color:var(--acento);font-weight:700}
+nav.abajo .icono{font-size:1.25rem;line-height:1}
+nav.abajo .contador{position:absolute;top:6px;left:calc(50% + 6px);background:var(--aviso);color:#fff;border-radius:999px;font-size:.7rem;padding:0 .35rem}
+@media (min-width:900px){
+ nav.abajo{top:57px;bottom:0;right:auto;width:7.5rem;grid-template-columns:1fr;grid-auto-rows:72px;border-top:0;border-right:1px solid var(--linea)}
+ main{padding:1.5rem 1.5rem 2rem 9rem;max-width:60rem}
+}
+.nota{font-size:.85rem;color:var(--suave)}
+</style>
+</head>
+<body>
+<header><span class="marca">NEXO</span><span class="chip">maqueta T691 · sin datos reales</span><button class="parada" type="button">PARADA</button></header>
+<main>
+ <section id="centro" class="vista activa" aria-labelledby="h-centro">
+  <h1 id="h-centro">Centro</h1>
+  <div class="estado" role="status"><strong>NEXO funciona. 3 cosas te esperan.</strong>
+   <div class="fila"><span>▶ Turno en marcha: Tribunal (2 de 3)</span><span>· Próximo: Vigía 09:15</span><span>· IAs: 6 de 7 listas</span></div></div>
+  <h2>Te toca</h2>
+  <article class="tarjeta"><span class="chip urgente">Decidir hoy</span><h3>Restaurar el turno del piloto del implementador</h3><p>Se borró por un fallo de la web a las 01:10. Ya está arreglado para que no vuelva a pasar.</p><div class="acciones"><button class="si">Restaurar</button><button>Dejarlo parado</button></div></article>
+  <article class="tarjeta"><span class="chip">Tribunal · sin acuerdo</span><h3>T059 · Revisar el borrador del vigía</h3><p>2 de 3 revisores aprueban; uno pide datos. Resumen en 3 líneas dentro.</p><div class="acciones"><button class="si">Aprobar</button><button>Rechazar</button><button>Mandar a Claude</button></div></article>
+  <p class="nota">Los 14 paneles de hoy siguen en Más → Detalle técnico.</p>
+ </section>
+
+ <section id="tareas" class="vista" aria-labelledby="h-tareas">
+  <h1 id="h-tareas">Tareas</h1>
+  <div class="pestanas" role="tablist"><button aria-selected="true">Te tocan</button><button>NEXO</button><button>Claude</button><button>Hechas</button><button>Descartadas</button></div>
+  <ul class="lista"><li><span><strong>Rediseño de la interfaz</strong><br><span class="nota">Plan listo · falta tu visto bueno</span></span><span class="chip">T691</span></li>
+   <li><span><strong>Brief diario por el Google Home</strong><br><span class="nota">Investigación hecha · prueba contigo delante</span></span><span class="chip">T697</span></li></ul>
+ </section>
+
+ <section id="ordenes" class="vista" aria-labelledby="h-ordenes">
+  <h1 id="h-ordenes">Órdenes</h1>
+  <label for="orden" class="nota">¿Qué quieres que haga NEXO?</label>
+  <textarea id="orden" class="caja" placeholder="Ej.: investiga cursos gratis de diseño de PCB"></textarea>
+  <div class="acciones"><button class="si">Enviar</button></div>
+  <article class="tarjeta"><span class="chip urgente">Aviso</span><p>Algo parecido ya se descartó: T178 Blkit (24/09) — “la web es htmx; no necesita esa librería”.</p></article>
+ </section>
+
+ <section id="bandejas" class="vista" aria-labelledby="h-bandejas">
+  <h1 id="h-bandejas">Bandejas</h1>
+  <div class="pestanas" role="tablist"><button aria-selected="true">Todo (3)</button><button>Tribunal (1)</button><button>Riesgo (1)</button><button>Investigación</button><button>Chat</button></div>
+  <article class="tarjeta"><span class="chip urgente">R2 · caduca en 6 días</span><h3>Diff del implementador en auto_etiquetado_router.py</h3><p>Tests en verde. Solo cambia la validación de claves.</p><div class="acciones"><button class="si">OK</button><button>Ver diff</button><button>Rechazar</button></div></article>
+  <article class="tarjeta"><span class="chip">Investigación</span><h3>Google Home: brief hablado</h3><p>Vía propuesta: botón en la web + altavoz por Cast. ¿Probamos mañana?</p><div class="acciones"><button class="si">Sí, mañana</button><button>Más tarde</button></div></article>
+ </section>
+
+ <section id="radares" class="vista" aria-labelledby="h-radares">
+  <h1 id="h-radares">Radares</h1>
+  <div class="pestanas" role="tablist"><button aria-selected="true">Oportunidades</button><button>Cursos</button><button>Viajes</button><button>Monetización</button><button>Novedades</button><button>⚙</button></div>
+  <article class="tarjeta"><span class="chip">Prácticas · fuente: web oficial</span><h3>Ejemplo de tarjeta de oportunidad</h3><p>Por qué te la enseño: encaja con tu perfil (filtrado en local). Enlace a la fuente.</p><div class="acciones"><button>♥ Me gusta</button><button>Guardar</button><button>Descartar</button></div></article>
+ </section>
+</main>
+<nav class="abajo" aria-label="Principal">
+ <button type="button" data-v="centro" aria-current="page"><span class="icono" aria-hidden="true">◎</span>Centro</button>
+ <button type="button" data-v="tareas"><span class="icono" aria-hidden="true">☰</span>Tareas</button>
+ <button type="button" data-v="ordenes"><span class="icono" aria-hidden="true">✎</span>Órdenes</button>
+ <button type="button" data-v="bandejas"><span class="icono" aria-hidden="true">▤</span>Bandejas<span class="contador">3</span></button>
+ <button type="button" data-v="radares"><span class="icono" aria-hidden="true">◈</span>Radares</button>
+</nav>
+<script>
+document.querySelectorAll('nav.abajo button').forEach(function(b){b.addEventListener('click',function(){
+ document.querySelectorAll('.vista').forEach(function(v){v.classList.toggle('activa',v.id===b.dataset.v)});
+ document.querySelectorAll('nav.abajo button').forEach(function(x){x.toggleAttribute('aria-current',x===b);if(x===b)x.setAttribute('aria-current','page')});
+ window.scrollTo(0,0);});});
+</script>
+</body>
+</html>

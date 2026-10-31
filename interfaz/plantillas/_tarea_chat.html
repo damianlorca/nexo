@@ -1,0 +1,21 @@
+{# T290: chat de la tarea (diseno aprobado en el boceto de T230). La conversacion se carga sola y se
+   repinta con el evento "chat" (SSE); el formulario va aparte para no borrar lo que estas escribiendo. #}
+<section id="chat-tarea" class="panel bc-chat" aria-labelledby="t-chat">
+  <h2 id="t-chat">Pregunta sobre esta tarea</h2>
+  <p class="nota">Lo pequeño lo hace <strong>Qwen</strong> en tu PC y lo deja anotado (con «Deshacer»); lo grande te lo
+     propone para que lo apruebes. Las dudas las contesta <strong>NVIDIA</strong> (gratis) y, si es algo privado, Qwen sin salir del PC.
+     Solo ve esta tarea y los últimos mensajes. <strong>Escalar</strong> se la guarda a Claude.</p>
+  <div id="chat-mensajes" hx-get="/tareas/{{ t.id }}/chat" hx-trigger="load, nexo:chat from:body, nexo:reconciliar from:body">
+    <p class="cargando">Cargando la conversación…</p>
+  </div>
+  <div class="bc-atajos" role="group" aria-label="Preguntas rápidas">
+    {% for s in ["¿Qué falta?", "Explícamela fácil", "Súbele la prioridad", "Apárcala una semana"] %}
+    <form hx-post="/tareas/{{ t.id }}/chat" hx-target="#chat-mensajes" hx-disabled-elt="find button">
+      <input type="hidden" name="mensaje" value="{{ s }}">
+      <button type="submit" class="boton-sutil">{{ s }}</button>
+    </form>
+    {% endfor %}
+  </div>
+  {% include "_tarea_chat_form.html" %}
+  <div id="error-chat" aria-live="assertive"></div>
+</section>

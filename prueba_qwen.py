@@ -1,0 +1,1 @@
+﻿import time,logging;logging.disable(logging.INFO);from extremidades import qwen;t=time.time();r=qwen.pedir("Responde solo con 3 vinetas breves en espanol, sin preambulo.","Ventajas de un modelo local frente a una API de pago para tareas repetitivas.");print("SEGUNDOS: %.1f" % (time.time()-t));print(r[:700])

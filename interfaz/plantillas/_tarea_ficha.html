@@ -1,0 +1,68 @@
+{# T230: lo que Damian necesita, arriba y en palabras normales. Sin formularios: el SSE la repinta sola. #}
+<section class="panel bc-ficha" aria-labelledby="t-ficha">
+  <h2 id="t-ficha" class="solo-lector" tabindex="-1">Ficha de la tarea</h2>
+  <div class="bc-tarjeta-cabeza">
+    {% set e = v.estado %}{% include "_estado_tarea.html" %}
+    <span class="bc-prio {{ v.clase_prio }}" title="Puntuación {{ puntuacion }}">{{ v.prioridad }}</span>
+    {% if v.plazo %}<span class="{{ 'bc-vencida' if v.vencida else 'bc-plazo' }}">{{ v.plazo }}</span>{% endif %}
+    {% if v.vuelve %}<span class="bc-plazo">{{ v.vuelve }}</span>{% endif %}
+  </div>
+  <p class="bc-frase-estado">{{ v.estado.frase }}</p>
+  {% if te_toca %}<p class="bc-te-toca-bloque"><strong>¿Y tú?</strong> {{ te_toca }}</p>{% endif %}
+
+  <h3>De qué va</h3>
+  {% if v.resumen.texto %}
+  <p class="bc-resumen-grande">{{ v.resumen.texto }}</p>
+  {% if v.resumen.provisional %}<p class="nota">Resumen provisional sacado del texto técnico (el completo, en «Detalle técnico»).</p>{% endif %}
+  {% else %}<p class="vacio">Sin descripción.</p>{% endif %}
+
+  {% if t.objetivo or t.hecho_cuando or t.donde or instrucciones or t.despues or t.cierre %}
+  <dl class="bc-datos bc-formato">
+    {% if instrucciones %}<dt>Lo que pediste</dt><dd class="texto-largo">{{ instrucciones }}</dd>{% endif %}
+    {% if t.objetivo %}<dt>Objetivo</dt><dd>{{ t.objetivo }}</dd>{% endif %}
+    {% if t.hecho_cuando %}<dt>Hecho cuando</dt><dd><ul class="bc-lista-simple">{% for h in t.hecho_cuando %}<li>{{ h }}</li>{% endfor %}</ul></dd>{% endif %}
+    {% if t.donde %}<dt>Dónde</dt><dd>{{ t.donde }}</dd>{% endif %}
+    {% if t.cierre %}<dt>Cierre</dt><dd>{{ t.cierre.estado_real }} — {{ t.cierre.evidencia }}</dd>{% endif %}
+    {% if t.despues %}<dt>Después</dt><dd>{% if t.despues.startswith("T") %}<a href="/tareas/{{ t.despues }}">{{ t.despues }}</a>{% else %}{{ t.despues }}{% endif %}</dd>{% endif %}
+  </dl>
+  {% if avisos_formato %}<p class="nota">Avisos de formato (no bloquean): {{ avisos_formato|join('; ') }}.</p>{% endif %}
+  {% endif %}
+
+  <dl class="bc-datos">
+    <dt>Quién</dt><dd>{{ v.quien }}</dd>
+    {% if destino %}<dt>Quién la hará</dt><dd>{% if destino.quien == "nadie" %}<strong>Nadie ahora mismo</strong>: {% endif %}{{ destino.por_que }}</dd>{% endif %}
+    {% if claude %}<dt>Sesión de Claude</dt><dd>Abrir la sesión con <strong>{{ claude.modelo }}</strong>, esfuerzo <strong>{{ claude.esfuerzo }}</strong></dd>{% endif %}
+    {% if v.et.categoria %}<dt>Tipo</dt><dd>{{ v.et.categoria }}</dd>{% endif %}
+    {% if v.et.tema %}<dt>Tema</dt><dd>{{ v.et.tema }}</dd>{% endif %}
+    {% if v.et.origen %}<dt>La pidió</dt><dd>{{ v.et.origen }}</dd>{% endif %}
+    {% if t.bloqueada_por %}<dt>Espera a</dt><dd><a href="/tareas/{{ t.bloqueada_por }}">{{ t.bloqueada_por }}</a></dd>{% endif %}
+    <dt>Creada</dt><dd>{{ v.creada }}</dd>
+    <dt>Último cambio</dt><dd>{{ v.actualizada }}</dd>
+    {% if t.cerrada %}<dt>Cerrada</dt><dd>{{ hace(t.cerrada) }}</dd>{% endif %}
+  </dl>
+</section>
+
+{% if relacionadas %}
+<section class="panel" aria-labelledby="t-relacion">
+  <h2 id="t-relacion">Relacionadas</h2>
+  <ul class="bc-lista-simple">
+    {% for rel, x in relacionadas %}
+    <li>{{ rel }}: <a href="/tareas/{{ x.id }}">{{ x.id }} · {{ x.titulo }}</a>{% if x.estado %} · {{ x.estado.nombre|lower }}{% endif %}</li>
+    {% endfor %}
+  </ul>
+</section>
+{% endif %}
+
+<section class="panel" aria-labelledby="t-notas">
+  <h2 id="t-notas">Qué ha pasado</h2>
+  {% macro nota(n) %}<li class="{{ 'nota-evidencia' if n.prueba }}"><span class="bc-cuando" title="{{ n.exacto }}">{{ n.cuando }}</span>
+    {% if n.prueba %}<strong>Evidencia:</strong> {% endif %}{{ n.texto }}</li>{% endmacro %}
+  {% if notas_humanas %}
+  <ol class="bc-notas">{% for n in notas_humanas[:3] %}{{ nota(n) }}{% endfor %}</ol>
+  {% if notas_humanas|length > 3 %}
+  <details><summary>Ver las {{ notas_humanas|length - 3 }} notas anteriores</summary>
+    <ol class="bc-notas">{% for n in notas_humanas[3:] %}{{ nota(n) }}{% endfor %}</ol>
+  </details>
+  {% endif %}
+  {% else %}<p class="vacio">Todavía no hay notas.</p>{% endif %}
+</section>

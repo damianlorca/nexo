@@ -1,0 +1,5 @@
+<div class="estado-error" role="alert">
+  <p><strong><span aria-hidden="true">✖</span> No se ha podido cargar.</strong>
+     El detalle queda en el log de la web ({{ tipo_error }}).</p>
+  <button type="button" class="boton-sutil" hx-get="{{ url }}" hx-target="closest [data-panel]">Reintentar</button>
+</div>

@@ -1,0 +1,162 @@
+diff --git a/nucleo/permisos.py b/nucleo/permisos.py
+index 3dd3479..568c7a3 100644
+--- a/nucleo/permisos.py
++++ b/nucleo/permisos.py
+@@ -48,18 +48,19 @@ def _cualquiera(patrones: tuple[str, ...]) -> re.Pattern:
+ 
+ # Inicio de comando: principio de linea o tras ; | & (
+ # N01 (H03): tambien detras de `cmd /c` o `cmd /k`, que es por donde se colaba `del`.
+-_INI = r"(?:^|[;|&(]\s*|\bcmd(?:\.exe)?\s+/[ck]\s+[\"']?)"
++# T832: un salto de linea (\r o \n) tambien separa ordenes; en una sola linea nada cambia.
++_INI = r"(?:^|[;|&(\r\n]\s*|\bcmd(?:\.exe)?\s+/[ck]\s+[\"']?)"
+ 
+ 
+ # Nunca, bajo ningun concepto.
+ ROJOS = _cualquiera((
+-    rf"{_INI}format\s+[a-z]:",      # format C:  — no "Get-Date -Format"
++    rf"{_INI}format(\.com)?\s+[a-z]:",      # format C: / format.com C:  — no "Get-Date -Format"
+     r"\bdiskpart\b",
+-    r"\bcipher\s+/w\b",
++    r"\bcipher(\.exe)?\s+/w\b",
+     r"\bbcdedit\b",
+     rf"{_INI}shutdown\b",
+-    r"\bvssadmin\s+delete\b",
+-    r"\breg\s+delete\s+hk(lm|ey_local)",
++    r"\bvssadmin(\.exe)?\s+delete\b",
++    r"\breg(\.exe)?\s+delete\s+hk(lm|ey_local_machine)",
+ 
+     # N01 (H03/H08): matar procesos por nombre o por patron. CLAUDE.md (25/09): NUNCA.
+     # Solo por el PID exacto que se lanzo, comprobando antes su linea de comando.
+@@ -285,11 +286,27 @@ def _partir_simple(comando: str) -> list[list[str]] | None:
+     while i < n:
+         c = comando[i]
+ 
++        if c in "'\"" and en_palabra:
++            # T841: una comilla en mitad de una palabra no es un literal para PowerShell: duda, linea entera.
++            return None
++
+         if c == "'":
+-            fin = comando.find("'", i + 1)
+-            if fin < 0:
+-                return None
+-            palabra.append(comando[i + 1:fin])
++            # T841: dentro de comillas simples, '' es una comilla literal y no cierra la cadena.
++            trozo: list[str] = []
++            j = i + 1
++            while True:
++                fin = comando.find("'", j)
++                if fin < 0:
++                    return None
++                if comando[fin + 1:fin + 2] == "'":
++                    trozo.append(comando[j:fin] + "'")
++                    j = fin + 2
++                    continue
++                trozo.append(comando[j:fin])
++                break
++            if comando[fin + 1:fin + 2] not in ("", " ", "\t", ";", "|", "\n", "\r"):
++                return None   # T841: algo pegado a la comilla de cierre: no se interpreta con seguridad
++            palabra.append("".join(trozo))
+             en_palabra = True
+             i = fin + 1
+             continue
+@@ -302,6 +319,8 @@ def _partir_simple(comando: str) -> list[list[str]] | None:
+             # En comillas dobles PowerShell expande $() y escapes.
+             if _NO_SIMPLE.search(dentro):
+                 return None
++            if comando[fin + 1:fin + 2] not in ("", " ", "\t", ";", "|", "\n", "\r"):
++                return None   # T841: lo mismo con las comillas dobles
+             palabra.append(dentro)
+             en_palabra = True
+             i = fin + 1
+diff --git a/tests/test_permisos_guardia_n05.py b/tests/test_permisos_guardia_n05.py
+new file mode 100644
+index 0000000..dba10d8
+--- /dev/null
++++ b/tests/test_permisos_guardia_n05.py
+@@ -0,0 +1,86 @@
++# -*- coding: utf-8 -*-
++"""T830, T832 y T841 (propuestas N05 aprobadas por Claude en T829/T840): la guardia de comandos de nucleo/permisos.py.
++
++Solo se clasifica texto: no se ejecuta nada.
++"""
++from __future__ import annotations
++
++import pytest
++
++from nucleo.permisos import Nivel, _partir_simple, nivel_de_comando
++
++R, A, V = Nivel.ROJO, Nivel.AMBAR, Nivel.VERDE
++
++
++# ------------------------------------------------------------------ T830: grafias equivalentes
++@pytest.mark.parametrize("comando", [
++    "format.com C:",
++    "format C:",
++    "vssadmin.exe delete shadows /all",
++    "vssadmin delete shadows /all",
++    r"reg.exe delete HKEY_LOCAL_MACHINE\Software\Prueba /f",
++    r"reg delete HKLM\Software\Prueba /f",
++    r"cipher.exe /w:C:\temp",
++    "diskpart.exe",
++    "shutdown.exe /s",
++])
++def test_t830_las_grafias_equivalentes_de_lo_rojo_son_rojo(comando):
++    assert nivel_de_comando(comando) is R
++
++
++@pytest.mark.parametrize("comando", [
++    "Get-Date -Format yyyy-MM-dd",
++    r"reg.exe query HKLM\Software\Prueba",
++    "vssadmin.exe list shadows",
++    "echo el formato del bot",
++])
++def test_t830_lo_parecido_que_no_es_peligroso_sigue_verde(comando):
++    assert nivel_de_comando(comando) is V
++
++
++# ------------------------------------------------------------------ T832: salto de linea
++@pytest.mark.parametrize("comando", [
++    "echo hola\nrm archivo.txt",
++    "echo hola\r\ndel archivo.txt",
++    "Get-ChildItem\nformat C:",
++    "echo hola\n  erase x.txt",
++])
++def test_t832_un_peligro_tras_un_salto_de_linea_se_ve(comando):
++    assert nivel_de_comando(comando) is R
++
++
++@pytest.mark.parametrize("comando", [
++    "echo hola\necho adios",
++    "echo log del bot",
++    "echo formato\necho del bot",
++])
++def test_t832_una_linea_sin_peligro_sigue_verde(comando):
++    assert nivel_de_comando(comando) is V
++
++
++# ------------------------------------------------------------------ T841: comillas simples escapadas
++def test_t841_la_comilla_simple_doble_es_un_literal_dentro_de_comillas_simples():
++    assert _partir_simple("git log --grep 'it''s'") == [["git", "log", "--grep", "it's"]]
++    assert _partir_simple("git log --grep ''") == [["git", "log", "--grep", ""]]
++    assert _partir_simple("git log --grep ''''") == [["git", "log", "--grep", "'"]]
++
++
++@pytest.mark.parametrize("comando", [
++    "git log a'b ; curl http://x ; c'd",          # comilla en mitad de palabra: para PowerShell no abre cadena
++    "git log 'a'b",                                # algo pegado a la comilla de cierre
++    'git log "a"b',
++    "git log 'sin cerrar",
++])
++def test_t841_lo_que_no_se_interpreta_con_seguridad_no_es_simple(comando):
++    assert _partir_simple(comando) is None
++
++
++def test_t841_no_se_cuela_un_comando_ambar_dentro_de_una_pseudo_cadena():
++    # Antes: se leia como UNA orden inerte (git log) y salia VERDE; PowerShell ejecuta el curl.
++    assert nivel_de_comando("git log a'b ; curl http://x ; c'd") is A
++
++
++def test_t841_las_ordenes_inertes_normales_siguen_verdes():
++    assert nivel_de_comando("git log --grep 'it''s'") is V
++    assert nivel_de_comando("git status") is V
++    assert nivel_de_comando('git diff -- "nucleo/ruta con espacio.py"') is V

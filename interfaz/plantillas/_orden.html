@@ -1,0 +1,29 @@
+{% set estados = {"en_cola": ("◌", "En cola"), "en_curso": ("◐", "Trabajando…"), "hecha": ("●", "Terminada"),
+                  "error": ("✖", "Error"), "cancelada": ("■", "Cancelada")} %}
+{% set icono, texto_estado = estados[o.estado] %}
+{# nexo.js la repinta (GET /ordenes/<id>) cuando llega un evento SSE "orden" con su id. #}
+<li id="orden-{{ o.id }}" class="orden orden-{{ o.estado }}" data-orden="{{ o.id }}">
+  <div class="orden-cabecera">
+    <span class="insignia orden-estado"><span aria-hidden="true">{{ icono }}</span> {{ texto_estado }}</span>
+    <strong>{{ o.id }}</strong>
+    <span class="insignia-texto">{{ "ahora" if o.modo == "instantanea" else "para más tarde" }}</span>
+    <span class="hora">{{ o.creada[11:19] }}</span>
+  </div>
+  <p class="orden-texto">{{ o.texto|truncate(300) }}</p>
+  {% if o.estado == "en_curso" and o.modo == "instantanea" %}
+  <p class="nota">Clasificando y, si es delegable, haciendo borrador con revisor: puede tardar unos minutos. Puedes seguir usando la web.</p>
+  {% elif o.estado == "hecha" %}
+  <p class="orden-resultado"><strong>{{ v.etiqueta }}</strong></p>
+  <dl class="datos">
+    {% if v.tarea %}<dt>Tarea</dt><dd>{{ v.tarea }}</dd>{% endif %}
+    {% if v.categoria %}<dt>Tipo</dt><dd>{{ v.categoria }}{% if v.proveedor %} (proveedor sugerido: {{ v.proveedor }}){% endif %}</dd>{% endif %}
+    {% if v.autor %}<dt>Autor</dt><dd>{{ v.autor }}</dd>{% endif %}
+    {% if v.revisor %}<dt>Revisor</dt><dd>{{ v.revisor }}{% if v.veredicto %}: {{ v.veredicto }}{% endif %}</dd>{% endif %}
+    {% if v.borrador %}<dt>Borrador</dt><dd><a href="/borrador?f={{ v.borrador|urlencode }}">{{ v.borrador }}</a></dd>{% endif %}
+  </dl>
+  {% if v.respuesta %}<p class="nota">{{ v.respuesta }}</p>{% endif %}
+  {% elif o.estado in ("error", "cancelada") %}
+  <p class="estado-error-texto">{{ o.error }}</p>
+  {% endif %}
+</li>
+{% if aviso %}<div hx-swap-oob="innerHTML:#avisos">{{ aviso }}</div>{% endif %}

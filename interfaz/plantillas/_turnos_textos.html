@@ -1,0 +1,17 @@
+{# T231: texto por defecto de cada plantilla (lo usan los turnos sin instrucciones personalizadas). #}
+{% if aviso %}<p class="nota nota-aviso" role="status">{{ aviso }}</p>{% endif %}
+{% if error %}<p class="nota nota-bloqueo" role="alert">{{ error }}</p>{% endif %}
+{% for p in plantillas %}
+<form hx-post="/turnos/texto" hx-target="#turnos-textos" hx-disabled-elt="find button" class="campos">
+  <input type="hidden" name="plantilla" value="{{ p.id }}">
+  <label class="campo-ancho">{{ p.nombre }}{% if p.editada %} <span class="nota">(editado)</span>{% endif %}
+    <textarea name="texto" rows="3" maxlength="{{ max_texto }}">{{ p.texto }}</textarea>
+  </label>
+  <div class="fila-botones campo-ancho">
+    <button type="submit" class="boton-sutil">Guardar texto</button>
+    {% if p.editada %}<button type="submit" class="boton-sutil" name="restablecer" value="1">Volver al de fábrica</button>{% endif %}
+  </div>
+</form>
+{% endfor %}
+<p class="nota">En «cola», «investigación» y «correcciones» el texto va como indicaciones dentro de cada encargo; en las
+  de revisar y en el vigía es la instrucción principal. El formato de entrega (hallazgos y propuestas) lo añade NEXO.</p>

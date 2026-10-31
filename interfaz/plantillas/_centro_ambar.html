@@ -1,0 +1,25 @@
+{# T751: aprobaciones AMBAR de la cola (nucleo/aprobaciones.py). Antes solo se decidian con los botones de Telegram.
+   POST a /ambar/decidir (CSRF por la cabecera de base.html). Sin respuesta antes de que venza = NO.
+   T1020: la ficha es la del guardian (nucleo.guardian.explicacion); "Preguntar" abre la ficha con su minichat. #}
+{% if aviso %}<p class="nota nota-aviso" role="status">{{ aviso }}</p>{% endif %}
+{% if error %}<p class="estado-parado" role="alert">{{ error }}</p>{% endif %}
+{% if not pendientes %}
+<p role="status">Nada ámbar esperando tu aprobación.</p>
+{% else %}
+<ul class="lista-limpia">
+  {% for x in pendientes %}
+  <li class="panel">
+    <p><strong>{{ x.id }}</strong> · {{ x.explica.que }}</p>
+    {% if x.con_tribunal %}<p class="nota">El tribunal de 3 IAs lo está mirando; si no se ponen de acuerdo, te llega con su opinión. Puedes decidir tú antes.</p>{% endif %}
+    {% include "_ficha_aprobacion.html" %}
+    <details><summary>Ver la orden exacta ({{ x.accion }})</summary><pre class="tabla-desplazable">{{ x.detalle }}</pre></details>
+    <form hx-post="/ambar/decidir" hx-target="#panel-ambar" hx-disabled-elt="find button">
+      <input type="hidden" name="id" value="{{ x.id }}">
+      <button type="submit" name="accion" value="aprobar">Aprobar</button>
+      <button type="submit" name="accion" value="denegar">Denegar</button>
+      <a class="boton boton-sutil" href="/aprobacion/{{ x.id }}#chat-aprobacion">Preguntar</a>
+    </form>
+  </li>
+  {% endfor %}
+</ul>
+{% endif %}

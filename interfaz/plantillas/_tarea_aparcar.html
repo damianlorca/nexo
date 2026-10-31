@@ -1,0 +1,37 @@
+{# T230: "Aparcar hasta...": sale de pendientes y vuelve sola ese dia, con aviso push (vigilancia de la web). #}
+{% if t.estado not in ("hecha", "descartada") %}
+<section class="panel" aria-labelledby="t-aparcar">
+  <h2 id="t-aparcar" class="solo-lector">Aparcar</h2>
+  <details class="bc-aparcar"{% if t.estado == "aparcada" %} open{% endif %}>
+    <summary class="bc-boton-summary">{% if t.estado == "aparcada" %}Aparcada · cambiar la fecha de vuelta…{% else %}Aparcar hasta…{% endif %}</summary>
+    <div class="bc-aparcar-cuerpo">
+      {% if t.estado == "aparcada" %}
+      <p><strong>{{ v.vuelve|capitalize }}.</strong> Ese día vuelve sola a pendientes y te llega un aviso.</p>
+      {% else %}
+      <p>La tarea sale de <strong>Pendientes</strong> y <strong>vuelve sola</strong> el día que elijas, con un aviso en el móvil.
+         Mientras tanto la encuentras en Tareas → <a href="/tareas?estado=aparcadas">Aparcadas</a>.</p>
+      {% endif %}
+      <div class="bc-atajos" role="group" aria-label="Aparcar hasta">
+        {% for nombre, fecha in atajos %}
+        <form hx-post="/tareas/{{ t.id }}/aparcar" hx-target="#detalle-tarea" hx-disabled-elt="find button">
+          <input type="hidden" name="hasta" value="{{ fecha.isoformat() }}">
+          <button type="submit" class="boton-sutil">{{ nombre }} <span class="nota">({{ fecha.strftime("%d/%m") }})</span></button>
+        </form>
+        {% endfor %}
+      </div>
+      <form class="bc-aparcar-fecha" hx-post="/tareas/{{ t.id }}/aparcar" hx-target="#detalle-tarea" hx-disabled-elt="find button">
+        <label class="bc-fecha">O elige el día
+          <input type="date" name="hasta" min="{{ atajos[0][1].isoformat() }}" value="{{ t.aparcada_hasta or '' }}" required>
+        </label>
+        <button type="submit">Aparcar</button>
+      </form>
+      {% if t.estado == "aparcada" %}
+      <form hx-post="/tareas/{{ t.id }}/recuperar" hx-target="#detalle-tarea" hx-disabled-elt="find button">
+        <button type="submit" class="boton-sutil">Recuperarla ahora</button>
+      </form>
+      {% endif %}
+      <div id="error-aparcar" aria-live="assertive"></div>
+    </div>
+  </details>
+</section>
+{% endif %}

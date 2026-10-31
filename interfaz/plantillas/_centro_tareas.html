@@ -1,0 +1,15 @@
+{% if resumen.total == 0 %}
+<p class="vacio">Todavía no hay tareas en la cola.</p>
+{% else %}
+<table class="tabla-compacta">
+  <caption class="solo-lector">Tareas por estado real</caption>
+  <tbody>
+    {% for estado, cuantas in resumen.estados %}
+    <tr><th scope="row">{{ estado }}</th><td class="numero">{{ cuantas }}</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+<p class="nota">Vivas por quién dependen:
+  {% for dep, cuantas in resumen.depende %}{{ {"ia": "NEXO", "damian": "tú", "externo": "terceros", "claude": "Claude"}[dep] }} <strong>{{ cuantas }}</strong>{% if not loop.last %} · {% endif %}{% endfor %}.
+  Total: {{ resumen.total }}.</p>
+{% endif %}

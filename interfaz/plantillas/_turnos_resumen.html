@@ -1,0 +1,52 @@
+{# T231: resumen de los ultimos turnos (registros/turno_nexo_*.json) y semanal del vigia (T272). #}
+{% if not turnos %}
+<p class="nota">Todavía no hay turnos registrados.</p>
+{% endif %}
+{% for t in turnos %}
+<details class="turno-registro"{% if loop.first %} open{% endif %}>
+  <summary><strong>{{ t.inicio }}</strong> · {{ t.plantilla }}{% if t.manual %} · lanzado a mano{% endif %}{% if t.simular %} · simulado{% endif %}
+    — {% if t.abortado %}<span>no hecho</span>{% elif t.tribunal %}{{ t.tribunal }}{% else %}{{ t.filas|length }} tarea(s), {{ t.propuestas|length }} propuesta(s){% endif %}
+    {% if t.solo_lectura and not t.solo_lectura.ok %} · <strong>⚠ solo lectura violada</strong>{% endif %}</summary>
+  {% if t.explicacion %}<p><strong>Por qué {{ "no hizo nada" if t.abortado else "así" }}:</strong> {{ t.explicacion }}.</p>
+  {% elif t.abortado %}<p>{{ t.abortado }}</p>{% endif %}
+  {% if t.solo_lectura %}
+  <p class="nota{% if not t.solo_lectura.ok %} nota-bloqueo{% endif %}">
+    {% if t.solo_lectura.ok %}Solo lectura: el turno no escribió nada en el proyecto.
+    {% elif t.solo_lectura.metodo %}El propio turno escribió en: {{ t.solo_lectura.cambiados|join(", ") }}. Un turno de
+      solo lectura no debe hacerlo: avisa a Claude.
+    {% else %}Cambiaron durante el turno: {{ t.solo_lectura.cambiados|join(", ") }} (comprobación antigua: puede ser
+      otra sesión).{% endif %}</p>
+  {% endif %}
+  {% if t.filas %}
+  <ul>
+    {% for f in t.filas %}
+    <li><a href="/tareas/{{ f.tarea }}">{{ f.tarea }}</a> {{ f.titulo }} — <strong>{{ f.veredicto }}</strong>
+      {% if f.auditoria %}· auditoría {{ f.auditoria }}{% endif %}
+      {% if f.revision %}· revisión de Claude <a href="/tareas/{{ f.revision }}">{{ f.revision }}</a>{% endif %}
+      {% if f.propuestas %}· propuestas {% for p in f.propuestas %}<a href="/tareas/{{ p }}">{{ p }}</a>{% if not loop.last %}, {% endif %}{% endfor %}{% endif %}
+      {% if f.error %}<br><span class="nota">Error: {{ f.error }}</span>{% endif %}</li>
+    {% endfor %}
+  </ul>
+  {% endif %}
+  {% for paso, err in t.errores.items() %}<p class="nota">{{ paso }}: {{ err }}</p>{% endfor %}
+  {% if t.instrucciones %}<p class="nota">Instrucciones: {{ t.instrucciones }}</p>{% endif %}
+</details>
+{% endfor %}
+
+<h3>Vigía de novedades: última semana</h3>
+{% if vigia.ultimo %}
+<p class="nota">Última pasada: {% for f, n in vigia.ultimo.por_fuente.items() %}{{ f }} {{ n }}{% if not loop.last %}, {% endif %}{% endfor %}
+  {% if vigia.ultimo.linea_base %}· línea base (primera vez, no propone): {{ vigia.ultimo.linea_base|join(", ") }}{% endif %}
+  {% if vigia.ultimo.errores %}· fuentes caídas: {{ vigia.ultimo.errores.keys()|join(", ") }}{% endif %}</p>
+{% endif %}
+{% if vigia.lotes %}
+<ul>
+  {% for l in vigia.lotes %}
+  <li><a href="/tareas/{{ l.id }}">{{ l.id }}</a> {{ l.titulo }} ({{ l.estado }})
+    {% if l.propuestas %}— {% for p in l.propuestas %}<a href="/tareas/{{ p.id }}">{{ p.id }}</a> {{ p.titulo }}{% if not loop.last %}; {% endif %}{% endfor %}
+    {% else %}— sin propuestas todavía{% endif %}</li>
+  {% endfor %}
+</ul>
+{% else %}
+<p class="nota">Ningún vigía en los últimos 7 días.</p>
+{% endif %}

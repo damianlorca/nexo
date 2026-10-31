@@ -1,0 +1,298 @@
+Propuesta N04 (T077): enganchar la cola de aprobaciones a manos/ y blindarla.
+SIN APLICAR. Toca archivos blindados: nucleo/permisos.py, manos/shell.py, manos/servidor_mcp.py.
+Damian tiene que ver este diff antes (CLAUDE.md).
+
+Que cambia y por que
+====================
+1. nucleo/permisos.py: anade a ARCHIVOS_BLINDADOS nucleo/aprobaciones.py,
+   memoria/aprobaciones.json, memoria/aprobaciones_historial.jsonl,
+   nucleo/revisor.py y memoria/revisor_estado.json. Sin esto el agente
+   podria escribir "aprobada" en el JSON con la herramienta escribir() y
+   aprobarse a si mismo, o cerrar el disyuntor del revisor.
+
+2. manos/shell.py (ejecutar y lanzar): aprobado=True salta el ambar, pero
+   ya NO el rojo. Hoy `if not aprobado: exigir(...)` se salta exigir()
+   entero: shell.ejecutar("format C:", aprobado=True) no se bloquea.
+   Comprobado con tests/test_enganche_aprobaciones.py (xfail estricto).
+
+3. manos/servidor_mcp.py:
+   - comando, lanzar y ejecutar_python aceptan aprobacion_id. Si la accion
+     es ambar y no llega id (o solo llega aprobado=True), la peticion se da
+     de alta en la cola y se devuelve su id; no se ejecuta nada.
+   - Con aprobacion_id se llama a aprobaciones.consumir(): solo pasa si
+     Damian la aprobo, si es para esa accion EXACTA (comando completo, no
+     los 120 primeros caracteres) y si no se ha usado antes.
+   - El rojo no pasa nunca, venga lo que venga.
+   - _envuelto: cualquier otra NecesitaAprobacion (escribir en blindado,
+     cwd fuera de zona) tambien queda en cola en vez de perderse.
+   - aprobado=True se mantiene en la firma para que un cliente viejo reciba
+     un mensaje claro ("ya no basta") en vez de un error de parametro.
+   - Aprobar NO es una herramienta MCP a proposito: el agente no se aprueba.
+     Se aprueba por CLI (python -m nucleo.aprobaciones aprobar A0001) o
+     desde Telegram (/aprobaciones, botones; canal/aprobaciones_bot.py).
+   - T154 F1: tras dar de alta la peticion, nucleo/revisor.py la mira. Si
+     encaja entera en su lista blanca minima (hoy solo pip install -r de los
+     requisitos fijados del repo), la aprueba como revisor:reglas y la
+     accion pasa sin esperar. Todo lo demas sigue esperando a Damian.
+   - Docstring del arranque: uv run --with "mcp[cli]<2" (mcp 2.x quita
+     FastMCP). Comprobar que claude_desktop_config.json lo arranca igual.
+
+Como aplicarlo (en el PC, en la raiz del repo)
+==============================================
+    git apply --ignore-whitespace --check documentacion/propuestas/N04.patch
+    git apply --ignore-whitespace documentacion/propuestas/N04.patch
+El patch va en LF (se subio por la API de GitHub, que no conserva CRLF) y los
+archivos que toca son CRLF: por eso --ignore-whitespace. Las lineas nuevas
+quedan en LF; a Python le da igual. Si se quieren uniformes, convertir a CRLF.
+    .venv\Scripts\python.exe -m pytest tests/test_aprobaciones.py tests/test_enganche_aprobaciones.py -q
+Con el patch aplicado deben dar 36 passed (0 saltados, 0 xfail).
+(tests/test_revisor.py no depende del patch: 32 passed con o sin el.)
+Despues, reiniciar el servidor MCP (matar SOLO el PID exacto, ver CLAUDE.md).
+
+Probado en la nube (Linux) aplicandolo en un worktree temporal: ver
+documentacion/nube/N04_2026-09-25.md.
+
+--- a/nucleo/permisos.py
++++ b/nucleo/permisos.py
+@@ -149,6 +149,13 @@
+     Path("manos") / "shell.py",
+     Path("manos") / "archivos.py",
+     Path("manos") / "servidor_mcp.py",
++    # T077 (propuesta N04): la cola de aprobaciones es control. Si el
++    # agente pudiera escribir en ella, se aprobaria a si mismo.
++    Path("nucleo") / "aprobaciones.py",
++    Path("memoria") / "aprobaciones.json",
++    Path("memoria") / "aprobaciones_historial.jsonl",
++    Path("nucleo") / "revisor.py",
++    Path("memoria") / "revisor_estado.json",
+ )
+ 
+ 
+--- a/manos/shell.py
++++ b/manos/shell.py
+@@ -13,7 +13,7 @@
+ from pathlib import Path
+ 
+ from nucleo.config import RAIZ
+-from nucleo.permisos import exigir, nivel_de_comando, nivel_de_ruta
++from nucleo.permisos import Nivel, exigir, nivel_de_comando, nivel_de_ruta
+ from nucleo.registro import logger, registrar_evidencia, traza
+ 
+ 
+@@ -148,7 +148,8 @@
+ 
+     nivel = nivel_de_comando(comando)
+ 
+-    if not aprobado:
++    # N04: aprobado=True salta el ambar, NUNCA el rojo.
++    if not aprobado or nivel is Nivel.ROJO:
+         exigir(nivel, "ejecutar comando", comando[:120])
+ 
+     directorio = _cwd(cwd)
+@@ -262,7 +263,8 @@
+ 
+     nivel = nivel_de_comando(comando)
+ 
+-    if not aprobado:
++    # N04: aprobado=True salta el ambar, NUNCA el rojo.
++    if not aprobado or nivel is Nivel.ROJO:
+         exigir(nivel, "lanzar proceso", comando[:120])
+ 
+     directorio = _cwd(cwd)
+--- a/manos/servidor_mcp.py
++++ b/manos/servidor_mcp.py
+@@ -1,7 +1,9 @@
+ """Servidor MCP del agente. Esto es lo que Claude ve como "manos".
+ 
+ Arranque desde Claude Desktop:
+-    uv run --with "mcp[cli]" mcp run <ruta a este archivo>
++    uv run --with "mcp[cli]<2" mcp run <ruta a este archivo>
++
++(<2 porque mcp 2.x quita FastMCP; requisitos.txt ya lo fija igual.)
+ 
+ Notas aprendidas a base de golpes:
+ - sys.executable, nunca "python": en Windows la cadena "python"
+@@ -32,10 +34,13 @@
+ from mcp.server.fastmcp import FastMCP  # noqa: E402
+ 
+ from manos import archivos, shell                        # noqa: E402
++from nucleo import aprobaciones, revisor                 # noqa: E402
+ from nucleo.permisos import (  # noqa: E402
+     Bloqueado,
+     NecesitaAprobacion,
++    Nivel,
+     exigir,
++    nivel_de_comando,
+     nivel_de_ruta,
+ )
+ from nucleo.registro import registrar_evidencia  # noqa: E402
+@@ -58,17 +63,68 @@
+         return f"BLOQUEADO (rojo): {e}"
+ 
+     except NecesitaAprobacion as e:
++        # T077: que no se pierda. Estas herramientas (escribir, archivar,
++        # cwd fuera de zona) aun no aceptan aprobacion_id: queda en cola
++        # para que Damian lo vea y lo haga el o apruebe el cambio.
++        s = aprobaciones.solicitar(e.accion, e.detalle, origen="mcp")
++
+         return (
+             f"NECESITA APROBACION (ambar): {e.accion}\n"
+             f"DETALLE: {e.detalle}\n"
+-            "Preguntaselo a Damian y vuelve a llamar con aprobado=True."
++            f"SOLICITUD: {s['id']} (queda en la cola de aprobaciones)."
+         )
+ 
++    except (aprobaciones.NoEncontrada, aprobaciones.EstadoInvalido, aprobaciones.NoCoincide) as e:
++        return f"APROBACION NO VALIDA: {e}. No se ha ejecutado nada."
++
+     except Exception as e:
+         return f"ERROR {type(e).__name__}: {e}"
+ 
+ 
+ # ---------------------------------------------------------------
++# Puerta de aprobaciones (T077, propuesta N04)
++# ---------------------------------------------------------------
++#
++# Antes, aprobado=True era un booleano que ponia quien llamaba, y ademas
++# se saltaba exigir() ENTERO, rojo incluido (manos/shell.py). Ahora:
++# - rojo: nunca pasa, haya lo que haya;
++# - ambar: solo con un aprobacion_id que Damian haya aprobado FUERA de
++#   este canal (CLI o Telegram) y que coincida con la accion exacta; se
++#   gasta al usarlo. Lo que encaja en la lista blanca de nucleo/revisor.py
++#   lo aprueba el revisor de reglas y pasa sin esperar;
++# - verde: como siempre.
++# Aprobar no es una herramienta MCP a proposito: el agente no se aprueba.
++
++def _puerta(accion: str, detalle: str, nivel: Nivel, aprobacion_id: str, aprobado: bool):
++    """Devuelve (aprobado_para_manos, respuesta). Si respuesta no es None, devolverla y no ejecutar."""
++
++    if nivel is not Nivel.AMBAR:
++        return False, None  # verde pasa; rojo lo corta exigir() dentro de manos
++
++    if aprobacion_id:
++        aprobaciones.consumir(aprobacion_id, accion, detalle)  # revienta si no vale
++        return True, None
++
++    s = aprobaciones.solicitar(accion, detalle, origen="mcp")
++
++    # T154 F1: el revisor de reglas despacha lo obvio (lista blanca minima)
++    # sin molestar a Damian. Queda en el historial como revisor:reglas.
++    if revisor.procesar(s).decision == "permitir":
++        aprobaciones.consumir(s["id"], accion, detalle)
++        return True, None
++
++    return False, (
++        f"NECESITA APROBACION (ambar): {accion}\n"
++        f"DETALLE: {detalle[:300]}\n"
++        f"SOLICITUD: {s['id']} ({s['estado']}, vence {s['vence']})\n"
++        + ("aprobado=True ya no basta. " if aprobado else "")
++        + "Damian decide fuera de este canal "
++        f"(python -m nucleo.aprobaciones aprobar {s['id']}). "
++        f'Cuando este aprobada, repite la llamada con aprobacion_id="{s["id"]}".'
++    )
++
++
++# ---------------------------------------------------------------
+ # Diagnostico
+ # ---------------------------------------------------------------
+ 
+@@ -124,31 +180,45 @@
+ # ---------------------------------------------------------------
+ 
+ @mcp.tool()
+-def comando(comando: str, cwd: str = "", timeout: int = 45, aprobado: bool = False) -> str:
++def comando(
++    comando: str, cwd: str = "", timeout: int = 45, aprobado: bool = False, aprobacion_id: str = ""
++) -> str:
+     """Ejecuta un comando de PowerShell que termina solo.
+ 
+-    Si devuelve NECESITA APROBACION, preguntale a Damian y repite
+-    la llamada con aprobado=True.
++    Si devuelve NECESITA APROBACION con una SOLICITUD, espera a que
++    Damian la apruebe y repite la llamada con aprobacion_id=<id>.
+     """
+ 
+-    return _envuelto(
+-        shell.ejecutar, comando, cwd or None, timeout, aprobado
+-    )
++    def _correr():
++        ok, respuesta = _puerta(
++            "ejecutar comando", comando, nivel_de_comando(comando), aprobacion_id, aprobado
++        )
++
++        return respuesta or shell.ejecutar(comando, cwd or None, timeout, ok)
++
++    return _envuelto(_correr)
+ 
+ 
+ @mcp.tool()
+-def lanzar(comando: str, nombre: str = "proceso", cwd: str = "", aprobado: bool = False) -> str:
++def lanzar(
++    comando: str, nombre: str = "proceso", cwd: str = "", aprobado: bool = False, aprobacion_id: str = ""
++) -> str:
+     """Arranca un proceso que no termina solo y devuelve el control.
+ 
+     Chrome con depuracion, ComfyUI, el bot de Telegram.
+     """
+ 
+-    if not aprobado:
+-        comando = _con_guardia(comando)
++    def _correr():
++        ok, respuesta = _puerta(
++            "lanzar proceso", comando, nivel_de_comando(comando), aprobacion_id, aprobado
++        )
+ 
+-    return _envuelto(
+-        lambda: shell.lanzar(comando, nombre, cwd or None, aprobado)
+-    )
++        if respuesta:
++            return respuesta
++
++        return shell.lanzar(comando if ok else _con_guardia(comando), nombre, cwd or None, ok)
++
++    return _envuelto(_correr)
+ 
+ 
+ # T091 (2a pieza, aprobada por Damian 23/09): `python script.py ...` lanzado con lanzar()
+@@ -173,27 +243,33 @@
+ 
+ 
+ @mcp.tool()
+-def ejecutar_python(ruta: str, timeout: int = 45, aprobado: bool = False) -> str:
++def ejecutar_python(ruta: str, timeout: int = 45, aprobado: bool = False, aprobacion_id: str = "") -> str:
+     """Ejecuta un script Python del proyecto con el mismo interprete.
+ 
+-    Si devuelve NECESITA APROBACION, preguntale a Damian y repite
+-    la llamada con aprobado=True.
++    Si devuelve NECESITA APROBACION con una SOLICITUD, espera a que
++    Damian la apruebe y repite la llamada con aprobacion_id=<id>.
+     """
+ 
++    pedido = aprobado
++
+     def _correr() -> str:
++        nonlocal aprobado
++
+         archivo = Path(ruta)
+ 
+         if not archivo.is_absolute():
+             archivo = RAIZ / archivo
+ 
+         archivo = archivo.resolve()
++        nivel = nivel_de_ruta(archivo, escritura=True)
++
++        aprobado, respuesta = _puerta("ejecutar_python", str(archivo), nivel, aprobacion_id, pedido)
++
++        if respuesta:
++            return respuesta
+ 
+         if not aprobado:
+-            exigir(
+-                nivel_de_ruta(archivo, escritura=True),
+-                "ejecutar_python",
+-                str(archivo),
+-            )
++            exigir(nivel, "ejecutar_python", str(archivo))
+ 
+         if not archivo.is_file():
+             raise FileNotFoundError(str(archivo))

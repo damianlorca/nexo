@@ -1,0 +1,58 @@
+diff --git a/canal/bot.py b/canal/bot.py
+index fd551c7..e3253a6 100644
+--- a/canal/bot.py
++++ b/canal/bot.py
+@@ -829,6 +829,41 @@ RENDIRSE_TRAS_401 = 5
+ _401_seguidos = 0
+ 
+ 
++def _chat_de(update: dict) -> int:
++    """Chat del que viene un update (mensaje o boton). 0 si no se sabe."""
++
++    if "callback_query" in update:
++        chat = ((update["callback_query"].get("message") or {}).get("chat") or {})
++    else:
++        chat = ((update.get("message") or {}).get("chat") or {})
++
++    try:
++        return int(chat.get("id") or 0)
++    except (TypeError, ValueError):
++        return 0
++
++
++def _autorizado(estado: dict, chat_id: int, texto: str) -> bool:
++    """N01 (H01): solo el chat de Damian manda.
++
++    El chat bueno es canal.chat_id de config.toml si esta puesto; si no, el que
++    aprendio el primer /start. Sin ninguno de los dos, solo se acepta /start
++    (primer arranque). Todo lo demas se ignora sin contestar: ni /start de otro
++    chat cambia el canal, ni /ahora, /orden, /seguir, /hecha o un boton de otro
++    chat hacen nada.
++    """
++
++    fijo = int(valor("canal.chat_id", 0) or 0)
++    esperado = fijo or int(estado.get("chat_id") or 0)
++
++    ok = (chat_id == esperado) if esperado else texto.startswith("/start")
++
++    if not ok:
++        log.warning("update de un chat no autorizado (%s): ignorado", chat_id)
++
++    return ok
++
++
+ def procesar_updates(cliente: httpx.Client, estado: dict) -> None:
+     global _conflictos, _401_seguidos
+ 
+@@ -904,6 +939,11 @@ def procesar_updates(cliente: httpx.Client, estado: dict) -> None:
+     for update in datos.get("result", []):
+         estado["offset"] = update["update_id"] + 1
+ 
++        texto_update = ((update.get("message") or {}).get("text") or "").strip()
++
++        if not _autorizado(estado, _chat_de(update), texto_update):
++            continue
++
+         if "callback_query" in update:
+             cq = update["callback_query"]
+             id_pregunta, _, indice = cq["data"].partition("|")

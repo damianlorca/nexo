@@ -1,0 +1,73 @@
+diff --git a/nucleo/permisos.py b/nucleo/permisos.py
+index 3dd3479..3962e91 100644
+--- a/nucleo/permisos.py
++++ b/nucleo/permisos.py
+@@ -256,7 +256,7 @@ ORDENES_INERTES = frozenset({
+ # proposito: grep (-O abre un programa), las que aceptan -c antes de
+ # la suborden y cualquier otra que no este aqui.
+ GIT_INERTES = frozenset({
+-    "commit", "log", "show", "diff", "status", "add", "blame",
++    "log", "show", "diff", "status", "blame",   # T831: commit y add escriben: nunca inertes
+ })
+ 
+ # Algo de esto fuera de comillas simples y la linea deja de ser
+diff --git a/tests/test_permisos_argumentos.py b/tests/test_permisos_argumentos.py
+index 095f32d..16b3886 100644
+--- a/tests/test_permisos_argumentos.py
++++ b/tests/test_permisos_argumentos.py
+@@ -21,8 +21,6 @@ from nucleo.permisos import Nivel, nivel_de_comando
+ V, A, R = Nivel.VERDE, Nivel.AMBAR, Nivel.ROJO
+ 
+ FALSOS_POSITIVOS = [
+-    'git commit -m "instale winget"',
+-    'git commit -m "quitar rm -rf del script"',
+     "Get-Command winget",
+     'Write-Output "pip install requests"',
+     'Select-String -Pattern "Remove-Item" -Path *.ps1',
+diff --git a/tests/test_permisos_t831.py b/tests/test_permisos_t831.py
+new file mode 100644
+index 0000000..355955e
+--- /dev/null
++++ b/tests/test_permisos_t831.py
+@@ -0,0 +1,41 @@
++# -*- coding: utf-8 -*-
++"""T831 (propuesta N05 aprobada por Claude en T829): `git commit` y `git add` ya no son ordenes inertes.
++
++Una orden inerte (T024) no mira lo que lleva en los argumentos. `git commit` y `git add` escriben (indice, historial,
++y `commit` ejecuta los hooks del repo), asi que sus argumentos se vuelven a mirar como los de cualquier orden.
++Coste aceptado: un mensaje de commit que contenga `rm -rf` o `winget` deja de salir verde.
++"""
++from __future__ import annotations
++
++import pytest
++
++from nucleo.permisos import GIT_INERTES, Nivel, nivel_de_comando
++
++R, A, V = Nivel.ROJO, Nivel.AMBAR, Nivel.VERDE
++
++
++def test_commit_y_add_no_estan_en_git_inertes():
++    assert "commit" not in GIT_INERTES and "add" not in GIT_INERTES
++    assert {"log", "show", "diff", "status", "blame"} <= GIT_INERTES
++
++
++@pytest.mark.parametrize("comando,nivel", [
++    ('git commit -m "instale winget"', A),
++    ('git commit -m "quitar rm -rf del script"', R),
++    ('git add nucleo/permisos.py', A),                 # un blindado nombrado en la linea
++    ('git commit -m "no subir secretos.toml"', R),
++])
++def test_los_argumentos_de_commit_y_add_se_miran(comando, nivel):
++    assert nivel_de_comando(comando) is nivel
++
++
++@pytest.mark.parametrize("comando", [
++    'git commit -m "arreglo del parser de fechas"',
++    "git add memoria/tareas.json",
++    "git add .",
++    'git add tests/test_algo.py; git commit -m "tests"',
++    "git log --oneline",
++    "git status",
++])
++def test_el_uso_normal_de_commit_y_add_sigue_verde(comando):
++    assert nivel_de_comando(comando) is V

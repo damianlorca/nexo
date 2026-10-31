@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block titulo %}{{ t.id }} · {{ t.titulo|truncate(40) }}{% endblock %}
+{% block encabezado %}<span class="bc-id">{{ t.id }}</span> · {{ t.titulo }}{% endblock %}
+{% block contenido %}
+<p><a href="/tareas">← Volver a tareas</a></p>
+{# Las acciones repintan todo #detalle-tarea; el SSE solo la ficha y el detalle tecnico (sin formularios). #}
+<div id="detalle-tarea">
+  {% include "_tarea_detalle.html" %}
+</div>
+{% endblock %}

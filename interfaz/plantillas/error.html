@@ -1,0 +1,15 @@
+{% extends "base.html" if sesion else "suelta.html" %}
+{% block titulo %}Error {{ codigo_error }}{% endblock %}
+{% block encabezado %}Error {{ codigo_error }}{% endblock %}
+{% block contenido %}
+{% if not sesion %}<h1>Error {{ codigo_error }}</h1>{% endif %}
+{% if codigo_error == 404 %}
+<p>Esta página no existe (todavía). <a href="/">Volver al centro</a>.</p>
+{% elif codigo_error == 405 %}
+<p>Esta dirección no se abre así: es una acción que se lanza con su botón. <a href="/">Volver al centro</a>.</p>
+{% elif codigo_error < 500 %}
+<p>La petición no es válida. <a href="/">Volver al centro</a>.</p>
+{% else %}
+<p>Algo ha fallado en el servidor. El detalle queda en el log, no aquí. <a href="">Reintentar</a>.</p>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,124 @@
+/* T251: pestaña Grafo. Colores del lienzo como tokens: grafo.js los lee (getComputedStyle) y los repinta
+   al cambiar de tema. El color nunca va solo: la forma dice el tipo y la ficha dice el estado en palabras. */
+:root {
+  --g-por-hacer: #6b7280;
+  --g-aparcada: #9ca3af;
+  --g-en-marcha: #1f5fbf;
+  --g-propuesta: #7c3aed;
+  --g-esperando: #c2410c;
+  --g-atascada: #b3261e;
+  --g-sin-comprobar: #b7791f;
+  --g-comprobada: #1d7a3e;
+  --g-descartada: #c4c8cf;
+  --g-turno: #0e7490;
+  --g-ia: #1b1f27;
+  --g-otro: #6b7280;
+  --g-linea: #9aa1ad;
+  --g-seleccion: #1f5fbf;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-tema="claro"]) {
+    --g-por-hacer: #9aa3b2;
+    --g-aparcada: #6b7280;
+    --g-en-marcha: #7fb0ff;
+    --g-propuesta: #b794f6;
+    --g-esperando: #fb923c;
+    --g-atascada: #ff8a80;
+    --g-sin-comprobar: #f0c060;
+    --g-comprobada: #6fd08f;
+    --g-descartada: #4b5260;
+    --g-turno: #22d3ee;
+    --g-ia: #e6e8ec;
+    --g-otro: #9aa3b2;
+    --g-linea: #4f5663;
+    --g-seleccion: #9cc2ff;
+  }
+}
+:root[data-tema="oscuro"] {
+  --g-por-hacer: #9aa3b2;
+  --g-aparcada: #6b7280;
+  --g-en-marcha: #7fb0ff;
+  --g-propuesta: #b794f6;
+  --g-esperando: #fb923c;
+  --g-atascada: #ff8a80;
+  --g-sin-comprobar: #f0c060;
+  --g-comprobada: #6fd08f;
+  --g-descartada: #4b5260;
+  --g-turno: #22d3ee;
+  --g-ia: #e6e8ec;
+  --g-otro: #9aa3b2;
+  --g-linea: #4f5663;
+  --g-seleccion: #9cc2ff;
+}
+
+/* `hidden` manda aunque la clase ponga display (grid/flex) */
+.grafo-resultados[hidden], .grafo-ficha[hidden], .grafo-cambios[hidden], .grafo-ficha p[hidden] { display: none; }
+.grafo-intro { color: var(--texto-suave); margin: 0 0 12px; max-width: 70ch; }
+.grafo-estado { margin: 8px 0; color: var(--texto-suave); }
+.grafo-cambios { margin: 8px 0; padding: 8px 12px; border-left: 4px solid var(--aviso); background: var(--superficie); }
+.grafo-cambios button { min-height: 36px; margin-left: 8px; }
+.grafo-check { display: flex !important; flex-direction: row; align-items: center; gap: 8px; min-height: 36px; color: var(--texto) !important; }
+.grafo-check input { min-height: 0 !important; width: 20px; height: 20px; }
+.grafo-tipos { border: 1px solid var(--borde); border-radius: var(--radio); padding: 4px 12px 8px; display: flex;
+  flex-wrap: wrap; gap: 0 16px; flex: 1 1 100%; margin: 0; }
+.grafo-tipos legend { color: var(--texto-suave); font-size: 0.9rem; padding: 0 4px; }
+
+/* Resultados del buscador: botones, se llega con el teclado */
+.grafo-resultados { list-style: none; margin: 0 0 8px; padding: 0; display: grid; gap: 4px; max-width: 640px; }
+.grafo-resultados button { width: 100%; text-align: left; min-height: 44px; padding: 6px 12px; background: var(--superficie);
+  color: var(--texto); border: 1px solid var(--borde); border-radius: var(--radio); cursor: pointer; font: inherit; }
+.grafo-resultados button:hover, .grafo-resultados button:focus-visible { border-color: var(--acento); }
+
+/* Lienzo + ficha: lado a lado en PC; en el movil la ficha sube desde abajo sobre el lienzo */
+.grafo { display: flex; gap: 12px; align-items: stretch; }
+.grafo-marco { position: relative; flex: 1 1 auto; min-width: 0; }
+.grafo-lienzo { height: min(72vh, 820px); min-height: 360px; background: var(--superficie); border: 1px solid var(--borde);
+  border-radius: var(--radio); touch-action: none; }
+.grafo-zoom { position: absolute; right: 8px; bottom: 8px; display: flex; gap: 6px; }
+.grafo-zoom button { min-width: 44px; min-height: 44px; font-size: 1.1rem; background: var(--superficie); color: var(--texto);
+  border: 1px solid var(--borde); border-radius: var(--radio); cursor: pointer; }
+.grafo-ficha { flex: 0 0 340px; max-height: min(72vh, 820px); overflow: auto; position: relative; background: var(--superficie);
+  border: 1px solid var(--borde); border-radius: var(--radio); padding: 12px 16px; box-shadow: var(--sombra); overflow-wrap: anywhere; }
+.grafo-cerrar { position: absolute; top: 6px; right: 6px; min-width: 44px; min-height: 44px; font-size: 1.4rem; background: none;
+  border: 0; color: var(--texto-suave); cursor: pointer; }
+.grafo-ficha-tipo { margin: 0; color: var(--texto-suave); font-size: 0.85rem; padding-right: 44px; }
+.grafo-ficha-titulo { font-size: 1.1rem; margin: 4px 0 8px; padding-right: 36px; line-height: 1.35; }
+.grafo-ficha-sub { font-size: 0.95rem; margin: 12px 0 6px; }
+.grafo-relaciones { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+.grafo-relaciones button { width: 100%; text-align: left; min-height: 40px; padding: 4px 8px; background: none; color: var(--texto);
+  border: 1px solid transparent; border-radius: var(--radio); cursor: pointer; font: inherit; }
+.grafo-relaciones button:hover, .grafo-relaciones button:focus-visible { border-color: var(--acento); }
+.grafo-rel { color: var(--texto-suave); font-size: 0.85rem; display: block; }
+
+/* Estado en la ficha y leyenda: punto de color + palabra */
+.grafo-punto, .grafo-muestra { display: inline-block; width: 12px; height: 12px; border-radius: 50%; vertical-align: middle;
+  border: 1px solid var(--borde); }
+.grafo-leyenda-lista { list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 6px 16px; }
+.grafo-c-por-hacer { background: var(--g-por-hacer); }
+.grafo-c-aparcada { background: var(--g-aparcada); }
+.grafo-c-en-marcha { background: var(--g-en-marcha); }
+.grafo-c-propuesta { background: var(--g-propuesta); }
+.grafo-c-esperando { background: var(--g-esperando); }
+.grafo-c-atascada { background: var(--g-atascada); }
+.grafo-c-sin-comprobar { background: var(--g-sin-comprobar); }
+.grafo-c-comprobada { background: var(--g-comprobada); }
+.grafo-c-descartada { background: var(--g-descartada); }
+.grafo-c-turno { background: var(--g-turno); }
+.grafo-c-ia { background: var(--g-ia); }
+.grafo-c-otro { background: var(--g-otro); }
+
+/* Formas de la leyenda de tipos (mismas que en el lienzo) */
+.grafo-forma { display: inline-block; width: 12px; height: 12px; background: var(--texto-suave); }
+.grafo-forma-tarea { border-radius: 50%; }
+.grafo-forma-propuesta { transform: rotate(45deg) scale(0.85); }
+.grafo-forma-revision { clip-path: polygon(50% 0, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%); }
+.grafo-forma-borrador { border-radius: 2px; }
+.grafo-forma-turno { clip-path: polygon(50% 0, 100% 100%, 0 100%); }
+.grafo-forma-ia { clip-path: polygon(25% 5%, 75% 5%, 100% 50%, 75% 95%, 25% 95%, 0 50%); }
+
+@media (max-width: 760px) {
+  .grafo { display: block; }
+  .grafo-lienzo { height: 62vh; min-height: 300px; }
+  .grafo-ficha { position: fixed; left: 0; right: 0; bottom: 0; z-index: 30; max-height: 52vh; border-radius: 14px 14px 0 0;
+    padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px)); box-shadow: 0 -4px 16px rgb(0 0 0 / 0.2); }
+}

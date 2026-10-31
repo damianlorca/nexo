@@ -1,0 +1,119 @@
+{% extends "base.html" %}
+{% block titulo %}Detalle técnico{% endblock %}
+{% block encabezado %}Detalle técnico{% endblock %}
+{% block contenido %}
+{# T691 fase 1: el Centro de antes, tal cual (14 paneles). El Centro nuevo esta en / ("Te toca"). #}
+<p class="nota">El Centro de antes, completo. Lo que te toca decidir está en <a href="/">Centro</a> y <a href="/bandejas">Bandejas</a>.</p>
+{# T230: arriba, en palabras normales, lo que necesita Damian. Debajo, plegado, el detalle de siempre.
+   Cada panel se carga aparte y se refresca con los eventos SSE que le tocan. #}
+{# Indicador fijo de la bandeja de Claude: se repinta solo cuando cambian tareas o expedientes. #}
+<div data-panel id="indicador-claude" hx-get="/centro/claude"
+     hx-trigger="load, every 30s, nexo:tareas from:body throttle:5s, nexo:reconciliar from:body"></div>
+
+<div data-panel hx-get="/centro/resumen"
+     hx-trigger="load, nexo:parada from:body, nexo:tareas from:body throttle:2s, nexo:aviso from:body, nexo:borrador from:body throttle:2s, nexo:reconciliar from:body">
+  {% include "_esqueleto.html" %}
+</div>
+
+<section class="panel" aria-labelledby="t-turnos-centro">
+  <h2 id="t-turnos-centro">Turnos</h2>
+  <p id="msg-turnos" role="status"></p>
+  <div data-panel hx-get="/centro/turnos"
+       hx-trigger="load, every 10s, nexo:turno from:body, nexo:turno_estado from:body, nexo:reconciliar from:body">
+    {% include "_esqueleto.html" %}
+  </div>
+</section>
+
+<section class="panel" aria-labelledby="t-freno">
+  <h2 id="t-freno">Cola de propuestas (freno F0)</h2>
+  <div data-panel hx-get="/centro/freno" hx-trigger="load, nexo:tareas from:body throttle:5s, nexo:reconciliar from:body">
+    {% include "_esqueleto.html" %}
+  </div>
+</section>
+
+<section class="panel" aria-labelledby="t-descartadas">
+  <h2 id="t-descartadas">Descartadas (con motivo)</h2>
+  <div data-panel hx-get="/centro/descartadas" hx-trigger="load, nexo:reconciliar from:body">
+    {% include "_esqueleto.html" %}
+  </div>
+</section>
+
+<section class="panel" aria-labelledby="t-tribunal">
+  <h2 id="t-tribunal">Tribunal de revisión (F1)</h2>
+  <div data-panel id="panel-tribunal" hx-get="/centro/tribunal" hx-trigger="load, nexo:tareas from:body throttle:5s, nexo:reconciliar from:body">
+    {% include "_esqueleto.html" %}
+  </div>
+</section>
+
+<section class="panel" aria-labelledby="t-riesgo">
+  <h2 id="t-riesgo">Aprobaciones por riesgo (F2)</h2>
+  <div data-panel id="panel-riesgo" hx-get="/centro/riesgo" hx-trigger="load, every 60s, nexo:tareas from:body throttle:5s, nexo:reconciliar from:body">
+    {% include "_esqueleto.html" %}
+  </div>
+</section>
+
+<section class="panel" aria-labelledby="t-ias">
+  <h2 id="t-ias">IAs disponibles</h2>
+  <div data-panel hx-get="/centro/ias" hx-trigger="load, every 60s, nexo:reconciliar from:body">
+    {% include "_esqueleto.html" %}
+  </div>
+</section>
+
+<details class="panel bc-tecnico" id="detalle-tecnico">
+  <summary>Detalle técnico <span class="nota">(cola de revisión de Claude, auditoría, recuentos, trazas)</span></summary>
+  <div class="rejilla-centro">
+    <section class="panel panel-ancho" aria-labelledby="t-revision" id="revision">
+      <h2 id="t-revision">Cola de revisión de Claude</h2>
+      <div data-panel hx-get="/centro/revision" hx-trigger="load, nexo:tareas from:body throttle:2s, nexo:reconciliar from:body">
+        {% include "_esqueleto.html" %}
+      </div>
+    </section>
+
+    <section class="panel panel-ancho" aria-labelledby="t-auditoria">
+      <h2 id="t-auditoria">Auditoría de delegaciones</h2>
+      <div data-panel hx-get="/centro/auditoria" hx-trigger="load, nexo:aviso from:body, nexo:borrador from:body throttle:2s, nexo:reconciliar from:body">
+        {% include "_esqueleto.html" %}
+      </div>
+    </section>
+
+    <section class="panel" aria-labelledby="t-estado">
+      <h2 id="t-estado">Estado de NEXO</h2>
+      <div data-panel hx-get="/centro/estado" hx-trigger="load, nexo:parada from:body, nexo:reconciliar from:body">
+        {% include "_esqueleto.html" %}
+      </div>
+    </section>
+
+    <section class="panel" aria-labelledby="t-tareas">
+      <h2 id="t-tareas">Tareas por estado</h2>
+      <div data-panel hx-get="/centro/tareas" hx-trigger="load, nexo:tareas from:body, nexo:reconciliar from:body">
+        {% include "_esqueleto.html" %}
+      </div>
+    </section>
+
+    <section class="panel" aria-labelledby="t-proveedores">
+      <h2 id="t-proveedores">Proveedores (detalle)</h2>
+      <div data-panel hx-get="/centro/proveedores" hx-trigger="load, every 60s, nexo:reconciliar from:body">
+        {% include "_esqueleto.html" %}
+      </div>
+    </section>
+
+    <section class="panel panel-ancho" aria-labelledby="t-acciones">
+      <h2 id="t-acciones">Últimas acciones</h2>
+      <div class="dos-columnas">
+        <div>
+          <h3>Tareas tocadas</h3>
+          <div data-panel hx-get="/centro/acciones/tareas" hx-trigger="load, nexo:tareas from:body throttle:2s, nexo:reconciliar from:body">
+            {% include "_esqueleto.html" %}
+          </div>
+        </div>
+        <div>
+          <h3>Últimas trazas</h3>
+          <div data-panel hx-get="/centro/acciones/trazas" hx-trigger="load, nexo:log from:body throttle:3s, nexo:reconciliar from:body">
+            {% include "_esqueleto.html" %}
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+</details>
+{% endblock %}

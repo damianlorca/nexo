@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block titulo %}Órdenes{% endblock %}
+{% block encabezado %}Órdenes{% endblock %}
+{% block contenido %}
+<section class="panel" aria-labelledby="t-nueva">
+  <h2 id="t-nueva">Nueva orden</h2>
+  <div id="formulario-orden">
+    {% include "_orden_formulario.html" %}
+  </div>
+</section>
+
+<section class="panel" aria-labelledby="t-sesion">
+  <h2 id="t-sesion">Órdenes de esta sesión</h2>
+  <ul id="ordenes-sesion" class="lista-ordenes" hx-get="/ordenes/lista" hx-trigger="nexo:reconciliar from:body">
+    {% include "_ordenes_lista.html" %}
+  </ul>
+</section>
+
+<section class="panel" aria-labelledby="t-historial">
+  <h2 id="t-historial">Últimas órdenes (web y Telegram)</h2>
+  <div data-panel hx-get="/ordenes/historial" hx-trigger="load, nexo:tareas from:body throttle:2s, nexo:reconciliar from:body">
+    {% include "_esqueleto.html" %}
+  </div>
+</section>
+{% endblock %}

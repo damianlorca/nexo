@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block titulo %}Logs{% endblock %}
+{% block encabezado %}Logs{% endblock %}
+{% block contenido %}
+{# Se rellena si el SSE avisa de que el buffer tuvo que saltarse lineas (logs_perdidos). #}
+<div id="aviso-perdidos" hx-get="/logs/perdidos" hx-trigger="nexo:logs_perdidos from:body"></div>
+
+<section class="panel" aria-labelledby="t-filtros-logs">
+  <h2 id="t-filtros-logs" class="solo-lector">Filtros</h2>
+  <form id="filtros-logs" class="filtros" role="search" action="/logs" method="get"
+        hx-get="/logs/lista" hx-target="#lista-logs" hx-trigger="change, input from:#estado-log delay:400ms, submit">
+    <label>Fichero
+      <select name="fuente">
+        <option value="">todos</option>
+        {% for x in fuentes %}<option value="{{ x }}"{% if f.fuente == x %} selected{% endif %}>{{ x }}.jsonl</option>{% endfor %}
+      </select>
+    </label>
+    <label>Proveedor
+      <select name="proveedor">
+        <option value="">cualquiera</option>
+        {% for x in proveedores %}<option value="{{ x }}"{% if f.proveedor == x %} selected{% endif %}>{{ x }}</option>{% endfor %}
+      </select>
+    </label>
+    <label>Estado
+      <input id="estado-log" name="estado" type="search" value="{{ f.estado }}" maxlength="40" placeholder="p. ej. OK, ERROR" autocomplete="off">
+    </label>
+    <label>Límite
+      <select name="limite">
+        {% for x in limites %}<option value="{{ x }}"{% if f.limite == x %} selected{% endif %}>{{ x }} líneas</option>{% endfor %}
+      </select>
+    </label>
+    <noscript><button type="submit">Filtrar</button></noscript>
+  </form>
+</section>
+
+<section class="panel" aria-labelledby="t-lista-logs">
+  <h2 id="t-lista-logs">Registros</h2>
+  <div id="lista-logs" data-panel hx-get="/logs/lista" hx-include="#filtros-logs"
+       hx-trigger="load, nexo:log from:body throttle:2s, nexo:logs_perdidos from:body, nexo:reconciliar from:body">
+    {% include "_esqueleto.html" %}
+  </div>
+</section>
+
+<section class="panel" aria-labelledby="t-borradores">
+  <h2 id="t-borradores">Borradores recientes</h2>
+  <div data-panel hx-get="/logs/borradores"
+       hx-trigger="load, nexo:borrador from:body throttle:1s, nexo:reconciliar from:body">
+    {% include "_esqueleto.html" %}
+  </div>
+</section>
+{% endblock %}

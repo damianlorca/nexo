@@ -1,0 +1,5 @@
+{% for o, v in ordenes_sesion %}
+{% include "_orden.html" %}
+{% else %}
+<li id="ordenes-vacio" class="vacio">Aún no has dado órdenes desde que arrancó la web.</li>
+{% endfor %}

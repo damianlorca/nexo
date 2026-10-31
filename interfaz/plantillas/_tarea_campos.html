@@ -1,0 +1,56 @@
+{# Campos comunes de crear y editar. Necesita `t` (valores) y `prefijo` (ids unicos por formulario). #}
+<div class="campos">
+  <label class="campo-ancho">Título
+    <input name="titulo" value="{{ t.titulo }}" maxlength="200" required autocomplete="off">
+  </label>
+  <label class="campo-ancho">Detalle
+    <textarea name="detalle" rows="4" maxlength="8000">{{ t.detalle }}</textarea>
+  </label>
+  {% for campo, texto in [("importancia", "Importancia"), ("urgencia", "Urgencia"), ("dificultad", "Dificultad"), ("coste", "Coste")] %}
+  <label>{{ texto }}
+    <select name="{{ campo }}">
+      {% for n in range(1, 6) %}<option value="{{ n }}"{% if t[campo] == n %} selected{% endif %}>{{ n }}</option>{% endfor %}
+    </select>
+  </label>
+  {% endfor %}
+  <label>Depende de
+    <select name="depende">
+      {% for d, texto in [("ia", "NEXO"), ("damian", "Damián"), ("externo", "terceros"), ("claude", "Claude")] %}
+      <option value="{{ d }}"{% if t.depende == d %} selected{% endif %}>{{ texto }}</option>
+      {% endfor %}
+    </select>
+  </label>
+  <label>Fecha límite
+    <input name="limite" type="date" value="{{ t.limite or '' }}">
+  </label>
+  {# Formato v2 (T1010): lo esencial de una tarea. Todo opcional; las tareas viejas no lo tienen. #}
+  <label class="campo-ancho">Objetivo <span class="nota">(máx. 300 caracteres; nunca contradice tus instrucciones)</span>
+    <textarea name="objetivo" rows="2" maxlength="300">{{ t.objetivo or '' }}</textarea>
+  </label>
+  <label class="campo-ancho">Hecho cuando <span class="nota">(1 a 3 comprobaciones, una por línea)</span>
+    <textarea name="hecho_cuando" rows="3">{{ (t.hecho_cuando or [])|join('
+') }}</textarea>
+  </label>
+  <label class="campo-ancho">Dónde
+    <input name="donde" value="{{ t.donde or '' }}" maxlength="300" autocomplete="off" placeholder="archivo, módulo o pantalla">
+  </label>
+  <label>Tipo
+    <select name="tipo">
+      <option value=""{% if not t.tipo %} selected{% endif %}>—</option>
+      {% for x in ["codigo", "investigacion", "decision", "redaccion", "personal"] %}
+      <option value="{{ x }}"{% if t.tipo == x %} selected{% endif %}>{{ x }}</option>{% endfor %}
+    </select>
+  </label>
+  <label>Coste en € <span class="nota">(0 si no cuesta)</span>
+    <input name="coste_eur" inputmode="decimal" value="{{ '' if t.coste_eur is none or t.coste_eur is undefined else t.coste_eur }}" maxlength="10" autocomplete="off">
+  </label>
+  <label class="campo-ancho">Motivo, si es de Damián <span class="nota">(datos, dinero, gustos o presencia)</span>
+    <input name="motivo_quien" value="{{ t.motivo_quien or '' }}" maxlength="200" autocomplete="off">
+  </label>
+  <label class="campo-ancho">Instrucciones exactas de Damián <span class="nota">(solo si las pediste tú; en una tarea personal se guardan aparte)</span>
+    <textarea name="instrucciones_damian" rows="3" maxlength="8000">{{ instrucciones or '' }}</textarea>
+  </label>
+  <label class="campo-ancho">Etiquetas (separadas por comas)
+    <input name="etiquetas" value="{{ (t.etiquetas or [])|join(', ') }}" autocomplete="off">
+  </label>
+</div>

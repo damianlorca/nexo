@@ -1,0 +1,21 @@
+{# T688 pieza 2: lo DESCARTADO por idea (resultado de investigacion, idea mala o superado), con su motivo. Solo lee. #}
+<p role="status">{{ total }} descartes con motivo{% if causa %} · mostrando <strong>{{ causa }}</strong> ({{ mostradas }}){% elif mostradas < total %} · los {{ mostradas }} más recientes{% endif %}.</p>
+<p class="filtros">
+  <a href="#" hx-get="/centro/descartadas" hx-target="closest [data-panel]" {% if not causa %}aria-current="true"{% endif %}>todas</a>
+  {% for c, n in cuenta.items() %}· <a href="#" hx-get="/centro/descartadas?causa={{ c }}" hx-target="closest [data-panel]" {% if causa == c %}aria-current="true"{% endif %}>{{ c }} ({{ n }})</a> {% endfor %}
+</p>
+{% if filas %}
+<div class="tabla-desplazable">
+<table class="tabla-compacta">
+  <caption class="solo-lector">Tareas descartadas con su motivo</caption>
+  <thead><tr><th scope="col">Tarea</th><th scope="col">Qué</th><th scope="col">Causa</th><th scope="col">Motivo</th><th scope="col">Quién</th><th scope="col">Cuándo</th><th scope="col">Informe</th></tr></thead>
+  <tbody>
+    {% for d in filas %}
+    <tr><th scope="row"><a href="/tareas/{{ d.id }}">{{ d.id }}</a></th><td>{{ d.texto[:90] }}</td><td>{{ d.causa }}</td><td class="recorte">{{ d.motivo[:220] }}</td><td>{{ d.quien or "?" }}</td><td>{{ (d.cuando or "")[:10] }}</td><td>{% if d.informe %}{% if d.informe.endswith(".md") and "/" not in d.informe %}<a href="/borrador?f={{ d.informe|urlencode }}">{{ d.informe }}</a>{% else %}{{ d.informe }}{% endif %}{% else %}-{% endif %}</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+</div>
+{% else %}
+<p class="vacio">No hay descartes{% if causa %} con causa {{ causa }}{% endif %}.</p>
+{% endif %}

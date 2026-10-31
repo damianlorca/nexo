@@ -1,0 +1,191 @@
+{
+ "groq:qwen/qwen3.8-27b": {
+  "con_error": {
+   "ok": true,
+   "error": "",
+   "segundos": 0.7,
+   "global": "RECHAZAR",
+   "fallos": [],
+   "texto": "GLOBAL: RECHAZAR | El borrador se basa en un supuesto técnico incorrecto (que Python esté garantizado en el sistema) y evita evaluar la eficiencia de alternativas nativas para tareas simples de copia en Windows.\nP1: RECHAZAR | Usar Python para copias de seguridad introduce una dependencia innecesaria y penaliza el perfil de ligereza \"local-first\" cuando herramientas nativas (como `robocopy` o PowerShell) son más rápidas, fiables y no requieren instalación.\nFALLOS:\n- ninguno\nFIN_DICTAMEN"
+  },
+  "limpio": {
+   "ok": false,
+   "error": "HTTP 429",
+   "segundos": 0.4
+  },
+  "vale": false,
+  "detecta_error": true
+ },
+ "nvidia:moonshotai/kimi-k3": {
+  "con_error": {
+   "ok": true,
+   "error": "",
+   "segundos": 70.0,
+   "global": "APROBAR",
+   "fallos": [
+    [
+     "FALSO",
+     "la primera version publica de Python (0.9.0) es de 1991, ampliamente documentado en python.org/doc afirmar que Python se publico por primera vez en 1995"
+    ],
+    [
+     "NO VERIFICABLE",
+     "afirmar que Python \"ya esta instalado en el PC\" de Damian; Windows no lo incluye por defecto y conviene verificarlo (o cambiar el argumento a \"facil de instalar gratis\")"
+    ]
+   ],
+   "texto": " y una suposicion sin comprobar.\nP1: APROBAR | Python es adecuado para scripting de backups en Windows (shutil, pathlib, programacion con Task Scheduler), alto valor y bajo esfuerzo; el error de fecha no invalida la propuesta.\nFALLOS:\n- [FALSO: la primera version publica de Python (0.9.0) es de 1991, ampliamente documentado en python.org/doc] afirmar que Python se publico por primera vez en 1995\n- [NO VERIFICABLE] afirmar que Python \"ya esta instalado en el PC\" de Damian; Windows no lo incluye por defecto y conviene verificarlo (o cambiar el argumento a \"facil de instalar gratis\")\nFIN_DICTAMEN"
+  },
+  "limpio": {
+   "ok": false,
+   "error": "salida truncada o incompleta (sin FIN_DICTAMEN)",
+   "segundos": 45.4,
+   "global": "",
+   "fallos": [],
+   "texto": ""
+  },
+  "vale": false,
+  "detecta_error": true
+ },
+ "nvidia:deepseek-ai/deepseek-v4.1-flash": {
+  "con_error": {
+   "ok": false,
+   "error": "ReadTimeout",
+   "segundos": 120.3
+  },
+  "limpio": {
+   "ok": false,
+   "error": "ReadTimeout",
+   "segundos": 120.4
+  },
+  "vale": false,
+  "detecta_error": false
+ },
+ "nvidia:z-ai/glm-5.3-flash": {
+  "con_error": {
+   "ok": false,
+   "error": "ReadTimeout",
+   "segundos": 120.3
+  },
+  "limpio": {
+   "ok": false,
+   "error": "ReadTimeout",
+   "segundos": 120.3
+  },
+  "vale": false,
+  "detecta_error": false
+ },
+ "nvidia:mistralai/mistral-nemotron": {
+  "con_error": {
+   "ok": false,
+   "error": "HTTP 410",
+   "segundos": 0.4
+  },
+  "limpio": {
+   "ok": false,
+   "error": "HTTP 410",
+   "segundos": 0.4
+  },
+  "vale": false,
+  "detecta_error": false
+ },
+ "groq:qwen/qwen3-32b": {
+  "con_error": {
+   "ok": false,
+   "error": "HTTP 404",
+   "segundos": 0.4
+  },
+  "limpio": {
+   "ok": false,
+   "error": "HTTP 404",
+   "segundos": 0.3
+  },
+  "vale": false,
+  "detecta_error": false
+ },
+ "groq:qwen/qwen3.8-27b (2a pasada, 30 s entre llamadas)": {
+  "con_error": {
+   "ok": false,
+   "error": "GLOBAL ilegible (vacio)",
+   "segundos": 0.8,
+   "global": "",
+   "fallos": [],
+   "texto": "GLOBAL: RECHAZAR El borrador contiene una discrepancia técnica grave sobre el año de publicación original de Python que compromete su credibilidad.\nP1: APROBAR Python es un lenguaje estándar, con biblioteca rica para E/S y programable, ideal para automatización de backups en Windows.\nFALLOS:\n- [FALSO: proof] El borrador afirma que Python se publicó por primera vez en 1995, pero la primera versión pública (0.9.0) fue liberada en 1991 (los manuales citan 1991 como año de creación y primera disponibilidad).\nFIN_DICTAMEN"
+  },
+  "limpio": {
+   "ok": true,
+   "error": "",
+   "segundos": 0.7,
+   "global": "APROBAR",
+   "fallos": [],
+   "texto": "GLOBAL: APROBAR | La decisión es técnica, low-effort y reutiliza la stack existente, maximizando la robustez del sistema local-first.\nP1: APROBAR | Python tiene librerías estándar sólidas (shutil, pathlib, os) para manejo de archivos/FIFO y facilita la integración con el ecosistema existente de NEXO (tests en pytest).\nFALLOS:\n- ninguno\nFIN_DICTAMEN"
+  },
+  "vale": false,
+  "detecta_error": false
+ },
+ "nvidia:moonshotai/kimi-k3 (2a pasada, 30 s entre llamadas)": {
+  "con_error": {
+   "ok": true,
+   "error": "",
+   "segundos": 96.2,
+   "global": "RECHAZAR",
+   "fallos": [
+    [
+     "FALSO",
+     "python.org/doc/essays/foreword/ y la propia historia oficial de Python situan su primera publicacion en 1991 (version 0.9.0, febrero 1991 en alt.sources) \"Python se publico por primera vez en 1995\""
+    ],
+    [
+     "NO VERIFICABLE",
+     "que Python \"ya esta instalado en el PC\" de Damian"
+    ]
+   ],
+   "texto": "ble (fecha de Python) y la recomendacion carece de justificacion tecnica real (un .bat/PowerShell tambien estan \"ya instalados\")\nP1: RECHAZAR | la premisa esta mal fechada y el argumento \"ya esta instalado en el PC\" no esta verificado ni es criterio suficiente frente a alternativas nativas de Windows\nFALLOS:\n- [FALSO: python.org/doc/essays/foreword/ y la propia historia oficial de Python situan su primera publicacion en 1991 (version 0.9.0, febrero 1991 en alt.sources)] \"Python se publico por primera vez en 1995\"\n- [NO VERIFICABLE] que Python \"ya esta instalado en el PC\" de Damian\nFIN_DICTAMEN"
+  },
+  "limpio": {
+   "ok": false,
+   "error": "salida truncada o incompleta (sin FIN_DICTAMEN)",
+   "segundos": 54.0,
+   "global": "",
+   "fallos": [],
+   "texto": ""
+  },
+  "vale": false,
+  "detecta_error": true
+ },
+ "nvidia:nvidia/nemotron-3-ultra-550b-a55b": {
+  "con_error": {
+   "ok": true,
+   "error": "",
+   "segundos": 29.4,
+   "global": "RECHAZAR",
+   "fallos": [
+    [
+     "FALSO",
+     "Python 1.0 se lanzo en enero de 1994 (https://www.python.org/download/releases/1.0/); la version 0.9.0 fue febrero 1991. 1995 es incorrecto."
+    ],
+    [
+     "NO VERIFICABLE",
+     "que Python ya este instalado en el PC de Damian (Windows no lo incluye por defecto)"
+    ]
+   ],
+   "texto": "GLOBAL: RECHAZAR | El borrador contiene un error factual en la fecha de lanzamiento de Python y asume sin verificar que Python esta instalado en Windows por defecto\nP1: RECHAZAR | La justificacion del borrador es incorrecta (fecha falsa) y la premisa de \"ya instalado\" no es segura en Windows vanilla\nFALLOS:\n- [FALSO: Python 1.0 se lanzo en enero de 1994 (https://www.python.org/download/releases/1.0/); la version 0.9.0 fue febrero 1991. 1995 es incorrecto.]\n- [NO VERIFICABLE] que Python ya este instalado en el PC de Damian (Windows no lo incluye por defecto)\nFIN_DICTAMEN"
+  },
+  "limpio": {
+   "ok": true,
+   "error": "",
+   "segundos": 7.5,
+   "global": "DUDA",
+   "fallos": [
+    [
+     "NO VERIFICABLE",
+     "Python ya está instalado en el PC de NEXO (.venv)"
+    ],
+    [
+     "NO VERIFICABLE",
+     "Los tests ya corren con pytest en ese entorno"
+    ]
+   ],
+   "texto": "GLOBAL: DUDA | No puedo verificar el entorno específico de NEXO (Python en .venv, pytest configurado) para validar la recomendación\nP1: DUDA | La propuesta depende de premisas no verificables sobre el estado actual del PC de Damian\nFALLOS:\n- [NO VERIFICABLE] Python ya está instalado en el PC de NEXO (.venv)\n- [NO VERIFICABLE] Los tests ya corren con pytest en ese entorno\nFIN_DICTAMEN"
+  },
+  "vale": true,
+  "detecta_error": true
+ }
+}

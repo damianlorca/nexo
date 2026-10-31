@@ -1,0 +1,4 @@
+{# Respuesta a POST /orden: la tarjeta nueva (afterbegin), limpiar errores y aviso. El "vacio" lo oculta el CSS. #}
+{% include "_orden.html" %}
+<div hx-swap-oob="innerHTML:#error-orden"></div>
+<div hx-swap-oob="innerHTML:#avisos">Orden {{ o.id }} recibida ({{ "ahora" if o.modo == "instantanea" else "para más tarde" }}): en cola.</div>

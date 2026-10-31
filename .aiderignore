@@ -1,0 +1,11 @@
+# T669 (F3): Aider nunca ve ni manda a un modelo lo privado de Damian (decision del 04/10/2026).
+# Ademas, el worktree del implementador se crea con sparse-checkout y estos archivos ni siquiera estan en su disco.
+# La lista es la de nucleo/implementador.py (PRIVADAS); tests/test_t669_implementador.py comprueba que coinciden.
+memoria/becas.md
+memoria/historial_telegram.json
+canal/entrada/
+canal/estado_bot.json
+secretos.toml
+.env
+registros/
+chrome-perfil/

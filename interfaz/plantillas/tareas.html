@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% block titulo %}Tareas{% endblock %}
+{% block encabezado %}Tareas{% endblock %}
+{% block contenido %}
+{# T230: filtros en la URL (volver, recargar o guardar el enlace da la misma lista). Con JS la lista se
+   repinta sola (HTMX) al cambiar un filtro; sin JS, el boton "Aplicar" hace la misma busqueda por GET. #}
+<form id="filtros-tareas" class="bc-filtros panel" role="search" action="/tareas" method="get"
+      hx-get="/tareas/lista" hx-target="#lista-tareas" hx-trigger="change, input from:#q delay:400ms, submit">
+  <label class="bc-buscar">Buscar
+    <input id="q" type="search" name="q" value="{{ f.q }}" maxlength="100" placeholder="Palabras del título o del texto, o el número (T150)" autocomplete="off">
+  </label>
+  <label>Estado
+    <select name="estado">
+      {% for clave, nombre in grupos %}<option value="{{ clave }}"{% if f.estado == clave %} selected{% endif %}>{{ nombre }} ({{ cuenta[clave] or 0 }})</option>{% endfor %}
+      {% if f.estado and f.estado not in grupos|map("first")|list %}<option value="{{ f.estado }}" selected>{{ f.estado }}</option>{% endif %}
+    </select>
+  </label>
+  <label>Quién
+    <select name="depende">
+      <option value="">Cualquiera</option>
+      {% for clave, nombre in quienes.items() %}<option value="{{ clave }}"{% if f.depende == clave %} selected{% endif %}>{{ nombre }}</option>{% endfor %}
+    </select>
+  </label>
+  <label>Ordenar
+    <select name="orden">
+      {% for clave, nombre in ordenes %}<option value="{{ clave }}"{% if f.orden == clave %} selected{% endif %}>{{ nombre }}</option>{% endfor %}
+    </select>
+  </label>
+  <details class="bc-mas-filtros"{% if f.categoria or f.tema or f.proveedor or f.origen or f.etiqueta %} open{% endif %}>
+    <summary>Más filtros</summary>
+    <div class="bc-filtros-extra">
+      {% for clave, nombre in [("categoria", "Tipo de trabajo"), ("tema", "Tema"), ("proveedor", "Quién lo trabaja"), ("origen", "De dónde salió")] %}
+      <label>{{ nombre }}
+        <select name="{{ clave }}">
+          <option value="">Cualquiera</option>
+          {% for valor, n in ops[clave] or [] %}<option value="{{ valor }}"{% if f[clave] == valor %} selected{% endif %}>{{ valor }} ({{ n }})</option>{% endfor %}
+        </select>
+      </label>
+      {% endfor %}
+      <label>Etiqueta técnica
+        <input name="etiqueta" value="{{ f.etiqueta }}" maxlength="60" placeholder="p. ej. cat:codigo" autocomplete="off">
+      </label>
+    </div>
+  </details>
+  <div class="bc-botones"><button type="submit">Aplicar</button> <a href="/tareas" class="bc-enlace-sutil">Quitar filtros</a></div>
+</form>
+
+{# Se recarga con los filtros actuales cuando cambia tareas.json (SSE). #}
+<div id="lista-tareas" data-panel hx-get="/tareas/lista" hx-include="#filtros-tareas"
+     hx-trigger="nexo:tareas from:body throttle:1s, nexo:reconciliar from:body">
+  {% if error %}
+    {% set url = "/tareas/lista" %}{% set tipo_error = error %}{% include "_panel_error.html" %}
+  {% else %}
+    {% include "_tareas_lista.html" %}
+  {% endif %}
+</div>
+
+<section class="panel" aria-labelledby="t-nueva-tarea">
+  <details>
+    <summary><h2 id="t-nueva-tarea" class="en-linea">Nueva tarea</h2></summary>
+    <form class="form-tarea" hx-post="/tareas" hx-disabled-elt="find button[type=submit]">
+      {% set t = {"titulo": "", "detalle": "", "importancia": 3, "urgencia": 3, "dificultad": 3, "coste": 2,
+                  "depende": "ia", "limite": "", "etiquetas": []} %}
+      {% set prefijo = "nueva" %}
+      {% include "_tarea_campos.html" %}
+      <div class="fila-botones"><button type="submit">Crear tarea</button></div>
+      <div id="error-nueva" aria-live="assertive"></div>
+    </form>
+  </details>
+</section>
+{% endblock %}

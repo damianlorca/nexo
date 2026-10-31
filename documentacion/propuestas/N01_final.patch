@@ -1,0 +1,237 @@
+diff --git a/documentacion/nube/N01_evidencias/test_evidencias_n01.py b/documentacion/nube/N01_evidencias/test_evidencias_n01.py
+index 85dad0d..d0523b0 100644
+--- a/documentacion/nube/N01_evidencias/test_evidencias_n01.py
++++ b/documentacion/nube/N01_evidencias/test_evidencias_n01.py
+@@ -91,38 +91,8 @@ def test_bot_seguir_de_un_desconocido_no_quita_la_parada(bot, monkeypatch):
+     assert llamadas == []
+ 
+ 
+-# ---------------------------------------------------------------- filtro de comandos (H03)
+-
+-PELIGROSOS = [
+-    "rm archivo.txt",                         # borrado sin bandera -r/-f
+-    "cmd /c del memoria\\tareas.json",        # del detras de cmd /c
+-    "ri memoria",                             # alias de Remove-Item
+-    "git clean -fdx",                         # borra todo lo no versionado
+-    "git reset --hard",                       # tira cambios sin commitear
+-    "taskkill /IM python.exe /F",             # matar por nombre: prohibido en CLAUDE.md
+-    "Stop-Process -Name python",              # idem
+-    "Get-Content secretos.toml",              # leer secretos por la shell
+-    "Set-Content nucleo\\permisos.py x",      # reescribir un blindado por la shell
+-]
+-
+-
+-@pytest.mark.parametrize("comando", PELIGROSOS)
+-@pytest.mark.xfail(strict=True, reason="H03: nivel_de_comando() lo deja en VERDE")
+-def test_comando_peligroso_no_es_verde(comando):
+-    from nucleo.permisos import Nivel, nivel_de_comando
+-    assert nivel_de_comando(comando) is not Nivel.VERDE
+-
+-
+-# ---------------------------------------------------------------- archivar (H07)
+-
+-@pytest.mark.parametrize("carpeta", ["nucleo", "manos"])
+-@pytest.mark.xfail(strict=True, reason="H07: archivar() una carpeta entera se lleva los archivos blindados")
+-def test_archivar_carpeta_con_blindados_esta_bloqueado(carpeta):
+-    from manos.archivos import _comprobar_archivable
+-    from nucleo.permisos import Bloqueado
+-    # Solo se llama al freno, que no mueve nada: el movimiento real lo hace archivar() despues.
+-    with pytest.raises(Bloqueado):
+-        _comprobar_archivable(RAIZ / carpeta, RAIZ / "_archivo" / "20260925")
++# H03 y H07: arreglados con N01.patch adaptado sobre N05 (27/09); sus tests
++# viven ahora en tests/test_permisos_n01.py.
+ 
+ 
+ # ---------------------------------------------------------------- router (H09)
+diff --git a/manos/archivos.py b/manos/archivos.py
+index 94cfd7b..4fca5f0 100644
+--- a/manos/archivos.py
++++ b/manos/archivos.py
+@@ -21,7 +21,7 @@ from pathlib import Path
+ 
+ from nucleo.config import RAIZ
+ from nucleo.escritura import escribir_atomico
+-from nucleo.permisos import Bloqueado, Nivel, exigir, nivel_de_ruta
++from nucleo.permisos import ARCHIVOS_BLINDADOS, Bloqueado, Nivel, exigir, nivel_de_ruta
+ from nucleo.registro import logger
+ 
+ 
+@@ -170,6 +170,16 @@ def _comprobar_archivable(p: Path, destino: Path) -> None:
+             f"({destino}) dentro de si misma."
+         )
+ 
++    # N01 (H07): una carpeta que contiene un archivo blindado (nucleo/, manos/, .claude/) no se
++    # archiva entera: se llevaria permisos.py & cia. sin pasar por el ambar de K2.
++    if p.is_dir():
++        for b in ARCHIVOS_BLINDADOS:
++            if p in (RAIZ / b).parents:
++                raise Bloqueado(
++                    f"Archivar {p} se llevaria {b}, que esta blindado. Archiva los "
++                    "archivos sueltos, o que Damian lo haga viendo el cambio."
++                )
++
+     if p.is_dir() and p.name in INTOCABLES and p.parent == RAIZ:
+         raise Bloqueado(
+             f"Archivar la carpeta '{p.name}' entera. Los archivos sueltos "
+diff --git a/nucleo/permisos.py b/nucleo/permisos.py
+index ea4a747..6865c34 100644
+--- a/nucleo/permisos.py
++++ b/nucleo/permisos.py
+@@ -47,7 +47,8 @@ def _cualquiera(patrones: tuple[str, ...]) -> re.Pattern:
+ 
+ 
+ # Inicio de comando: principio de linea o tras ; | & (
+-_INI = r"(?:^|[;|&(]\s*)"
++# N01 (H03): tambien detras de `cmd /c` o `cmd /k`, que es por donde se colaba `del`.
++_INI = r"(?:^|[;|&(]\s*|\bcmd(?:\.exe)?\s+/[ck]\s+[\"']?)"
+ 
+ 
+ # Nunca, bajo ningun concepto.
+@@ -59,6 +60,13 @@ ROJOS = _cualquiera((
+     rf"{_INI}shutdown\b",
+     r"\bvssadmin\s+delete\b",
+     r"\breg\s+delete\s+hk(lm|ey_local)",
++
++    # N01 (H03/H08): matar procesos por nombre o por patron. CLAUDE.md (25/09): NUNCA.
++    # Solo por el PID exacto que se lanzo, comprobando antes su linea de comando.
++    r"\btaskkill\b[^;|&]*\s/im\b",
++    r"\bstop-process\b[^;|&]*\s-(name|processname)\b",
++    r"\b(pkill|killall)\b",
++    r"commandline\s+-(like|match)\b.*\bstop-process\b",
+ ))
+ 
+ 
+@@ -71,6 +79,11 @@ BORRADO = _cualquiera((
+     r"\brd\s+/s\b",
+     r"\brmdir\s+/s\b",
+     r"\brm\s+-[a-z]*[rf]",
++
++    # N01 (H03): borrados que antes pasaban en verde.
++    rf"{_INI}(rm|ri|rmdir|rd|del|erase)\s",   # rm/ri sueltos y rmdir sin /s
++    r"\bgit\s+clean\b",                      # borra lo no versionado
++    r"\bgit\s+reset\s+--hard\b",             # tira cambios sin commitear
+ ))
+ 
+ 
+@@ -89,8 +102,8 @@ AMBAR = _cualquiera((
+     r"\bchoco\s+install\b",
+     r"\bscoop\s+install\b",
+ 
+-    # Sacar codigo de casa
+-    r"\bgit\s+push\b",
++    # Sacar codigo de casa (N01: tambien `git -c x=y push`)
++    r"\bgit\s+(-c\s+\S+\s+)*push\b",
+ 
+     # Traerse cosas de internet (L2). Bajar un .exe y dejarlo en disco
+     # es exactamente "descarga cosas", que es lo que dice el titulo.
+@@ -143,6 +156,9 @@ AMBAR = _cualquiera((
+ ARCHIVOS_EN_ROJO = ("secretos.toml",)
+ 
+ ARCHIVOS_BLINDADOS = (
++    Path("nucleo") / "guardia_python.py",   # N01 (H06): la guardia tambien es control
++    Path(".claude") / "settings.json",       # N01 (H02): los permisos de Claude Code tambien
++    Path("manos") / "__init__.py",           # CLAUDE.md: manos/* entero
+     Path("nucleo") / "permisos.py",
+     Path("nucleo") / "instancia.py",
+     Path("nucleo") / "config.py",
+@@ -334,10 +350,23 @@ def _solo_ordenes_inertes(comando: str) -> bool:
+     return ordenes is not None and all(_es_inerte(o) for o in ordenes)
+ 
+ 
++# N01 (H03): lo que el filtro de rutas protege tampoco se toca por la shell.
++# Adaptado encima de N05 (27/09): va en la mirada de linea entera, asi que
++# una linea de ordenes inertes (git diff, Select-String...) que solo LEE un
++# blindado sigue verde; cualquier otra que lo nombre pasa a ambar. Los
++# secretos ya los cubre SECRETOS_EN_COMANDO (con comodines).
++_BLINDADOS_EN_COMANDO = _cualquiera(tuple(
++    re.escape(b.as_posix()).replace("/", r"[\\/]") for b in ARCHIVOS_BLINDADOS
++))
++
++
+ def _nivel_linea_entera(comando: str) -> Nivel:
+     if ROJOS.search(comando) or BORRADO.search(comando):
+         return Nivel.ROJO
+ 
++    if _BLINDADOS_EN_COMANDO.search(comando):
++        return Nivel.AMBAR
++
+     if AMBAR.search(comando):
+         return Nivel.AMBAR
+ 
+diff --git a/tests/test_permisos_n01.py b/tests/test_permisos_n01.py
+new file mode 100644
+index 0000000..e9870c8
+--- /dev/null
++++ b/tests/test_permisos_n01.py
+@@ -0,0 +1,71 @@
++# -*- coding: utf-8 -*-
++"""N01 (H03, H06, H07) sobre N05: el filtro de comandos y archivar() respetan
++lo prohibido en CLAUDE.md. Antes eran xfail estrictos en
++documentacion/nube/N01_evidencias/test_evidencias_n01.py. Sin procesos reales:
++solo se clasifica texto y se llama al freno de archivar(), que no mueve nada."""
++from __future__ import annotations
++
++from pathlib import Path
++
++import pytest
++
++from nucleo.permisos import Bloqueado, Nivel, nivel_de_comando, nivel_de_ruta
++from nucleo.config import RAIZ
++
++ROJO = [
++    "rm archivo.txt",
++    r"cmd /c del memoria\tareas.json",
++    'cmd.exe /k "del x"',
++    "ri memoria",
++    "git clean -fdx",
++    "git reset --hard",
++    "taskkill /IM python.exe /F",
++    "Stop-Process -Name python",
++    "pkill -f comfy",
++    "Get-CimInstance Win32_Process | Where-Object { $_.CommandLine -like '*ComfyUI*' } | Stop-Process",
++    "Get-Content secretos.toml",
++]
++
++
++@pytest.mark.parametrize("comando", ROJO)
++def test_rojo(comando):
++    assert nivel_de_comando(comando) is Nivel.ROJO
++
++
++AMBAR = [
++    r"Set-Content nucleo\permisos.py x",
++    "Copy-Item x manos/shell.py",
++    "Set-Content nucleo/guardia_python.py x",
++    r"Out-File .claude\settings.json",
++    "git -c user.name=x push",
++]
++
++
++@pytest.mark.parametrize("comando", AMBAR)
++def test_ambar(comando):
++    assert nivel_de_comando(comando) is Nivel.AMBAR
++
++
++# Sobre N05: las ordenes inertes que solo LEEN un blindado siguen verdes.
++@pytest.mark.parametrize("comando", [
++    "git diff nucleo/permisos.py",
++    r"Select-String -Pattern ROJOS -Path nucleo\permisos.py",
++    "Stop-Process -Id 1234",
++    # H08 (N02): asi reinicia extremidades/imagen.py el ComfyUI que lanzo, por PID exacto.
++    "taskkill /PID 4321 /T /F",
++    "(Get-CimInstance Win32_Process -Filter 'ProcessId=4321').CommandLine",
++])
++def test_leer_un_blindado_o_matar_por_pid_sigue_verde(comando):
++    assert nivel_de_comando(comando) is Nivel.VERDE
++
++
++@pytest.mark.parametrize("ruta", ["nucleo/guardia_python.py", ".claude/settings.json", "manos/__init__.py"])
++def test_h06_blindados_nuevos_no_son_verdes(ruta):
++    assert nivel_de_ruta(RAIZ / ruta) is not Nivel.VERDE
++
++
++@pytest.mark.parametrize("carpeta", ["nucleo", "manos"])
++def test_h07_archivar_carpeta_con_blindados_esta_bloqueado(carpeta):
++    from manos.archivos import _comprobar_archivable
++    with pytest.raises(Bloqueado):
++        _comprobar_archivable(RAIZ / carpeta, RAIZ / "_archivo" / "20260927")

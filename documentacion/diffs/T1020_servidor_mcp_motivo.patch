@@ -1,0 +1,248 @@
+diff --git a/manos/servidor_mcp.py b/manos/servidor_mcp.py
+index 58e00f1..6780181 100644
+--- a/manos/servidor_mcp.py
++++ b/manos/servidor_mcp.py
+@@ -50,7 +50,14 @@ from nucleo.registro import registrar_evidencia  # noqa: E402
+ mcp = FastMCP("Nexo")
+ 
+ 
+-def _envuelto(fn, *args, **kwargs) -> str:
++def _extra(motivo: str) -> dict | None:
++    """T1020: el para-que de quien pide. Va en extra (fuera de la huella): el guardian lo pone en la ficha de Damian
++    ("Quien lo pide y para que") y el tribunal lo lee. Sin motivo, la ficha dice "No lo ha dicho"."""
++    motivo = " ".join(str(motivo or "").split())[:500]
++    return {"motivo": motivo} if motivo else None
++
++
++def _envuelto(fn, *args, _motivo: str = "", **kwargs) -> str:
+     """Traduce las excepciones de permisos a texto que Claude entiende.
+ 
+     Una excepcion cruda solo dice "ha fallado". Esto dice por que y
+@@ -67,12 +74,12 @@ def _envuelto(fn, *args, **kwargs) -> str:
+         # T077: que no se pierda. Estas herramientas (escribir, archivar,
+         # cwd fuera de zona) aun no aceptan aprobacion_id: queda en cola
+         # para que Damian lo vea y lo haga el o apruebe el cambio.
+-        s = aprobaciones.solicitar(e.accion, e.detalle, origen="mcp")
++        s = aprobaciones.solicitar(e.accion, e.detalle, origen="mcp", extra=_extra(_motivo))
+ 
+         return (
+             f"NECESITA APROBACION (ambar): {e.accion}\n"
+             f"DETALLE: {e.detalle}\n"
+-            f"SOLICITUD: {s['id']} (queda en la cola de aprobaciones)."
++            f"SOLICITUD: {s['id']} ({s['estado']}; queda en la cola de aprobaciones)."
+         )
+ 
+     except (aprobaciones.NoEncontrada, aprobaciones.EstadoInvalido, aprobaciones.NoCoincide) as e:
+@@ -96,7 +103,7 @@ def _envuelto(fn, *args, **kwargs) -> str:
+ # - verde: como siempre.
+ # Aprobar no es una herramienta MCP a proposito: el agente no se aprueba.
+ 
+-def _puerta(accion: str, detalle: str, nivel: Nivel, aprobacion_id: str, aprobado: bool):
++def _puerta(accion: str, detalle: str, nivel: Nivel, aprobacion_id: str, aprobado: bool, motivo: str = ""):
+     """Devuelve (aprobado_para_manos, respuesta). Si respuesta no es None, devolverla y no ejecutar."""
+ 
+     if nivel is not Nivel.AMBAR:
+@@ -106,7 +113,13 @@ def _puerta(accion: str, detalle: str, nivel: Nivel, aprobacion_id: str, aprobad
+         aprobaciones.consumir(aprobacion_id, accion, detalle)  # revienta si no vale
+         return True, None
+ 
+-    s = aprobaciones.solicitar(accion, detalle, origen="mcp")
++    s = aprobaciones.solicitar(accion, detalle, origen="mcp", extra=_extra(motivo))
++
++    # T1020: el guardian (gancho de aprobaciones.solicitar) aprueba solo lo que SOLO LEE, sin secretos ni lo
++    # privado. Si ya viene aprobada (por el, o por Damian antes para esta accion exacta), se gasta aqui mismo.
++    if s["estado"] == "aprobada":
++        aprobaciones.consumir(s["id"], accion, detalle)
++        return True, None
+ 
+     # T154 F1: el revisor de reglas despacha lo obvio (lista blanca minima)
+     # sin molestar a Damian. Queda en el historial como revisor:reglas.
+@@ -149,34 +162,42 @@ def info_entorno() -> str:
+ # ---------------------------------------------------------------
+ 
+ @mcp.tool()
+-def listar(subcarpeta: str = "", patron: str = "*") -> str:
+-    """Lista archivos del proyecto. patron admite comodines: *.py"""
++def listar(subcarpeta: str = "", patron: str = "*", motivo: str = "") -> str:
++    """Lista archivos del proyecto. patron admite comodines: *.py
++
++    motivo: para que lo necesitas, en una frase (sale en la ficha de Damian si hace falta permiso).
++    """
+ 
+-    return _envuelto(lambda: "\n".join(archivos.listar(subcarpeta, patron)))
++    return _envuelto(lambda: "\n".join(archivos.listar(subcarpeta, patron)), _motivo=motivo)
+ 
+ 
+ @mcp.tool()
+-def leer(ruta: str) -> str:
+-    """Lee un archivo de texto."""
++def leer(ruta: str, motivo: str = "") -> str:
++    """Lee un archivo de texto.
++
++    motivo: para que lo necesitas, en una frase (sale en la ficha de Damian si hace falta permiso).
++    """
+ 
+-    return _envuelto(archivos.leer, ruta)
++    return _envuelto(archivos.leer, ruta, _motivo=motivo)
+ 
+ 
+ @mcp.tool()
+-def escribir(ruta: str, contenido: str, aprobacion_id: str = "") -> str:
+-    """Escribe un archivo. Si ya existia, guarda respaldo antes.
++def escribir(ruta: str, contenido: str, aprobacion_id: str = "", motivo: str = "") -> str:
++    """Escribe un archivo. Si ya existia, guarda respaldo antes.
++
++    Si devuelve NECESITA APROBACION con una SOLICITUD, espera a que
++    Damian la apruebe y repite la llamada con aprobacion_id=<id> y el
++    MISMO contenido (T861: la aprobacion va atada a la ruta y al sha256
++    del contenido; otro contenido pide otra aprobacion).
+ 
+-    Si devuelve NECESITA APROBACION con una SOLICITUD, espera a que
+-    Damian la apruebe y repite la llamada con aprobacion_id=<id> y el
+-    MISMO contenido (T861: la aprobacion va atada a la ruta y al sha256
+-    del contenido; otro contenido pide otra aprobacion).
++    motivo: para que lo escribes, en una frase (sale en la ficha de Damian y lo lee el tribunal).
+     """
+ 
+     def _escribir() -> str:
+         p = archivos._resolver(ruta)
+         nivel = nivel_de_ruta(p, escritura=True)
+         detalle = f"{p} sha256:{hashlib.sha256(contenido.encode('utf-8')).hexdigest()[:16]}"
+-        aprobado, respuesta = _puerta("escribir", detalle, nivel, aprobacion_id, False)
++        aprobado, respuesta = _puerta("escribir", detalle, nivel, aprobacion_id, False, motivo)
+         if respuesta:
+             return respuesta
+         return archivos.escribir(ruta, contenido, aprobado=aprobado)
+@@ -188,7 +209,7 @@ def escribir(ruta: str, contenido: str, aprobacion_id: str = "") -> str:
+ def archivar(ruta: str, motivo: str = "") -> str:
+     """Mueve algo a _archivo/. El agente no borra: archiva."""
+ 
+-    return _envuelto(archivos.archivar, ruta, motivo)
++    return _envuelto(archivos.archivar, ruta, motivo, _motivo=motivo)
+ 
+ 
+ # ---------------------------------------------------------------
+@@ -197,36 +218,43 @@ def archivar(ruta: str, motivo: str = "") -> str:
+ 
+ @mcp.tool()
+ def comando(
+-    comando: str, cwd: str = "", timeout: int = 45, aprobado: bool = False, aprobacion_id: str = ""
++    comando: str, cwd: str = "", timeout: int = 45, aprobado: bool = False, aprobacion_id: str = "",
++    motivo: str = "",
+ ) -> str:
+     """Ejecuta un comando de PowerShell que termina solo.
+ 
+     Si devuelve NECESITA APROBACION con una SOLICITUD, espera a que
+     Damian la apruebe y repite la llamada con aprobacion_id=<id>.
++    Lo que solo lee lo aprueba el guardian al momento y se ejecuta sin esperar.
++
++    motivo: para que lo necesitas, en una frase (sale en la ficha de Damian y lo lee el tribunal).
+     """
+ 
+     def _correr():
+         ok, respuesta = _puerta(
+-            "ejecutar comando", comando, nivel_de_comando(comando), aprobacion_id, aprobado
++            "ejecutar comando", comando, nivel_de_comando(comando), aprobacion_id, aprobado, motivo
+         )
+ 
+         return respuesta or shell.ejecutar(comando, cwd or None, timeout, ok)
+ 
+-    return _envuelto(_correr)
++    return _envuelto(_correr, _motivo=motivo)
+ 
+ 
+ @mcp.tool()
+ def lanzar(
+-    comando: str, nombre: str = "proceso", cwd: str = "", aprobado: bool = False, aprobacion_id: str = ""
++    comando: str, nombre: str = "proceso", cwd: str = "", aprobado: bool = False, aprobacion_id: str = "",
++    motivo: str = "",
+ ) -> str:
+     """Arranca un proceso que no termina solo y devuelve el control.
+ 
+     Chrome con depuracion, ComfyUI, el bot de Telegram.
++
++    motivo: para que lo arrancas, en una frase (sale en la ficha de Damian y lo lee el tribunal).
+     """
+ 
+     def _correr():
+         ok, respuesta = _puerta(
+-            "lanzar proceso", comando, nivel_de_comando(comando), aprobacion_id, aprobado
++            "lanzar proceso", comando, nivel_de_comando(comando), aprobacion_id, aprobado, motivo
+         )
+ 
+         if respuesta:
+@@ -242,7 +270,7 @@ def lanzar(
+         envuelto = _con_guardia(comando)
+         return shell.lanzar(envuelto, nombre, cwd or None, envuelto != comando)
+ 
+-    return _envuelto(_correr)
++    return _envuelto(_correr, _motivo=motivo)
+ 
+ 
+ # T091 (2a pieza, aprobada por Damian 23/09): `python script.py ...` lanzado con lanzar()
+@@ -267,11 +295,14 @@ def proceso_vivo(pid: int) -> str:
+ 
+ 
+ @mcp.tool()
+-def ejecutar_python(ruta: str, timeout: int = 45, aprobado: bool = False, aprobacion_id: str = "") -> str:
++def ejecutar_python(ruta: str, timeout: int = 45, aprobado: bool = False, aprobacion_id: str = "",
++                    motivo: str = "") -> str:
+     """Ejecuta un script Python del proyecto con el mismo interprete.
+ 
+     Si devuelve NECESITA APROBACION con una SOLICITUD, espera a que
+     Damian la apruebe y repite la llamada con aprobacion_id=<id>.
++
++    motivo: para que lo ejecutas, en una frase (sale en la ficha de Damian y lo lee el tribunal).
+     """
+ 
+     pedido = aprobado
+@@ -287,7 +318,7 @@ def ejecutar_python(ruta: str, timeout: int = 45, aprobado: bool = False, aproba
+         archivo = archivo.resolve()
+         nivel = nivel_de_ruta(archivo, escritura=True)
+ 
+-        aprobado, respuesta = _puerta("ejecutar_python", str(archivo), nivel, aprobacion_id, pedido)
++        aprobado, respuesta = _puerta("ejecutar_python", str(archivo), nivel, aprobacion_id, pedido, motivo)
+ 
+         if respuesta:
+             return respuesta
+diff --git a/tests/test_enganche_aprobaciones.py b/tests/test_enganche_aprobaciones.py
+index 840668e..731e700 100644
+--- a/tests/test_enganche_aprobaciones.py
++++ b/tests/test_enganche_aprobaciones.py
+@@ -266,3 +266,36 @@ def test_lanzar_ambar_aprobado_se_lanza_sin_envoltorio(monkeypatch):
+     srv.lanzar("winget install algo", aprobacion_id="A0001")
+ 
+     assert lanzados == [("winget install algo", True)]
++
++
++# ------------------------------------------------ T1020: motivo y guardian (pieza 4, blindado)
++
++@con_patch
++def test_t1020_el_motivo_queda_en_la_solicitud_y_no_en_la_huella(ejecutados):
++    r = srv.comando("winget install algo", motivo="  para   probar el guardian ")
++    s = ap.cargar()["solicitudes"][-1]
++    assert "NECESITA APROBACION" in r and ejecutados == []
++    assert s["extra"]["motivo"] == "para probar el guardian"
++    assert s["huella"] == ap.huella("ejecutar comando", "winget install algo")
++
++
++@con_patch
++def test_t1020_lo_que_el_guardian_aprueba_se_ejecuta_sin_esperar(ejecutados, monkeypatch):
++    from nucleo import guardian
++    monkeypatch.setattr(guardian, "GANCHO", True)
++    monkeypatch.setattr(guardian, "ESTADO", ap.ALMACEN.with_name("guardian.json"))
++    cmd = "Select-String -Path memoria\\aprobaciones.json -Pattern 'MiroFish' | Select-Object -First 3"
++    assert permisos.nivel_de_comando(cmd) is permisos.Nivel.AMBAR      # nombra un blindado: llega a la cola
++    r = srv.comando(cmd, motivo="ver que pidio MiroFish")
++    s = ap.cargar()["solicitudes"][-1]
++    assert "NECESITA" not in r and len(ejecutados) == 1
++    assert s["estado"] == "usada" and s["decidida_por"] == "guardian"
++    assert s["extra"]["motivo"] == "ver que pidio MiroFish"
++
++
++@con_patch
++def test_t1020_leer_fuera_de_la_zona_guarda_el_motivo(monkeypatch):
++    fuera = RAIZ.parent / "herramientas_externas" / "x" / ".env.example"
++    r = srv.leer(str(fuera), motivo="ver la plantilla")
++    s = ap.cargar()["solicitudes"][-1]
++    assert "NECESITA APROBACION" in r and s["accion"] == "leer" and s["extra"]["motivo"] == "ver la plantilla"

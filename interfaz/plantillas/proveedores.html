@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block titulo %}Proveedores{% endblock %}
+{% block encabezado %}Proveedores{% endblock %}
+{% block contenido %}
+<section class="panel" aria-labelledby="t-salud">
+  <div class="cabecera-panel">
+    <h2 id="t-salud">Salud</h2>
+    <button type="button" class="boton-sutil" hx-get="/proveedores/salud?fresco=1" hx-target="#salud-proveedores"
+            hx-disabled-elt="this">Comprobar ahora<span class="htmx-indicator" aria-hidden="true"> …</span></button>
+  </div>
+  <div id="salud-proveedores" data-panel hx-get="/proveedores/salud" hx-trigger="load, every 60s, nexo:reconciliar from:body">
+    {% include "_esqueleto.html" %}
+  </div>
+</section>
+
+<section class="panel" aria-labelledby="t-sesiones">
+  <div class="cabecera-panel">
+    <h2 id="t-sesiones">Sesiones de las webs</h2>
+    <form hx-post="/proveedores/inicializar" hx-target="#sesiones-web" hx-disabled-elt="find button">
+      <button type="submit" class="boton-sutil">Inicializar todos<span class="htmx-indicator" aria-hidden="true"> …</span></button>
+    </form>
+  </div>
+  <p class="nota">Abre la web de cada proveedor en el Chrome de NEXO (una sola ventana, una pestaña por proveedor; nunca tu
+    Chrome personal) y dice si la sesión sigue activa o ha caducado. No escribe nada en las webs.</p>
+  <ul class="lista-acciones">
+    {% for sitio, nombre in web %}
+    <li>
+      <form hx-post="/proveedores/inicializar" hx-target="#sesiones-web" hx-disabled-elt="find button">
+        <input type="hidden" name="sitio" value="{{ sitio }}">
+        <strong>{{ nombre }}</strong>
+        <button type="submit" class="boton-sutil">Inicializar<span class="htmx-indicator" aria-hidden="true"> …</span></button>
+      </form>
+    </li>
+    {% endfor %}
+  </ul>
+  <div id="sesiones-web" aria-live="polite"></div>
+</section>
+
+<section class="panel" aria-labelledby="t-uso">
+  <h2 id="t-uso">Uso real</h2>
+  <form id="periodo-uso" class="filtros" action="/proveedores" method="get"
+        hx-get="/proveedores/uso" hx-target="#uso-proveedores" hx-trigger="change">
+    <fieldset class="periodos">
+      <legend>Periodo</legend>
+      {% for d in periodos %}
+      <label><input type="radio" name="dias" value="{{ d }}"{% if loop.first %} checked{% endif %}>
+        {{ "último día" if d == 1 else "últimos %d días"|format(d) }}</label>
+      {% endfor %}
+    </fieldset>
+  </form>
+  {# Se recarga con el periodo marcado cuando llegan lineas nuevas a los registros (SSE). #}
+  <div id="uso-proveedores" data-panel hx-get="/proveedores/uso" hx-include="#periodo-uso"
+       hx-trigger="load, nexo:log from:body throttle:5s, nexo:reconciliar from:body">
+    {% include "_esqueleto.html" %}
+  </div>
+</section>
+{% endblock %}

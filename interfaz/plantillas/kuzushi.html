@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block titulo %}Kuzushi{% endblock %}
+{% block encabezado %}Kuzushi{% endblock %}
+{% block contenido %}
+{# T1011 fase 1: cada caso que ha visto Kuzushi (observa sin IA), con su evidencia. Solo lectura: la calibracion la hace
+   Claude por la CLI (nucleo.kuzushi calibrar). Lo que se guarda ya paso por auditor.tapar. #}
+<section class="panel" aria-labelledby="k-resumen">
+  <h2 id="k-resumen">Esta semana</h2>
+  {% include "_centro_kuzushi.html" %}
+  {% if error %}<p class="bc-aviso bc-aviso-frenado">No se ha podido leer el registro de Kuzushi ({{ error }}).</p>{% endif %}
+</section>
+
+<section class="panel" aria-labelledby="k-casos">
+  <h2 id="k-casos">Casos ({{ hallazgos|length }})</h2>
+  {% if not hallazgos %}<p>Todavía no hay ninguno.</p>{% endif %}
+  <ul class="bc-lista-simple">
+    {% for h in hallazgos %}
+    <li id="{{ h.id }}"><strong>{{ h.id }}</strong> · {{ h.titulo }}
+      <span class="bc-cuando">{{ h.gravedad }} · {{ estados.get(h.estado, h.estado) }}{% if h.tarea %} · tarea <a href="/tareas/{{ h.tarea }}">{{ h.tarea }}</a>{% endif %} · visto {{ h.visto[:10] }}{% if h.veces > 1 %} ({{ h.veces }} pasadas){% endif %}</span>
+      {% if h.calibracion %}<br><small>Claude: {{ "útil" if h.calibracion.veredicto == "util" else "no útil" }} — {{ h.calibracion.motivo }}</small>{% endif %}
+      <details><summary>Evidencia</summary>
+        {% if h.arreglo %}<p>Arreglo conocido: {{ h.arreglo }}</p>{% endif %}
+        {% if h.donde %}<p>Dónde: <code>{{ h.donde }}</code></p>{% endif %}
+        <div class="tabla-desplazable"><pre>{{ h.evidencia|tojson(indent=1) }}</pre></div>
+      </details>
+    </li>
+    {% endfor %}
+  </ul>
+</section>
+{% endblock %}

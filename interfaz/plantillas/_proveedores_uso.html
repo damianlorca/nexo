@@ -1,0 +1,30 @@
+{% set periodo = "el último día" if dias == 1 else "los últimos %d días"|format(dias) %}
+{% if filas|sum(attribute="llamadas") == 0 %}
+<p class="vacio">Sin llamadas a proveedores registradas en {{ periodo }}.</p>
+{% else %}
+<div class="tabla-desplazable">
+<table class="tabla tabla-apilable">
+  <caption class="solo-lector">Uso por proveedor en {{ periodo }}</caption>
+  <thead><tr>
+    <th scope="col">Proveedor</th><th scope="col" class="numero">Llamadas</th><th scope="col" class="numero">OK</th>
+    <th scope="col" class="numero">Fallos</th><th scope="col" class="numero">Éxito</th>
+    <th scope="col" class="numero">Tokens aprox.</th><th scope="col" class="numero">Media</th>
+  </tr></thead>
+  <tbody>
+  {% for f in filas %}
+  <tr>
+    <th scope="row" class="salud-nombre">{{ f.nombre }}</th>
+    <td class="numero" data-etiqueta="Llamadas">{{ f.llamadas }}</td>
+    <td class="numero" data-etiqueta="OK">{{ f.ok }}</td>
+    <td class="numero" data-etiqueta="Fallos">{% if f.fallos %}<strong>{{ f.fallos }}</strong>{% else %}0{% endif %}</td>
+    <td class="numero" data-etiqueta="Éxito">{{ "—" if f.exito is none else "%d %%"|format(f.exito) }}</td>
+    <td class="numero" data-etiqueta="Tokens aprox.">{{ "{:,}".format(f.tokens).replace(",", ".") }}</td>
+    <td class="numero" data-etiqueta="Media">{{ "—" if f.media_s is none else "%s s"|format(f.media_s) }}</td>
+  </tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+{% endif %}
+<p class="nota">Periodo: {{ periodo }}. Datos de registros/uso_proveedores.jsonl (lo que NEXO ha gastado de verdad);
+tokens estimados a ~4 caracteres por token. «Fallo» es cualquier respuesta que no sea OK (cuota, saturado, negativa…).</p>

@@ -1,0 +1,27 @@
+# Interfaz web de NEXO (interfaz/, MVP v1). Versiones fijadas y comprobadas en PyPI el 24/09/2026.
+# Instalar: .venv\Scripts\python.exe -m pip install -r requirements-interfaz.txt
+fastapi==0.141.1
+uvicorn==0.53.0
+jinja2==3.1.6
+sse-starlette==3.4.11
+python-multipart==0.0.32
+pytest==9.1.1
+# Hito movil (Web Push), fijadas el 25/09/2026. pywebpush y py-vapid pedidas; el resto son sus dependencias.
+pywebpush==2.5.0
+py-vapid==1.9.4
+http-ece==1.2.1
+cryptography==50.0.1
+cffi==2.1.1
+pycparser==3.0
+aiohttp==3.14.3
+aiohappyeyeballs==2.7.1
+aiosignal==1.4.0
+attrs==26.1.0
+frozenlist==1.8.0
+multidict==6.9.1
+propcache==0.5.4
+yarl==1.25.1
+# Tests de la interfaz (25/09/2026, N06): starlette.testclient exige httpx2; sin el no carga ningun test.
+httpx2==2.13.1
+httpcore2==2.13.1
+truststore==0.10.4

@@ -1,0 +1,54 @@
+diff --git a/manos/archivos.py b/manos/archivos.py
+index b73d674..568b23a 100644
+--- a/manos/archivos.py
++++ b/manos/archivos.py
+@@ -62,10 +62,14 @@ def listar(subcarpeta: str = "", patron: str = "*") -> list[str]:
+     return sorted(encontrados)
+ 
+ 
+-def leer(ruta: str | Path, max_bytes: int = 400_000) -> str:
++def leer(ruta: str | Path, max_bytes: int = 400_000, aprobado: bool = False) -> str:
++    """aprobado=True (T1025) solo lo pone servidor_mcp tras consumir una aprobacion ambar para ESTA ruta (de Damian
++    o del guardian): salta el ambar, NUNCA el rojo (secretos.toml sigue bloqueado). Mismo patron que escribir (T861)."""
+     p = _resolver(ruta)
+ 
+-    exigir(nivel_de_ruta(p, escritura=False), "leer", str(p))
++    nivel = nivel_de_ruta(p, escritura=False)
++    if not (aprobado and nivel is Nivel.AMBAR):
++        exigir(nivel, "leer", str(p))
+ 
+     if not p.is_file():
+         raise FileNotFoundError(str(p))
+diff --git a/manos/servidor_mcp.py b/manos/servidor_mcp.py
+index 6780181..32d3e34 100644
+--- a/manos/servidor_mcp.py
++++ b/manos/servidor_mcp.py
+@@ -172,13 +172,26 @@ def listar(subcarpeta: str = "", patron: str = "*", motivo: str = "") -> str:
+ 
+ 
+ @mcp.tool()
+-def leer(ruta: str, motivo: str = "") -> str:
++def leer(ruta: str, aprobacion_id: str = "", motivo: str = "") -> str:
+     """Lee un archivo de texto.
+ 
++    Fuera de las carpetas de NEXO pide permiso: si devuelve NECESITA
++    APROBACION con una SOLICITUD, cuando este aprobada repite la llamada
++    con aprobacion_id=<id> (T1025: va atada a ESTA ruta). Lo que el
++    guardian aprueba al entrar se lee a la primera.
++
+     motivo: para que lo necesitas, en una frase (sale en la ficha de Damian si hace falta permiso).
+     """
+ 
+-    return _envuelto(archivos.leer, ruta, _motivo=motivo)
++    def _leer() -> str:
++        p = archivos._resolver(ruta)
++        nivel = nivel_de_ruta(p, escritura=False)
++        aprobado, respuesta = _puerta("leer", str(p), nivel, aprobacion_id, False, motivo)
++        if respuesta:
++            return respuesta
++        return archivos.leer(ruta, aprobado=aprobado)
++
++    return _envuelto(_leer)
+ 
+ 
+ @mcp.tool()

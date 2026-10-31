@@ -1,0 +1,33 @@
+{# T1020 pieza 3: minichat de UNA solicitud (nucleo/chat_aprobacion.py). Sin acciones: solo explica; decidir es con
+   los botones. El POST devuelve este mismo bloque (mensajes + formulario vacio) y sustituye #chat-aprobacion. #}
+<h2 id="t-chat">Preguntar sobre este permiso</h2>
+{% if aviso_chat %}<p class="estado-parado" role="alert">{{ aviso_chat }}</p>{% endif %}
+{% if chat %}
+<ol class="bc-chat-mensajes" role="log" aria-label="Conversación sobre este permiso">
+  {% for m in chat %}
+  {% if m.tipo == "mensaje" %}
+  <li class="bc-msg bc-msg-tu"><span class="bc-msg-quien">Tú{% if m.escalar %} · para Claude{% endif %}
+    <span class="bc-cuando" title="{{ m.cuando }}">{{ m.cuando[11:16] }}</span></span>{{ m.texto }}</li>
+  {% elif m.tipo == "respuesta" %}
+  <li class="bc-msg bc-msg-ia{% if m.error %} bc-msg-error{% endif %}"><span class="bc-msg-quien">{{ m.quien_nombre }}
+    <span class="bc-cuando" title="{{ m.cuando }}{% if m.modelo %} · {{ m.modelo }}{% endif %}">{{ m.cuando[11:16] }}</span></span>
+    <span class="texto-largo">{{ m.texto }}</span>
+    {% if m.solo_local %}<span class="nota">No ha salido de tu PC ({{ m.solo_local }}).</span>{% endif %}</li>
+  {% elif m.tipo == "escalado" %}
+  <li class="bc-msg bc-msg-accion"><span aria-hidden="true">↑</span> {{ m.texto }}</li>
+  {% endif %}
+  {% endfor %}
+</ol>
+{% else %}
+<p class="nota">Pregunta lo que no entiendas de este permiso. Contesta una IA con solo esta ficha delante; el chat no
+  aprueba ni deniega nada.</p>
+{% endif %}
+<form class="bc-chat-form" hx-post="/aprobacion/{{ x.id }}/chat" hx-target="#chat-aprobacion" hx-swap="innerHTML"
+      hx-disabled-elt="find button">
+  <label class="solo-lector" for="chat-aprobacion-texto">Pregunta</label>
+  <textarea id="chat-aprobacion-texto" name="mensaje" rows="2" maxlength="2000" required
+            placeholder="Por ejemplo: ¿qué pasa si digo que no?"></textarea>
+  <button type="submit">Preguntar</button>
+  <button type="submit" name="escalar" value="1" class="boton-sutil"
+          title="Guarda la pregunta para Claude: la contesta en la próxima sesión de Code">Escalar</button>
+</form>

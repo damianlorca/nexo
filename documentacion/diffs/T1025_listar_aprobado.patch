@@ -1,0 +1,54 @@
+diff --git a/manos/archivos.py b/manos/archivos.py
+index 568b23a..a29fc2d 100644
+--- a/manos/archivos.py
++++ b/manos/archivos.py
+@@ -43,10 +43,14 @@ def _resolver(ruta: str | Path) -> Path:
+     return p.resolve() if p.is_absolute() else (RAIZ / p).resolve()
+ 
+ 
+-def listar(subcarpeta: str = "", patron: str = "*") -> list[str]:
++def listar(subcarpeta: str = "", patron: str = "*", aprobado: bool = False) -> list[str]:
++    """aprobado=True (T1025, como leer) solo lo pone servidor_mcp tras consumir una aprobacion ambar para ESTA carpeta
++    (de Damian o del guardian): salta el ambar, NUNCA el rojo."""
+     base = _resolver(subcarpeta) if subcarpeta else RAIZ
+ 
+-    exigir(nivel_de_ruta(base, escritura=False), "listar", str(base))
++    nivel = nivel_de_ruta(base, escritura=False)
++    if not (aprobado and nivel is Nivel.AMBAR):
++        exigir(nivel, "listar", str(base))
+ 
+     encontrados = []
+ 
+diff --git a/manos/servidor_mcp.py b/manos/servidor_mcp.py
+index 32d3e34..4651e40 100644
+--- a/manos/servidor_mcp.py
++++ b/manos/servidor_mcp.py
+@@ -162,13 +162,26 @@ def info_entorno() -> str:
+ # ---------------------------------------------------------------
+ 
+ @mcp.tool()
+-def listar(subcarpeta: str = "", patron: str = "*", motivo: str = "") -> str:
++def listar(subcarpeta: str = "", patron: str = "*", aprobacion_id: str = "", motivo: str = "") -> str:
+     """Lista archivos del proyecto. patron admite comodines: *.py
+ 
++    Fuera de las carpetas de NEXO pide permiso: si devuelve NECESITA
++    APROBACION con una SOLICITUD, cuando este aprobada repite la llamada
++    con aprobacion_id=<id> (T1025: va atada a ESA carpeta). Lo que el
++    guardian aprueba al entrar se lista a la primera.
++
+     motivo: para que lo necesitas, en una frase (sale en la ficha de Damian si hace falta permiso).
+     """
+ 
+-    return _envuelto(lambda: "\n".join(archivos.listar(subcarpeta, patron)), _motivo=motivo)
++    def _listar() -> str:
++        base = archivos._resolver(subcarpeta) if subcarpeta else archivos.RAIZ
++        nivel = nivel_de_ruta(base, escritura=False)
++        aprobado, respuesta = _puerta("listar", str(base), nivel, aprobacion_id, False, motivo)
++        if respuesta:
++            return respuesta
++        return "\n".join(archivos.listar(subcarpeta, patron, aprobado=aprobado))
++
++    return _envuelto(_listar)
+ 
+ 
+ @mcp.tool()

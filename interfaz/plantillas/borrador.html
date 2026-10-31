@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block titulo %}Borrador{% endblock %}
+{% block encabezado %}Borrador {{ archivo }}{% endblock %}
+{% block contenido %}
+<p><a href="/ordenes">← Volver a órdenes</a></p>
+{% if contenido is none %}
+<p class="vacio">Borrador no encontrado. Solo se pueden ver archivos .md de memoria/borradores.</p>
+{% else %}
+<p class="nota">Borrador generado por NEXO. No está dado por bueno hasta que Claude lo revise.</p>
+{% if auditoria %}
+<section class="panel" aria-labelledby="t-aud">
+  <h2 id="t-aud">Auditoría: <span class="{{ 'estado-parado' if auditoria.resultado != 'APROBADA' else 'estado-activo' }}">{{ auditoria.resultado }}</span></h2>
+  <ul class="lista-acciones">
+    {% for k, v in auditoria.puntos.items() %}
+    <li><strong>{{ "OK" if v.ok else "FALLA" }}</strong> {{ k }}: {{ v.detalle }}</li>
+    {% endfor %}
+  </ul>
+</section>
+{% endif %}
+<pre class="panel texto-borrador">{{ contenido }}</pre>
+{% endif %}
+{% endblock %}

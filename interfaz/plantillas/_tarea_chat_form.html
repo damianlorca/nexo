@@ -1,0 +1,9 @@
+<form id="chat-form" class="bc-chat-form" hx-post="/tareas/{{ t.id }}/chat" hx-target="#chat-mensajes"
+      hx-disabled-elt="find button"{% if form_oob %} hx-swap-oob="outerHTML"{% endif %}>
+  <label class="solo-lector" for="chat-texto-{{ t.id }}">Mensaje</label>
+  <textarea id="chat-texto-{{ t.id }}" name="mensaje" rows="2" maxlength="2000" required
+            placeholder="Escribe una duda o pide un cambio pequeño…"></textarea>
+  <button type="submit">Enviar</button>
+  <button type="submit" name="escalar" value="1" class="boton-sutil"
+          title="Guarda la pregunta para Claude: la contesta en la próxima sesión de Code">Escalar</button>
+</form>

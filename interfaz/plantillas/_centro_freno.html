@@ -1,0 +1,19 @@
+{# T666 (F0 de la epica T664): tamano de la cola frente a los limites y entradas/salidas por semana. #}
+{% set c = m.cola %}
+{% if c.superado %}
+<p class="estado-parado" role="status"><strong>Freno puesto:</strong> {{ c.motivos|join("; ") }}. Los turnos que generan propuestas ({{ m.generadoras|join(", ") }}) no arrancan hasta bajar del límite.</p>
+{% else %}
+<p role="status">Cola dentro de los límites: los turnos que generan propuestas pueden arrancar.</p>
+{% endif %}
+<p>Propuestas abiertas <strong>{{ c.propuestas }}</strong> / {{ c.limite_propuestas }} · revisiones pendientes <strong>{{ c.revisiones }}</strong> / {{ c.limite_revisiones }} · archivadas por el filtro {{ m.archivadas }} (recuperables) · caducidad {{ m.caducidad }} días.</p>
+<div class="tabla-desplazable">
+<table class="tabla-compacta">
+  <caption class="solo-lector">Entradas y salidas por semana</caption>
+  <thead><tr><th scope="col">Semana</th><th scope="col">Propuestas entran</th><th scope="col">salen</th><th scope="col">de ellas archivadas</th><th scope="col">Revisiones entran</th><th scope="col">salen</th></tr></thead>
+  <tbody>
+    {% for s in m.semanas %}
+    <tr><th scope="row">{{ s.semana }}</th><td class="numero">{{ s.prop_entran }}</td><td class="numero">{{ s.prop_salen }}</td><td class="numero">{{ s.prop_archivadas }}</td><td class="numero">{{ s.rev_entran }}</td><td class="numero">{{ s.rev_salen }}</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+</div>

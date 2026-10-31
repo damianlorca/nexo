@@ -1,0 +1,81 @@
+# Otros consejos prácticos
+
+## Lo práctico
+
+<!-- guia:inicio (se genera solo: nucleo/reels_destino.py; no editar dentro) -->
+Lo práctico, en una línea cada cosa. Fuentes públicas; nada de esto está probado en NEXO salvo que se diga.
+
+- **71 trucos conocidos detectados**: Catálogo de 71 patrones maliciosos detectados por SkillSpector (inyección de prompt, agente rebelde, código peligroso, fuga de system prompt, etc.). Mapear cada categoría a tests automatizados en el pipeline de skills de NEXO para cobertura completa
+- **AGENLTURECETA**: Flujo automático para que el agente extraiga tareas pendientes de conversaciones y las agende directamente
+- **Benchmark K2 Horizon vs open-weight models**: Validar que K2 Horizon 3.7B supera a modelos 4x-8x su tamaño en SWE-bench, GPQA y coding para confirmar idoneidad en CPU
+- **Benchmark results Gemma 4 family**: Consultar benchmarks (MMLU Pro, LiveCodeBench, Codeforces, GPQA, etc.) para seleccionar el modelo Gemma 4 óptimo según VRAM y tarea
+- **Benchmarking IA vs IA con cliente**: Retar al cliente: 'Hazlo tú con IA, yo lo hago con IA, comparamos resultados' para demostrar valor en el mismo terreno tecnológico
+- **BrowserWindow.setContentProtection(true)**: En Electron, activa BrowserWindow.setContentProtection(true) para proteger ventanas en macOS y Windows sin código nativo; usa para overlays privados o paneles de secretos en NEXO
+- **Bypass de contraseña Windows vía registro offline**: Procedimiento completo para resetear contraseña Windows offline: 1) Entrar en WinRE (Shift+Reiniciar). 2) Abrir Símbolo del sistema. 3) regedit -> Cargar subárbol C:\Windows\System32\config\SYSTEM (ej. clave 'TEMP'). 4) En TEMP\Setup poner CmdLine=cmd.exe y SetupType=2 (DWORD). 5) Desmontar subárbol. 6) Reiniciar: sale cmd.exe como SYSTEM. 7) 'net user <usuario> <nueva_pass>'
+- **Caching**: Cachea respuestas de prompts frecuentes usando una tabla hash con TTL ajustable. Prioriza el almacenamiento de resultados costosos (p.ej., generación de código) y actualiza el caché cuando cambien los datos de entrada críticos
+- **chess-coach**: Entrenador de ajedrez con IA que enseña a encontrar movimientos mediante Puzzles y análisis ([fuente](https://perchance.org/chess-coach))
+- **Claude API**: Interfaz de programación que permite acceder al modelo de lenguaje Claude de Anthropic para generar texto y razonamiento
+- **Claude vision**: Extensión del modelo Claude que permite interpretar y describir imágenes enviadas por el usuario
+- **Coffee chat**: Realizar 'coffee chats' (charlas breves informales) con reclutadores durante conferencias para romper el hielo, crear contacto directo y que te recuerden al aplicar a prácticas
+- **collect_analytics.py (script malicioso oculto)**: Patrón de ataque real: script de 52 líneas oculto en skill legítima (asistente cocina) que itera variables de entorno buscando 'API_KEY'/'SECRET' y las exfiltra vía POST a endpoint externo. Usar como caso de prueba para detectores estáticos y semánticos en pipeline de skills
+- **Contrato por escrito antes de empezar**: Entregar contrato firmado antes de iniciar, definiendo alcance, revisiones y condiciones de pago. NEXO puede generar plantillas adaptadas a cada proyecto
+- **Costo minimo Bland para LATAM**: Se requieren USD 5 de crédito en Bland para recibir llamadas en números de LATAM; presupuestar este coste recurrente al implementar la skill de llamadas
+- **cron**: Programa jobs cron (Supabase pg_cron, Vercel Cron, GitHub Actions) para tareas recurrentes: recordatorios diarios, chequeo de expiraciones, resúmenes, limpieza de datos
+- **Datos privados permanecen en propio servidor**: Beneficio de privacidad al alojar el modelo localmente
+- **Di 'no' a plazos imposibles sin presupuesto extra**: Rechazar acelerar entregas si no hay rush fee ni ampliación de presupuesto. NEXO puede evaluar carga y sugerir respuestas asertivas
+- **Distinguir revisión de cambio de alcance**: Diferenciar revisión (corrección de lo construido) de cambio de alcance (nueva petición facturable). Redactar cláusulas automáticas en propuestas
+- **Distribución por QR o enlace**: Desplegar pases vía QR o enlace directo para eliminar fricción de onboarding en App Store
+- **env.local**: Utilizar el archivo .env.local para almacenar secretos y claves API, excluyéndolos del control de versiones y del código fuente
+- **Error: enviar entregables antes de cobro completo**: Nunca enviar entregables finales antes del cobro completo; perder la palanca de negociación imposibilita recuperar pagos pendientes
+- **Exfiltración vía variables de entorno (os.environ)**: Técnica concreta de exfiltración: iterar `os.environ` buscando substrings 'API_KEY'/'SECRET' y enviar valores vía `requests.post`. Implementar regla Semgrep personalizada en NEXO que alerte si skill accede a entorno sensible y hace peticiones de red
+- **Facturación por horas para extras fuera de alcance**: Cambiar a facturación horaria para edits fuera de scope; el cliente se vuelve decisivo al ver coste marginal. NEXO puede trackear horas y generar facturas de extras
+- **FACTURAS**: Automatizar la generación y envío de facturas mediante scripts integrados en el flujo del agente
+- **GPQA Diamond scores Qwen3.8-27B cuantizaciones**: Comparar puntuaciones GPQA Diamond vs tamaño en disco (6-50GB) para elegir la mejor cuantización de Qwen3.8-27B según VRAM disponible
+- **How Do They Work (Psychology)**: Estudia psicología básica para anticipar reacciones de usuarios y clientes, diseñar productos que conecten y negociar entendiendo los motivos ajenos
+- **HyperFrames v0.8.157 (build 85596)**: Fijar la dependencia en HyperFrames v0.8.157 (build 85596, Apache-2.0) para garantizar reproducibilidad y estabilidad en el pipeline de NEXO
+- **Infinite Subscription Loophole**: Implementar un modelo donde la cuota mensual baje cada mes de permanencia; si el usuario cancela y vuelve, paga el precio inicial máximo. Aprovecha la aversión a la pérdida para reducir churn y aumentar LTV
+- **Instalación como plugin (marketplace)**: Usar comandos /plugin marketplace add Jakeschincariol/arena-skill y /plugin install arena-skill@arena-skill; el comando queda namespaced como /arena-skill:arena para gestión global de skills
+- **Instalación por git clone**: Clonar el repo y copiar la carpeta skills/arena a ~/.claude/skills/ para disponer del comando /arena en Claude Code sin depender del marketplace de plugins ([fuente](https://github.com/Jakeschincariol/arena-skill))
+- **Learn To Cook**: Aprende a cocinar 5 platos sanos y sabrosos: ahorras dinero, controlas tu nutrición y generas valor social cocinando para otros
+- **Linear_Attention_Report.pdf**: Informe exhaustivo sobre investigación en atención lineal
+- **Modificación de HKLM\SYSTEM\Setup\CmdLine**: En el hive SYSTEM cargado (clave Setup), modificar valor CmdLine (REG_SZ) a 'cmd.exe'. Esto sustituye la OOBE por una consola al siguiente arranque
+- **Modificación de HKLM\SYSTEM\Setup\SetupType**: En el hive SYSTEM cargado (clave Setup), crear/modificar SetupType (REG_DWORD) = 2. Indica a Windows entrar en modo setup personalizado y ejecutar CmdLine
+- **Moss Matcha Bar (ejemplo del repo)**: Estructura de datos de ejemplo para probar skills de simulación: negocio físico, precio ($6.50), target (profesionales 24-38 años, 4+ cafés/semana), ubicación. Útil para replicar formato de entrada en otras ideas
+- **New Relic**: Implementa New Relic en tu stack; instrumenta tus servicios, revisa dashboards de latencia y errores, y configura alertas para detectar problemas antes de que afecten a usuarios
+- **Nico**: Inspírate en Nico para definir la arquitectura modular de NEXO y aplicar estrategias de monetización basadas en sus experiencias
+- **No aceptes trabajo full-time si no duplica tu ingreso y da libertad**: Evaluar ofertas full-time comparando: sueldo, seguridad, autonomía y capacidad de explorar ideas propias. Decidir con datos, no con miedo. NEXO modela comparativas financiero-vida
+- **NSWindow.sharingType = .none**: Usa NSWindow.sharingType = .none en macOS para excluir ventanas sensibles de capturas y screen-share; ideal para mostrar claves/tokens sin riesgo de fuga visual
+- **Opción rush fee vs proyecto separado**: Ante adelanto de deadline, ofrecer: rush fee en factura actual o separar como proyecto nuevo; monetizar urgencia sin romper scope
+- **Para cada nivel de VRAM existe un modelo local óptimo: 32GB -> Qwen3.8-27B (nivel Opus); 24GB ->…**: Aplicar mapeo directo: 32GB→Qwen3.8-27B, 24GB→Qwen3.8-27B Q4, 16GB→Gemma 4 26B-A4B MoE, 12GB→Gemma 4 12B Q6, 8GB→MiMo-v2.6-9B Q4, 0GB→K2 Horizon 3.7B
+- **PDF render**: Usa librerías como -pdf/renderer o Puppeteer/Playwright para convertir HTML/datos a PDF en servidor o edge function y adjuntarlo en emails automáticos
+- **Pipeline de monetizacion en 5 pasos**: Marco de 5 pasos: 1) Motor de contenido (stack técnico), 2) Primeros brand deals, 3) Escalar a menos deals mejor pagados, 4) Superar meseta, 5) Lanzar oferta propia. Usa el stack como base para ingresos recurrentes y escalables
+- **Post: How we made claude.ai 3x faster in two weeks (15 min)**: Artículo/vídeo de 15 min sobre optimización de rendimiento de claude.ai; extraer técnicas de latencia aplicables a orquestación local de NEXO
+- **Post: What a task costs on Opus 5.5 (21 min)**: Artículo/vídeo de 21 min sobre coste de tareas en Opus 5.5; usar para estimar presupuesto de inferencia si NEXO usa modelos Opus
+- **Precio alto confiado sin negociación**: Anclar precio alto (ej. 10k$) sin negociar; transmite valor premium y cierra inmediato ('¿Dónde envío el depósito?')
+- **Precio bajo con margen de negociación**: Evitar precios bajos con 'margen de negociación'; posicionamiento débil que invita al regateo y devalora el servicio percibido
+- **Principio psicologico: aversión a la perdida del precio bajo**: Usar la aversión a la pérdida como motor de retención: el miedo a perder el precio bajo acumulado disuade la cancelación. Diseñar comunicaciones que recuerden al usuario el precio actual vs el de reinscripción
+- **privacy policy page**: Integrar plantilla Privacy Policy adaptable (RGPD/LOPD) y validar su existencia en pipeline pre-deploy
+- **Psicología facturación horaria: 'People get decisive when saving money'**: El cliente internaliza coste marginal al pagar por hora; se vuelve decisivo y prioriza solo lo esencial, frenando peticiones infinitas
+- **QR**: Escanea el QR que genera `expo start` o el enlace de EAS Build con Expo Go (o build interno) para probar la app en tu iPhone al instante sin pasar por TestFlight
+- **QR code**: Genera QR codes que apunten a URLs profundas de tu app (ej. /queue/join?shop=123) para onboarding físico instantáneo sin fricción de búsqueda o escritura
+- **Requisitos: Python 3.8+ y Claude Code**: Verificar que el entorno tenga Python 3.8+ y la CLI de Claude Code instalada, ya que la skill usa la herramienta Agent para spawnear sub-agentes
+- **RESUHIR AGENDA**: Protocolo para que el agente revise y reorganice automáticamente la agenda basal en busca de huecos o conflictos
+- **Retener entregables hasta cobro completo**: No entregar archivos finales hasta cobro completo. Automatizar recordatorios y bloquear enlace de descarga hasta webhook de pago confirmado
+- **Ruta del hive SYSTEM offline**: El hive SYSTEM del Windows instalado está en C:\Windows\System32\config\SYSTEM (letra de unidad del disco real, no X: de WinRE). Cargar este archivo en regedit como subárbol temporal para modificarlo
+- **SetWindowDisplayAffinity(WDA_EXCLUDEFROMCAPTURE)**: En Windows, aplica SetWindowDisplayAffinity(hwnd, WDA_EXCLUDEFROMCAPTURE) a ventanas que no deben ser capturadas por OBS, Teams, Zoom, Game Bar, etc.; complementa la protección cross-platform en NEXO
+- **Señal de saturación = momento de subir tarifas**: Usar exceso de demanda (no dar abasto) como señal objetiva para subir tarifas 30-50% y filtrar clientes de mayor valor
+- **Sistema de gaming retro (emulación)**: Instala Batocera/Recalbox en tarjeta SD aparte para emulación retro (NES a PS1) como descanso sin pantallas extra; aprende overclocking seguro, shaders y mapeo de mandos en Linux embebido
+- **Solicitar depósito por adelantado**: Solicitar depósito por adelantado tras aceptar presupuesto; confirma compromiso real del cliente antes de iniciar cualquier trabajo
+- **Soup Train**: Ejecuta el comando Soup Train; el sistema ajustará automáticamente el tamaño de lote y la memoria según la GPU disponible, evitando configuraciones manuales
+- **source.txt files**: Lista de fuentes de información usadas en investigación de atención lineal
+- **speculative decoding**: Technique that predicts multiple tokens ahead to accelerate generation
+- **Stripe subscriptions**: Configura Stripe Subscriptions con precios recurrentes y usa webhooks (customer.subscription.updated/deleted) para gestionar acceso y facturación automática en tu SaaS
+- **Stripe webhooks**: Usa webhooks de Stripe (checkout.session.completed, invoice.payment_failed) para sincronizar estado de pagos en tu BD y disparar acciones (acceso, emails) en tiempo real sin polling
+- **Sube tu tarifa un 30-50%**: Subir tarifa 30-50%; se pierden clientes pero se mantiene beneficio y se gana tiempo para mejor trabajo y referencias. NEXO puede simular escenarios
+- **T&C's page**: Añadir plantilla T&C base en NEXO y validar su existencia en pipeline de deploy
+- **Tarjetas en Wallet (Apple Wallet / Google Wallet)**: Usar Apple/Google Wallet para fidelización permite notificaciones push sin instalar app nativa
+- **Usar conferencias para conocer reclutadores, aprender la industria y hacer contactos**: Aprovechar la asistencia a conferencias pagadas para networking activo: hablar con reclutadores in situ, entender qué buscan las empresas y conseguir referencias internas que conviertan la beca en oportunidad real de prácticas
+- **Usar pasantía de Sync como marcador de posición en currículum**: Añade la pasantía gratuita de Sync (synk.today/intern) a tu LinkedIn/CV como marcador de posición mientras aplicas a prácticas en empresas top (Google, McKinsey). Rellena el formulario en 1 min, sin experiencia previa, para evitar huecos en tu perfil y mejorar tu apariencia profesional
+- **viz_png files**: Visualizaciones de datos relacionadas con investigación en atención lineal
+- **Wake Word + STT + TTS**: Implementar detección de palabra de activación (wake word), STT y TTS local para interfaz de voz natural y manos libres en NEXO
+<!-- guia:fin -->

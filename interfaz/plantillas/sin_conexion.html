@@ -1,0 +1,8 @@
+{% extends "suelta.html" %}
+{# La guarda el service worker: NUNCA meter aqui datos (tareas, ordenes, estado...). #}
+{% block titulo %}Sin conexión{% endblock %}
+{% block contenido %}
+<h1>Sin conexión con NEXO</h1>
+<p>No se llega al PC. Comprueba que el móvil tiene Tailscale conectado y que el PC está encendido.</p>
+<p><a class="boton" href="/">Reintentar</a></p>
+{% endblock %}

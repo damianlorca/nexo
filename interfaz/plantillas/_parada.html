@@ -1,0 +1,38 @@
+{# Boton de PARADA / Seguir. Se pinta SIEMPRE desde la bandera real (lecturas.estado_parada). #}
+<div id="parada" class="parada" data-activa="{{ '1' if parada.activa else '0' }}" data-motivo="{{ parada.motivo or '' }}"
+     x-data="confirmacion" x-on:keydown.escape="cancelar">
+{% if parada.activa %}
+  <span class="insignia insignia-parada"><span aria-hidden="true">■</span> PARADO</span>
+  <button type="button" class="boton" x-bind:hidden="abierto" x-on:click="abrir"
+          aria-controls="confirmar-parada" x-bind:aria-expanded="abierto">Seguir</button>
+  <form id="confirmar-parada" class="confirmar" hidden x-bind:hidden="cerrado"
+        hx-post="/seguir" hx-target="#parada" hx-swap="outerHTML" hx-disabled-elt="find button">
+    <p><strong>¿Reanudar NEXO?</strong> Los turnos automáticos podrán volver a arrancar.</p>
+    <input type="hidden" name="confirmacion" value="si">
+    <div class="fila-botones">
+      <button type="submit" class="boton" x-ref="primero">Sí, seguir</button>
+      <button type="button" class="boton-sutil" x-on:click="cancelar">Cancelar</button>
+      <span class="htmx-indicator">Reanudando…</span>
+    </div>
+  </form>
+{% else %}
+  <span class="insignia insignia-activo"><span aria-hidden="true">●</span> Activo</span>
+  <button type="button" class="boton-peligro" x-bind:hidden="abierto" x-on:click="abrir"
+          aria-controls="confirmar-parada" x-bind:aria-expanded="abierto">PARADA</button>
+  <form id="confirmar-parada" class="confirmar" hidden x-bind:hidden="cerrado"
+        hx-post="/parada" hx-target="#parada" hx-swap="outerHTML" hx-disabled-elt="find button">
+    <p><strong>¿Parar NEXO ahora?</strong> Ningún turno automático empieza ni sigue y se descargan los modelos de Ollama.</p>
+    <input type="hidden" name="confirmacion" value="si">
+    {# El foco va al boton, no al motivo: en el movil enfocar el campo abria el teclado (y el zoom de iOS)
+       y tapaba el boton de confirmar. El motivo es opcional. #}
+    <div class="fila-botones">
+      <button type="submit" class="boton-peligro" x-ref="primero">Sí, parar NEXO</button>
+      <button type="button" class="boton-sutil" x-on:click="cancelar">Cancelar</button>
+      <span class="htmx-indicator">Parando…</span>
+    </div>
+    <label for="motivo-parada">Motivo (opcional, puedes dejarlo vacío)</label>
+    <input id="motivo-parada" name="motivo" maxlength="300" autocomplete="off">
+  </form>
+{% endif %}
+{% if error %}<p class="error-parada" role="alert">{{ error }}</p>{% endif %}
+</div>

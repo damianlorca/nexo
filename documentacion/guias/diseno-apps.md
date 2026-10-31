@@ -1,0 +1,93 @@
+# Diseñar apps y webs
+
+## Lo práctico
+
+<!-- guia:inicio (se genera solo: nucleo/reels_destino.py; no editar dentro) -->
+Lo práctico, en una línea cada cosa. Fuentes públicas; nada de esto está probado en NEXO salvo que se diga.
+
+- **30 fps y ZIP sin previsualizar en EasyGIF**: En EasyGIF: FPS=30, tamaño original (máx 1920px), activar 'Don't display the images, I just want a ZIP'. Evita timeouts navegador y entrega frames listos para animación canvas scroll fluida tipo vídeo nativo
+- **AI images**: Rechazar imágenes de generadores conocidos (Midjourney, DALL-E); sugerir alternativas Unsplash, propias o ilustraciones vectoriales
+- **Analytics installed**: Integra herramienta ligera y respetuosa (Plausible, Umami, PostHog). Trackea eventos clave: signup, activacion, uso de features, errores. Define metricas norte (DAU, retention). No uses GA si priorizas privacidad
+- **API keys off the frontend**: Guarda secretos en variables de entorno del servidor. Crea endpoints proxy en tu backend que anadan la clave y llamen al proveedor externo. El frontend solo llama a tu proxy. Rota claves periodicamente
+- **Artdeco**: Simetría radial, motivos sol/sunburst, oro/negro, tipografía geométrica alta (Peignot), ornamentación escalonada; ideal para loaders y hero headers
+- **AsCllart**: Convierte frames de video o canvas a matriz de caracteres de densidad variable (@%#*+=-:. ); anima en <pre> con requestAnimationFrame para efecto retro
+- **Avatar**: Incorpora Avatar para mostrar fotos o iniciales; incluye fallback y estilos predefinidos, lo que unifica la presentación del perfil en toda la app
+- **Bauhaus**: Usa grid estricto, primarias (rojo/amarillo/azul) + negro/blanco, formas geométricas puras (círculo, triángulo, cuadrado) y tipografía sans-serif condensada
+- **Blueprint**: Fondo azulprint (#003366), líneas blancas finas, cotas, rejilla isométrica, texto técnico monospace; anima 'dibujo' de líneas (stroke-dashoffset) tipo CAD
+- **Button**: Reemplaza botones personalizados por el componente Button; ya incluye hover, focus y estados deshabilitados, ahorrando CSS y asegurando accesibilidad
+- **CinematicUI**: Usar la estetica CinematicUI (animaciones y transiciones cuidadas) como guia visual para el front-end de NEXO o demos de alta fidelidad sin disenador
+- **Clay3D**: Pide render PBR con subsurface scattering suave, colores pastel, luces suaves (HDRI studio) y geometría redondeada (bevel) para aspecto plastilina/arcilla
+- **Clear error messages**: Captura errores en backend y frontend. Muestra al usuario: que ocurrio en lenguaje sencillo, por que (si es relevante) y que puede hacer (reintentar, revisar conexion, contactar soporte). Loggea detalles tecnicos internamente
+- **Comicbook**: Aplica contorno negro grueso (stroke), tramas de puntos (halftone) en sombras, onomatopeyas tipográficas y viñetas con gutter para composición narrativa
+- **Componentes tipicos de layout: Panel lateral, Tarjetas KPI, Segmentadores, Graficos**: Plantilla base consistente: panel lateral navegación, 4-5 tarjetas KPI superiores, zona de filtros/segmentadores, área de 4-5 gráficos; útil para dashboards de NEXO (agentes, tokens, coste, latencia, modelos)
+- **CTA above the fold**: Ubica la llamada a la acción (CTA) visible sin necesidad de hacer scroll, usando colores contrastantes y texto orientado a la acción para captar la atención inmediata
+- **cursor animation**: Añadir regla ESLint/ast-grep que detecte librerías de cursor-effects y alerte en Pull Request
+- **Custom 404 page**: Crea una página 404 con mensaje claro, enlaces a secciones populares y mantén el estilo visual del sitio para que el visitante no se sienta perdido
+- **Database backups**: Programa copias de seguridad diarias (o segun criticidad) con retencion de 30 dias. Verifica restauracion periodicamente. Almacena en region distinta. Automatiza con cron jobs o servicios gestionados (AWS RDS snapshots, Supabase backups)
+- **Delete account button**: Anade en perfil 'Eliminar cuenta'. Confirma con contrasena. Ejecuta borrado logico o fisico de datos personales en <30 dias. Notifica confirmacion. Conserva solo logs anonimizados por obligacion legal
+- **Dialog**: Usa Dialog para modales críticos; el componente captura el foco y evita interacciones fuera del cuadro, eliminando bugs de cierre y problemas de accesibilidad
+- **Drawer**: Implementa Drawer cuando necesites menús laterales o paneles deslizantes; incluye swipe‑to‑dismiss y backdrop, lo que simplifica la lógica de cierre y mejora la UX móvil
+- **Ejemplo: Dashboard de Flota y Transporte (KPIs: $3.878.327, 37.5%, 81.3%, 4.11, 7.20 km/L)**: Patrón con 5 KPIs horizontales (coste total, % uso, eficiencia, ratio, consumo); adaptable para monitorización de múltiples agentes IA en NEXO (cada KPI = un agente)
+- **Ejemplo: Dashboard de Ventas CoffeeShop (2.119 transacciones, $6.181, 70.5% satisfaccion, $35.12…**: Dashboard retail con KPIs transacciones, ingreso, satisfacción, ticket medio + gráficos de tendencia; modelo para dashboard de uso de NEXO: sesiones, coste total, satisfacción usuario, coste medio por sesión
+- **Ejemplo: Dashboard Revenue (Revenue by Category/Product/Demographics, totales $577.605, $174.455,…**: Dashboard de ingresos con desglose por categoría, producto, demografía; patrón para dashboards de ROI en NEXO: ingresos/ahorro por agente, modelo, caso de uso
+- **Ejemplo: Inventario & Logistica 360 (KPIs: $47.5M, 8.3x, 132 dias, 6.86%)**: Patrón de layout: KPIs principales arriba (valor, rotación, días, %) y gráficos de detalle abajo; replicable para métricas de uso de modelos (coste total, coste/consulta, latencia media, % éxito)
+- **Ejemplo: Reporte Semanal de Stock (KPI: $526.695, graficos por categoria y proveedor, stock lento)**: Dashboard centrado en KPI valor total + desgloses por categoría/proveedor + alerta de movimiento lento; inspira dashboards de alertas en NEXO (modelos sin uso, prompts fallidos, costes anómalos)
+- **Email verification**: Tras el registro, envia un correo con enlace o codigo de verificacion. Marca la cuenta como no verificada hasta que el usuario confirme. Bloquea funcionalidades criticas hasta verificacion
+- **emoji icons**: Sustituir emojis por set de iconos SVG coherente (ej. Lucide, Phosphor) inyectado automáticamente en el proyecto
+- **Empty states**: Diseña estados vacios amigables: ilustracion, texto explicativo y accion principal (ej. 'Crea tu primer chat'). Usa en listas sin datos, resultados de busqueda vacios y onboarding inicial
+- **Error tracking**: Integra Sentry, LogRocket o similar. Captura excepciones no controladas en frontend y backend. Agrupa por release, usuario, navegador. Configura alertas en errores criticos. Revisa semanalmente
+- **Event Horizon / Wormhole / Nebula Monument / Dark Sky / Molten folding**: Usar Event Horizon, Wormhole, Nebula Monument, Dark Sky, Molten folding como referencias visuales para fondos generativos u onboarding inmersivo en NEXO
+- **Favicon set**: Genera un favicon de 32 × 32 px (y versiones 16 × 16, 48 × 48) en formato .ico o .png y enlázalo en el <head> para reforzar la identidad en pestañas y marcadores
+- **Field**: Utiliza Field para agrupar label, input y mensaje de error; simplifica el layout y asegura que todos los campos sigan el mismo estilo y comportamiento
+- **Form**: Aplica Form para manejar estado, validación y envío; reduce código boilerplate y evita errores comunes al manejar formularios manualmente
+- **Form error states**: Valida en tiempo real, resalta campos con errores y muestra mensajes claros y específicos junto al campo afectado
+- **Form validation**: Valida en cliente (HTML5, JS) para UX rapida y en servidor para seguridad. Muestra errores en linea junto al campo. Usa esquemas compartidos (Zod, Yup) para consistencia
+- **Give a clear design direction**: Proporciona referencias visuales, principios de estilo y restricciones claras en el prompt para guiar el diseño de UI/landing pages
+- **Glassmorphism**: Usa backdrop-filter: blur() con fondos semitransparentes blancos/negros, bordes sutiles 1px rgba(255,255,255,0.2) y sombras suaves para profundidad
+- **Gradient mesh**: Deforma una malla de puntos de control (mesh gradient) con ruido simplex o física de resortes; interpola colores en vértices para fondos orgánicos vivos
+- **Halftone**: Convierte luminancia a puntos de tamaño variable (círculos/líneas) en shader o Canvas; anima tamaño/rotación de la malla para efecto moiré dinámico
+- **Haven Terra**: Referenciar Haven Terra (Own your keys) para disenar landing pages minimalistas con enfasis en privacidad y soberania de datos en NEXO
+- **Holographic**: Combina shaders de fresnel, scanlines y paleta cian/magenta sobre geometría 3D simple (Three.js) para simular proyecciones holográficas futuristas
+- **hover animations**: Implementar animaciones de hover en letras de iconos para añadir dinamismo y mejorar la interacción visual en portafolios personales
+- **Input**: Emplea Input siempre que necesites un campo de texto; incluye estilos y atributos ARIA listos para usar, garantizando consistencia y accesibilidad
+- **Interfaz ONE WORD ONE NUMBER THE TIMING**: Disenar en NEXO una interfaz tabular donde cada fila controle un keyframe: etiqueta (Revenue), valor (18%), timing (2.0s). Cambiar una celda actualiza solo su fotograma, permitiendo iteracion rapida en dashboards animados o contenido
+- **Isometric**: Proyecta cubos/prismas en ejes 30° sin perspectiva; usa CSS transform rotateX(60deg) rotateZ(45deg) o SVG isométrico para dashboards y mapas
+- **Jerarquia visual en dashboards**: Usa tamaño, posición, contraste, color, espacio y agrupación para asignar protagonismo visual según importancia de los datos; aplica al generar dashboards de métricas de uso, costes o rendimiento
+- **Kinetictype**: Anima cada carácter independientemente (GSAP/SplitType): posición, rotación, escala y color siguiendo audio o scroll; usa variables CSS para control dinámico
+- **Layout-first (empieza por el layout, no por los graficos)**: Define primero la estructura y jerarquía del dashboard (zonas: KPIs, filtros, gráficos) antes de elegir tipos de gráfico; evita rehacer visualizaciones al construir interfaces de analíticas
+- **Liquid morph**: Pide interpolación entre formas usando curvas de Bézier y ruido Perlin para lograr transiciones orgánicas tipo líquido entre estados de UI o logos
+- **Loading states**: Muestra skeleton screens o spinners mientras cargan recursos críticos; oculta el contenido real sólo cuando esté totalmente listo
+- **Menu**: Emplea Menu para listas desplegables; su manejo de navegación con teclado y detección de clic fuera garantiza comportamientos consistentes sin código extra
+- **Meter**: Usa Meter para representar valores como uso de tokens o progreso de tareas; evita crear canvas o SVG personalizados
+- **Mobile breakpoints**: Define breakpoints CSS (p. ej. 576px, 768px, 992px, 1200px) y utiliza unidades flexibles (rem, %). Prueba en dispositivos reales para ajustar el layout
+- **Mobile layout**: Usa mobile-first: breakpoints CSS, unidades relativas (rem, %), touch targets >=44px. Prueba en dispositivos reales. Evita hover-only interactions. Asegura navegacion accesible con pulgar
+- **Name the styles you don't want**: Lista explícitamente estilos, componentes o patrones a evitar (ej. fuentes cursivas, bordes redondeados) para acotar el espacio de soluciones del modelo
+- **Navigation Menu**: Implementa Navigation Menu como barra de navegación principal; soporta estados activos y dropdowns, simplificando la estructura de menús de escritorio
+- **Neo-brutalism**: Contraste extremo (negro/blanco/primarias), sombras duras offset (4px 4px 0), bordes gruesos, tipografía system UI grande, sin border-radius; brutalismo digital
+- **Neon glow**: Aplica sombras exteriores e interiores con blur alto en SVG/CSS; usa colores saturados sobre fondo negro y anima el 'flicker' opacidad para realismo
+- **Number Field**: Utiliza Number Field para valores numéricos; gestiona incrementos, formato y teclado adecuado, reduciendo errores de entrada
+- **OfChains**: Extraer tokens de diseño de OfChains como referencia de producto real para alimentar agentes de IA en vibe coding
+- **Onboarding flow**: Diseña secuencia: bienvenida -> configuracion esencial (proveedores IA, preferencias) -> tour interactivo (tooltips, hotspots) -> primer exito (ej. primer chat). Permite saltar. Mide completitud y drop-off
+- **ORYZO / ORY**: Referenciar el design system ORYZO (tokens, colores, tipografía, componentes) como ejemplo completo de infraestructura de identidad open source para contextos de agentes de IA ([fuente](https://ory.sh))
+- **OTPField**: Utiliza OTPField para capturar códigos de un solo uso; el componente ya gestiona enfoque, accesibilidad y navegación entre caracteres, evitando código personalizado
+- **Particles**: Usa prompts que describan sistemas de partículas (fuego, humo, magia) con parámetros de física (velocidad, gravedad, vida) para generar animaciones orgánicas en SVG/Canvas
+- **Password reset**: Anade un flujo de restablecimiento de contrasena via email con enlace seguro de un solo uso y expiracion corta. Valida el token en backend y permite establecer nueva contrasena con requisitos de fortaleza
+- **pill shaped buttons**: Evitar botones 'pastilla' (border-radius: 9999px). Establecer radios moderados (4-12px) en prompts de generación
+- **Pixelart**: Dibuja en canvas con image-rendering: pixelated; limita paleta (ej. 16 colores), usa dithering Bayer y anima sprites por frames (sprite sheet) para movimiento nítido
+- **Privacy policy page**: Redacta politica clara: que datos recoges, finalidad, base legal, destinatarios, derechos (acceso, rectificacion, supresion, portabilidad), contacto DPO. Enlaza en footer y en formularios. Actualiza con cada cambio
+- **purple gradient**: Evitar gradientes morados/púrpura, tópico visual asociado a plantillas genéricas de IA; configurar system prompt para rechazar estas paletas
+- **Rate limiting**: Implementa limites de peticiones por usuario/IP/ventana de tiempo (ej. 100 req/min). Usa middleware (express-rate-limit, Redis). Devuelve 429 con cabecera Retry-After. Aplica a APIs publicas y llamadas a modelos externos
+- **Real login and logout**: Implementa un sistema de autenticacion real con inicio y cierre de sesion seguros, no solo simulados. Usa tokens JWT o sesiones con expiracion, protege rutas privadas y gestiona el estado de usuario en cliente y servidor
+- **Retro VHS**: Superpone scanlines, ruido gaussiano, aberración cromática RGB, jitter vertical y tracking error (desplazamiento horizontal aleatorio) vía shader CSS/Canvas
+- **Row level security**: Activa Row Level Security (RLS) en Postgres/Supabase. Define politicas: cada usuario solo ve/edita sus filas (auth.uid() = user_id). Evita filtros manuales en queries; la BD garantiza aislamiento
+- **Scroll-linked image sequence on canvas**: Renderizar secuencia de frames en <canvas>; actualizar frame según posición scroll (scrollY/IntersectionObserver) para ilusión de vídeo controlado por usuario. JS ligero, sin vídeo pesado ni librerías complejas. Ideal para landings tipo Apple
+- **Sistema de filtros de EU Academy**: Implementar búsqueda facetada con filtros por tema, nivel, idioma, duración, tipo, currículo y proveedor para catálogos de cursos o papers, inspirado en EU Academy ([fuente](https://academy.europa.eu))
+- **Split-flap**: Simula tarjetas giratorias 3D (rotateX 90°) con textura de caracteres; sincroniza sonido 'clack' y delay escalonado por dígito para realismo mecánico
+- **Sticky mobile CTA**: Implementa una barra fija en la parte inferior con posición sticky, usando z-index alto y suficiente contraste para que el botón sea siempre accesible
+- **Terms page**: Incluye: aceptacion al usar, licencia de uso, restricciones (no ingenieria inversa, no abuso), limitacion de responsabilidad, indemnidad, ley aplicable y jurisdiccion. Hazlos accesibles y versionados
+- **Thank-you page**: Diseña una página de agradecimiento que confirme la acción, ofrezca contenido adicional y proponga la siguiente interacción (p. ej. compartir en redes)
+- **The Cult of Pythagoras / Music of the Spheres**: Usar 'The Cult of Pythagoras' como referencia de dirección creativa/artística para landing pages experimentales con componentes animados tipo DynamicIsland
+- **Theloternet**: Extraer tokens de diseño (colores, fuentes, espaciado) de Theloternet como caso real de producto para inspirar vibe coding
+- **Wireframe3D**: Renderiza solo aristas (wireframe) de geometrías complejas con Three.js; anima rotación y 'draw' de líneas (stroke-dashoffset) para efecto construcción
+- **Wise design system**: Usar el design system de Wise (fintech) como referencia madura de tokens de color, tipografía Inter, espaciado y componentes para replicar patrones UI bancarios en proyectos propios ([fuente](https://styles.refero.design/style/367c0c6e-73a7-441c-a8ff-91d139ac60dc))
+<!-- guia:fin -->

@@ -1,0 +1,8 @@
+{% if tareas %}
+    <ul class="lista-acciones">
+      {% for t in tareas %}
+      <li><span class="hora">{{ t.actualizada[5:16] }}</span> <strong>{{ t.id }}</strong> {{ t.titulo }}
+          <span class="insignia-texto">{{ t.estado_real }}</span></li>
+      {% endfor %}
+    </ul>
+    {% else %}<p class="vacio">Ninguna tarea todavía.</p>{% endif %}

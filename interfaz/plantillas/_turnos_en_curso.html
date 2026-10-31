@@ -1,0 +1,94 @@
+{# T231 (28/09): turnos EN MARCHA, EN COLA y PARADOS con su control individual. Lo usan /turnos y el Centro.
+   Las acciones no cambian este bloque directamente (hx-swap="none"): responden con un mensaje en #msg-turnos y
+   un evento que hace que cada vista abierta se relea del disco. #}
+{% macro posponer(id) %}
+<details class="posponer">
+  <summary class="boton-sutil">Posponer…</summary>
+  <div class="posponer-opciones" role="group" aria-label="Posponer">
+    {% for op, texto in [("15m", "15 min"), ("1h", "1 hora"), ("manana", "Mañana a la misma hora")] %}
+    <form hx-post="/turnos/{{ id }}/posponer" hx-swap="none" hx-disabled-elt="find button">
+      <input type="hidden" name="opcion" value="{{ op }}"><button type="submit" class="boton-sutil">{{ texto }}</button>
+    </form>
+    {% endfor %}
+    <form hx-post="/turnos/{{ id }}/posponer" hx-swap="none" hx-disabled-elt="find button" class="posponer-hora">
+      <input type="hidden" name="opcion" value="hora">
+      <label>A las <input type="time" name="hora" required></label>
+      <button type="submit" class="boton-sutil">Posponer</button>
+    </form>
+  </div>
+</details>
+{% endmacro %}
+{% macro mover(id, hacia, texto, etiqueta) %}
+<form hx-post="/turnos/cola/{{ id }}/mover" hx-swap="none" hx-disabled-elt="find button">
+  <input type="hidden" name="hacia" value="{{ hacia }}">
+  <button type="submit" class="boton-sutil" aria-label="{{ etiqueta }}">{{ texto }}</button>
+</form>
+{% endmacro %}
+<div class="en-curso">
+  {% if desactivados %}
+  <div class="aviso-pausa" role="status">
+    <p><strong><span aria-hidden="true">⏸</span> TODOS los turnos están en pausa</strong> ({{ desactivados }}).
+      No arranca ninguno, ni programado ni a mano.</p>
+    <button type="button" class="boton-grande" hx-post="/turnos/reanudar-todos" hx-swap="none">Reanudar todos los turnos</button>
+  </div>
+  {% endif %}
+
+  <h3>En marcha</h3>
+  {% if marcha %}
+  <div class="en-curso-fila">
+    <p><strong>{{ marcha.nombre }}</strong> · {{ "parando…" if marcha.parando else (marcha.paso or "arrancando") }} ·
+      {{ marcha.transcurrido }}{% if marcha.tarea %}<br><span class="nota">Trabajando en {{ marcha.tarea }}</span>{% endif %}</p>
+    <div class="acciones-fila">
+      {% if not marcha.parando %}
+      <button type="button" hx-post="/turnos/marcha/parar" hx-swap="none"
+              hx-confirm="¿Parar «{{ marcha.nombre }}»? Termina lo que tiene entre manos y no empieza nada más (la PARADA general no se toca).">Parar este turno</button>
+      {{ posponer(marcha.turno) }}
+      {% endif %}
+    </div>
+  </div>
+  {% else %}
+  <p class="nota">Ningún turno en marcha.</p>
+  {% endif %}
+
+  <h3>En cola</h3>
+  {% if cola %}
+  <ol class="lista-cola">
+    {% for c in cola %}
+    <li class="en-curso-fila">
+      <p>{{ c.pos }}º <strong>{{ c.nombre }}</strong> · pedido {{ c.pedido }}{% if c.manual %} (a mano){% endif %}
+        {% if c.pospuesto %}· <strong>pospuesto hasta {{ c.pospuesto }}</strong>{% endif %}</p>
+      <div class="acciones-fila">
+        {% if c.pospuesto %}
+        <button type="button" hx-post="/turnos/{{ c.turno }}/reanudar" hx-swap="none">Reanudar ahora</button>
+        {% endif %}
+        {% if not loop.first %}
+        {{ mover(c.turno, "primero", "Pasar el primero", "Pasar " ~ c.nombre ~ " el primero") }}
+        {{ mover(c.turno, "arriba", "↑ Subir", "Subir " ~ c.nombre) }}
+        {% endif %}
+        {% if not loop.last %}{{ mover(c.turno, "abajo", "↓ Bajar", "Bajar " ~ c.nombre) }}{% endif %}
+        <button type="button" class="boton-sutil" hx-post="/turnos/cola/{{ c.turno }}/quitar" hx-swap="none"
+                hx-confirm="¿Quitar «{{ c.nombre }}» de la cola? No se ejecutará esta vez.">Quitar de la cola</button>
+        {{ posponer(c.turno) }}
+      </div>
+    </li>
+    {% endfor %}
+  </ol>
+  {% else %}
+  <p class="nota">Nada esperando.</p>
+  {% endif %}
+
+  {% if parados %}
+  <h3>Parados hace poco</h3>
+  <ul class="lista-cola">
+    {% for p in parados %}
+    <li class="en-curso-fila">
+      <p><strong>{{ p.nombre }}</strong> · parado {{ p.cuando_txt }}</p>
+      <div class="acciones-fila">
+        <button type="button" hx-post="/turnos/{{ p.turno }}/reanudar" hx-swap="none">Reanudar ahora</button>
+        <button type="button" class="boton-sutil" hx-post="/turnos/parados/{{ p.turno }}/descartar" hx-swap="none">Descartar</button>
+      </div>
+    </li>
+    {% endfor %}
+  </ul>
+  {% endif %}
+</div>

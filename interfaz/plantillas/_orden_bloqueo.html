@@ -1,0 +1,9 @@
+{# Aviso de ordenes bloqueadas. Es lo UNICO que se repinta al cambiar la PARADA: el formulario no
+   se reemplaza (se perderia lo escrito); nexo.js le pone/quita `disabled` segun data-activa. #}
+<div id="bloqueo-orden" data-activa="{{ '1' if parada.activa else '0' }}"
+     hx-get="/ordenes/bloqueo" hx-trigger="nexo:parada from:body, nexo:reconciliar from:body" hx-swap="outerHTML">
+{% if parada.activa %}
+  <p class="nota nota-bloqueo" role="note"><span aria-hidden="true">■</span> <strong>Órdenes bloqueadas:</strong>
+    NEXO está PARADO ({{ parada.motivo }}). Pulsa «Seguir» arriba para volver a dar órdenes.</p>
+{% endif %}
+</div>

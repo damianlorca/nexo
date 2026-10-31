@@ -1,0 +1,103 @@
+{# T231: tabla de turnos releida del disco. En movil se apila (tabla-apilable). #}
+{% if aviso %}<p class="nota nota-aviso" role="status">{{ aviso }}</p>{% endif %}
+{% if error %}<p class="nota nota-bloqueo" role="alert">{{ error }}</p>{% endif %}
+
+<div class="turnos-general">
+  {% if desactivados %}
+  <p><strong><span aria-hidden="true">⏸</span> TODOS los turnos en pausa</strong> — {{ desactivados }}. No arranca
+    ninguno, ni programado ni a mano. Cada turno conserva su activo/inactivo para cuando reanudes.</p>
+  <form hx-post="/turnos/interruptor" hx-target="#turnos-tabla" hx-disabled-elt="find button">
+    <input type="hidden" name="accion" value="on"><button type="submit" class="boton-grande">Reanudar todos los turnos</button>
+  </form>
+  {% else %}
+  <p><strong><span aria-hidden="true">▶</span> Turnos en funcionamiento.</strong>
+    {% if parada.activa %}<span class="nota-bloqueo">Pero la PARADA está puesta: no arranca ninguno.</span>{% endif %}</p>
+  <form hx-post="/turnos/interruptor" hx-target="#turnos-tabla" hx-disabled-elt="find button"
+        hx-confirm="¿Pausar TODOS los turnos? No arrancará ninguno hasta que los reanudes. Para uno solo, usa «Desactivar este» en su fila.">
+    <input type="hidden" name="accion" value="off"><button type="submit" class="boton-sutil">Pausar TODOS los turnos</button>
+  </form>
+  {% endif %}
+</div>
+
+<div class="turnos-trabajar" id="trabajar">
+  <form hx-post="/turnos/trabajar" hx-target="#turnos-tabla" hx-disabled-elt="find button"
+        hx-confirm="¿Trabajar ahora? Encola los turnos que tengan trabajo y usa el PC y las IAs web.">
+    <label for="trabajar-horas">Trabajar ahora</label>
+    <select name="horas" id="trabajar-horas">
+      <option value="0">una pasada</option><option value="1">1 h</option>
+      <option value="2">2 h</option><option value="3">3 h</option>
+    </select>
+    <button type="submit" class="boton-grande">Trabajar ahora</button>
+  </form>
+  {% if trabajo.activo %}
+  <p class="nota nota-aviso" role="status"><strong>Modo trabajo</strong> hasta las {{ trabajo.hasta }}: cuando se vacía
+    la cola vuelve a encolar mientras haya trabajo (máx. 3 tandas por turno).</p>
+  <form hx-post="/turnos/trabajar/parar" hx-target="#turnos-tabla" hx-disabled-elt="find button">
+    <button type="submit" class="boton-sutil">Dejar de trabajar</button>
+    <span class="nota">Solo quita el modo; no para lo que está en marcha ni vacía la cola.</span>
+  </form>
+  {% endif %}
+  {% if trabajo.cuando %}
+  <details class="trabajo-ultimo"{% if trabajo.encolados or trabajo.saltados %} open{% endif %}>
+    <summary>Última pasada ({{ trabajo.cuando }}){% if trabajo.fin %} · modo terminado: {{ trabajo.fin }}{% endif %}</summary>
+    {% if trabajo.encolados %}<p><strong>Encolados:</strong> {{ trabajo.encolados|join(", ") }}</p>{% endif %}
+    {% if trabajo.saltados %}<ul>{% for s in trabajo.saltados %}<li>{{ s.turno }}: {{ s.motivo }}</li>{% endfor %}</ul>{% endif %}
+  </details>
+  {% endif %}
+</div>
+
+{% if marcha %}
+<p class="nota nota-aviso"><strong>En marcha:</strong> {{ marcha.nombre }} · {{ marcha.paso or "arrancando" }}
+  {% if marcha.tarea %}· {{ marcha.tarea }}{% endif %}</p>
+{% endif %}
+{% for e in errores %}<p class="nota nota-bloqueo">{{ e.cuando|replace("T", " ") }}: {{ e.error }}</p>{% endfor %}
+
+{% if not filas %}
+<p class="vacio">No hay turnos. Pulsa «Añadir turno».</p>
+{% else %}
+<div class="tabla-desplazable">
+<table class="tabla tabla-apilable tabla-turnos">
+  <thead><tr>
+    <th scope="col">Turno</th><th scope="col">Estado</th><th scope="col">Instrucciones</th><th scope="col">Cuándo</th>
+    <th scope="col">Tope</th><th scope="col">Aviso</th><th scope="col">Próxima</th><th scope="col">Último resultado</th>
+    <th scope="col"><span class="solo-lector">Acciones</span></th>
+  </tr></thead>
+  <tbody>
+  {% for t in filas %}
+  <tr{% if not t.activo %} class="turno-inactivo"{% endif %}>
+    <th scope="row" data-etiqueta="Turno">{{ t.nombre }}
+      {% if t.en_marcha %}<span class="chip chip-marcha">en marcha</span>{% elif t.en_cola %}<span class="chip">en cola ({{ t.en_cola }}º)</span>{% endif %}</th>
+    <td data-etiqueta="Estado"><span class="estado-turno{% if t.activo %} estado-turno-on{% endif %}">{{ "● Activo" if t.activo else "○ Inactivo" }}</span></td>
+    <td data-etiqueta="Instrucciones">{{ t.instrucciones_texto }}{% if t.tareas %} <span class="nota">({{ t.tareas|join(", ") }})</span>{% endif %}</td>
+    <td data-etiqueta="Cuándo">{{ t.dias_texto }} · {{ t.horas|join(", ") }}
+      {% if t.choca %}<br><span class="nota-bloqueo" role="note">⚠ Coincide con {{ t.choca|join(", ") }}: el segundo esperará en cola.</span>{% endif %}</td>
+    <td data-etiqueta="Tope">{{ t.max_tareas }} tarea(s) · {{ t.max_minutos }} min</td>
+    <td data-etiqueta="Aviso">{{ "sí" if t.avisar else "no" }}</td>
+    <td data-etiqueta="Próxima">{{ t.proxima }}{% if t.saltada %}<br><span class="nota">(se salta la del {{ t.saltada }})</span>{% endif %}</td>
+    <td data-etiqueta="Último resultado">{{ t.ultimo }}</td>
+    <td data-etiqueta="Acciones" class="acciones-fila">
+      <form hx-post="/turnos/{{ t.id }}/activo" hx-target="#turnos-tabla" hx-disabled-elt="find button">
+        <input type="hidden" name="valor" value="{{ 'no' if t.activo else 'si' }}">
+        <button type="submit" class="boton-sutil">{{ "Desactivar este" if t.activo else "Activar este" }}</button>
+      </form>
+      {% if t.activo %}
+      <form hx-post="/turnos/{{ t.id }}/saltar" hx-target="#turnos-tabla" hx-disabled-elt="find button">
+        {% if t.saltada %}<input type="hidden" name="deshacer" value="1">
+        <button type="submit" class="boton-sutil">No saltar</button>
+        {% else %}<button type="submit" class="boton-sutil">Saltar la próxima</button>{% endif %}
+      </form>
+      {% endif %}
+      <button type="button" class="boton-sutil" hx-get="/turnos/{{ t.id }}/editar" hx-target="#turno-form">Editar</button>
+      <button type="button" class="boton-sutil" hx-post="/turnos/{{ t.id }}/duplicar" hx-target="#turnos-tabla">Duplicar</button>
+      <button type="button" class="boton-sutil" hx-post="/turnos/{{ t.id }}/borrar" hx-target="#turnos-tabla"
+              hx-confirm="¿Borrar el turno «{{ t.nombre }}»? Sale de la tabla y queda archivado (se puede recuperar).">Borrar</button>
+      <button type="button" hx-post="/turnos/{{ t.id }}/lanzar" hx-target="#turnos-tabla" hx-disabled-elt="this"
+              hx-confirm="¿Lanzar «{{ t.nombre }}» ahora? Usa el PC y las IAs web unos minutos.">Lanzar ya</button>
+    </td>
+  </tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+{% endif %}
+{% if limpiar_form %}<div id="turno-form" hx-swap-oob="innerHTML"></div>{% endif %}

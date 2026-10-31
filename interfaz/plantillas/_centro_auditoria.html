@@ -1,0 +1,35 @@
+{# T189: cada delegacion a otra IA pasa el checklist del auditor (nucleo/auditor.py). BLOQUEADA = no vale. #}
+{% if bloqueadas %}
+<p class="estado-parado" role="status"><strong>{{ bloqueadas }} {{ "delegaciones" if bloqueadas != 1 else "delegación" }} BLOQUEADA{{ "S" if bloqueadas != 1 else "" }} por el auditor.</strong> No se dan por buenas hasta que Claude las revise.</p>
+{% endif %}
+{% if en_espera %}
+<p class="estado-parado" role="status"><strong>{{ en_espera }} {{ "delegaciones" if en_espera != 1 else "delegación" }} esperando una decisión.</strong></p>
+{% endif %}
+{% if auditorias %}
+<ul class="lista-acciones">
+  {% for a in auditorias %}
+  <li>
+    <span class="hora">{{ a.cuando[5:16] }}</span>
+    <strong class="{{ 'estado-parado' if a.resultado != 'APROBADA' and not a.revisado else 'estado-activo' }}">{{ a.resultado }}</strong>
+    {{ a.tarea }} · {{ a.titulo[:70] }}
+    {% if a.revisado %}· revisada por Claude: <strong>{{ a.revisado.veredicto }}</strong> <span class="recorte">{{ a.revisado.motivo[:140] }}</span>{% endif %}
+    {% if a.borrador %}· <a href="/borrador?f={{ a.borrador|urlencode }}">borrador</a>{% endif %}
+    {% if a.fallos and not a.revisado %}
+    <ul>
+      {% for k in a.fallos %}<li>falla {{ k }}: {{ a.puntos[k].detalle }}</li>{% endfor %}
+    </ul>
+    {% endif %}
+  </li>
+  {% endfor %}
+</ul>
+{% else %}
+<p class="vacio">Todavía no hay delegaciones auditadas.</p>
+{% endif %}
+{% if avisos %}
+<h3>Últimos avisos</h3>
+<ul class="lista-acciones">
+  {% for v in avisos %}
+  <li><span class="hora">{{ v.cuando[5:16] }}</span> <strong>{{ v.titulo }}</strong> <code class="recorte">{{ v.cuerpo }}</code></li>
+  {% endfor %}
+</ul>
+{% endif %}

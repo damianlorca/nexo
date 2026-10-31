@@ -1,0 +1,15 @@
+diff --git a/manos/servidor_mcp.py b/manos/servidor_mcp.py
+index 8e22803..ce31ebf 100644
+--- a/manos/servidor_mcp.py
++++ b/manos/servidor_mcp.py
+@@ -118,8 +118,8 @@ def _puerta(accion: str, detalle: str, nivel: Nivel, aprobacion_id: str, aprobad
+         f"DETALLE: {detalle[:300]}\n"
+         f"SOLICITUD: {s['id']} ({s['estado']}, vence {s['vence']})\n"
+         + ("aprobado=True ya no basta. " if aprobado else "")
+-        + "Damian decide fuera de este canal "
+-        f"(python -m nucleo.aprobaciones aprobar {s['id']}). "
++        + "Damian decide fuera de este canal, SOLO en la web de NEXO (Bandejas > Aprobaciones ambar), "
++        "donde la ve explicada; no le pidas comandos de PowerShell. "
+         f'Cuando este aprobada, repite la llamada con aprobacion_id="{s["id"]}".'
+     )
+ 

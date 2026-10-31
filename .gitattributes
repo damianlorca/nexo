@@ -1,0 +1,2 @@
+# Los .patch no se convierten de fin de linea: git apply necesita el contexto tal cual.
+documentacion/propuestas/*.patch -text

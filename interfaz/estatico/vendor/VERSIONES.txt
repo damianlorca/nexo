@@ -1,0 +1,21 @@
+JS de terceros servidos en local (CSP estricta: nada de CDN en tiempo de ejecucion).
+Descargados el 24/09/2026 de cdn.jsdelivr.net con permiso de Damian. SHA-256 (base64) comprobado
+contra el publicado por data.jsdelivr.com: coincide en los tres.
+
+fichero            paquete npm                        bytes  sha256 (base64)
+htmx.min.js        htmx.org@2.0.11/dist/htmx.min.js   52182  1v3HXyBOa976mbab8ebUrGm4o2T3eSn0XBNHa0AA9xc=
+sse.min.js         htmx-ext-sse@2.2.4/dist/sse.min.js  2853  mKRklt4MNgX7/9zpFnukJ73ZVTGE+D8UnCYYkaksATY=
+alpine-csp.min.js  @alpinejs/csp@3.17.4/dist/cdn.min.js 72198 DRjX+NeRDi4CEvDwVrEvUL68Ort9iNL3x8tMM2/kUZo=
+
+vis-network (T251, vista Grafo): la misma version que fija Graphify en su graph.html (Graphify-Labs/graphify,
+graphify/exporters/html.py la carga de unpkg; aqui va en local). Licencia doble Apache-2.0 / MIT (cabecera
+del propio fichero). Descargado el 28/09/2026 de cdn.jsdelivr.net por encargo de Damian; SHA-256 comprobado
+contra data.jsdelivr.com: coincide.
+
+vis-network.min.js vis-network@9.1.6/standalone/umd/vis-network.min.js  702611  V2u4h3M+sBu1LudbkO9G2BhFTeX921thb7iimNMHyhI=
+
+OJO: el build standalone mete 7 <style> con su CSS. La CSP los deja pasar por hash exacto (seguridad.py,
+ESTILOS_VIS_NETWORK), nunca con 'unsafe-inline'. Si se cambia la version, hay que recalcular esos hashes
+(el test interfaz/tests/test_grafo.py falla si no coinciden).
+
+Comprobar: openssl dgst -sha256 -binary <fichero> | openssl base64

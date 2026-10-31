@@ -1,0 +1,247 @@
+Propuesta N05 (T024 / L6) para nucleo/permisos.py (BLINDADO: no aplicado).
+Autor: sesion en la nube, 25/09/2026. Informe: documentacion/nube/N05_2026-09-25.md
+
+Que cambia:
+  1. Falsos positivos de T024: una linea SIMPLE (sin bloques, subexpresiones,
+     redirecciones, variables, escapes ni llamadas) en la que TODAS las
+     ordenes son de argumentos inertes (echo/Write-Output/Write-Host,
+     Select-String/sls/findstr/rg/grep, Get-Command/gcm, Get-Help/help,
+     Test-Path y git commit/log/show/diff/status/add/blame) sale VERDE.
+  2. Cualquier otra linea se clasifica EXACTAMENTE como antes (misma
+     funcion, renombrada a _nivel_linea_entera).
+  3. K1 por la shell: si el comando menciona secretos.toml es ROJO.
+  4. Quita las marcas xfail de tests/test_permisos_argumentos.py.
+
+Por que es seguro: solo relaja, y solo lineas que no pueden ejecutar nada de
+lo que llevan como texto. Ante cualquier duda (comillas sin cerrar, $, (),
+{}, >, &, `) cae al comportamiento anterior.
+
+Evidencia (Linux): con el patch, tests/ 51 passed. interfaz/tests y
+prueba_guardia_python.py dan exactamente el mismo resultado con y sin patch.
+
+Este .patch esta en LF; nucleo/permisos.py esta en CRLF. Es para LEER el diff.
+Aplicar en el PC (despues de revisar el diff), de una de estas dos formas:
+  a) Recomendada: sustituir nucleo/permisos.py por
+     documentacion/propuestas/N05_permisos.py convertido a CRLF, y quitar las
+     marcas xfail de tests/test_permisos_argumentos.py (segunda parte de este diff).
+  b) git apply --ignore-whitespace documentacion/propuestas/N05.patch
+     (aplica, pero deja permisos.py con finales de linea mezclados: normalizar a CRLF).
+Despues: .venv\Scripts\python.exe -m pytest tests -q   -> 51 passed
+
+--- a/nucleo/permisos.py
++++ b/nucleo/permisos.py
+@@ -190,9 +190,140 @@
+     return Nivel.AMBAR
+ 
+ 
+-def nivel_de_comando(comando: str) -> Nivel:
+-    """Que nivel tiene este comando de shell."""
++# ---------------------------------------------------------------
++# T024 / L6: el texto de los argumentos (propuesta N05, 25/09/2026)
++# ---------------------------------------------------------------
++#
++# Antes se buscaban los patrones en la linea ENTERA, asi que un
++# 'git commit -m "instale winget"' salia ambar y un
++# 'Get-Help Remove-Item' salia rojo. Arreglarlo "en general" es
++# peligroso: afinar puede dejar pasar lo que hoy se para. Por eso el
++# cambio es de lista blanca y va en una sola direccion:
++#
++#   - Solo se relaja una linea SIMPLE (sin bloques, subexpresiones,
++#     redirecciones ni escapes) en la que TODAS las ordenes son de
++#     argumentos inertes: ordenes que solo muestran o buscan texto y
++#     no ejecutan nada de lo que reciben.
++#   - Cualquier otra linea se mira exactamente igual que antes.
++#   - Si hay duda al partir la linea (comillas sin cerrar...), se
++#     mira igual que antes.
++#
++# K1 tambien por la shell: mencionar secretos.toml en un comando es
++# rojo siempre, igual que leerlo con las herramientas de archivos.
++
++SECRETOS_EN_COMANDO = re.compile(r"secretos\.toml", re.IGNORECASE)
++
++# Ordenes cuyos argumentos son texto y nada mas.
++ORDENES_INERTES = frozenset({
++    "echo", "write-output", "write-host",
++    "select-string", "sls", "findstr", "rg", "grep",
++    "get-command", "gcm", "get-help", "help",
++    "test-path",
++})
++
++# git solo con subordenes que no ejecutan nada de la linea. Fuera a
++# proposito: grep (-O abre un programa), las que aceptan -c antes de
++# la suborden y cualquier otra que no este aqui.
++GIT_INERTES = frozenset({
++    "commit", "log", "show", "diff", "status", "add", "blame",
++})
++
++# Algo de esto fuera de comillas simples y la linea deja de ser
++# simple: bloques, subexpresiones, redirecciones, escapes, llamadas.
++_NO_SIMPLE = re.compile(r"[{}()`<>&$@]")
++
++
++def _partir_simple(comando: str) -> list[list[str]] | None:
++    """Parte una linea simple en ordenes y palabras.
++
++    Devuelve None si la linea no es simple o hay cualquier duda:
++    entonces se mira la linea entera, como siempre.
++    """
++
++    ordenes: list[list[str]] = [[]]
++    palabra: list[str] = []
++    en_palabra = False
++    i, n = 0, len(comando)
++
++    def cerrar() -> None:
++        nonlocal palabra, en_palabra
++        if en_palabra:
++            ordenes[-1].append("".join(palabra))
++        palabra, en_palabra = [], False
++
++    while i < n:
++        c = comando[i]
++
++        if c == "'":
++            fin = comando.find("'", i + 1)
++            if fin < 0:
++                return None
++            palabra.append(comando[i + 1:fin])
++            en_palabra = True
++            i = fin + 1
++            continue
++
++        if c == '"':
++            fin = comando.find('"', i + 1)
++            if fin < 0:
++                return None
++            dentro = comando[i + 1:fin]
++            # En comillas dobles PowerShell expande $() y escapes.
++            if _NO_SIMPLE.search(dentro):
++                return None
++            palabra.append(dentro)
++            en_palabra = True
++            i = fin + 1
++            continue
++
++        if _NO_SIMPLE.match(c):
++            return None
++
++        if c in ";|\n\r":
++            cerrar()
++            ordenes.append([])
++            i += 1
++            continue
++
++        if c.isspace():
++            cerrar()
++            i += 1
++            continue
++
++        palabra.append(c)
++        en_palabra = True
++        i += 1
++
++    cerrar()
++
++    ordenes = [o for o in ordenes if o]
++
++    return ordenes or None
++
++
++def _es_inerte(palabras: list[str]) -> bool:
++    nombre = palabras[0].lower()
++
++    if nombre.endswith(".exe"):
++        nombre = nombre[:-4]
++
++    if nombre == "git":
++        return len(palabras) > 1 and palabras[1].lower() in GIT_INERTES
++
++    # rg --pre <programa> ejecuta ese programa con cada archivo.
++    if nombre == "rg" and any(p.lower().startswith("--pre") for p in palabras):
++        return False
++
++    return nombre in ORDENES_INERTES
++
++
++def _solo_ordenes_inertes(comando: str) -> bool:
++    ordenes = _partir_simple(comando)
+ 
++    return ordenes is not None and all(_es_inerte(o) for o in ordenes)
++
++
++def _nivel_linea_entera(comando: str) -> Nivel:
+     if ROJOS.search(comando) or BORRADO.search(comando):
+         return Nivel.ROJO
+ 
+@@ -202,6 +333,20 @@
+     return Nivel.VERDE
+ 
+ 
++def nivel_de_comando(comando: str) -> Nivel:
++    """Que nivel tiene este comando de shell."""
++
++    if SECRETOS_EN_COMANDO.search(comando):
++        return Nivel.ROJO
++
++    # T024: una linea simple de ordenes inertes no ejecuta nada de lo
++    # que lleva en los argumentos. Nada de lo demas cambia.
++    if _solo_ordenes_inertes(comando):
++        return Nivel.VERDE
++
++    return _nivel_linea_entera(comando)
++
++
+ def exigir(nivel: Nivel, accion: str, detalle: str = "") -> None:
+     """Corta la ejecucion si el nivel no permite seguir solo."""
+ 
+--- a/tests/test_permisos_argumentos.py
++++ b/tests/test_permisos_argumentos.py
+@@ -6,12 +6,11 @@
+ ambar o rojo por una palabra que solo es texto (git commit -m "instale
+ winget").
+ 
+-- FALSOS_POSITIVOS: hoy fallan -> xfail(strict=True). Si empiezan a pasar,
+-  pytest avisa: alguien cambio el filtro. documentacion/propuestas/N05.patch
+-  los arregla y quita la marca.
++- FALSOS_POSITIVOS: arreglados por la propuesta N05 (lista blanca de
++  ordenes con argumentos inertes).
+ - NO_REGRESION: pasan hoy y tienen que seguir pasando con cualquier arreglo.
+   Es lo que "afinar" no puede dejar escapar.
+-- SECRETOS: K1 por la shell. Hoy sale VERDE; con N05.patch, ROJO.
++- SECRETOS: K1 por la shell: mencionar secretos.toml es ROJO.
+ """
+ from __future__ import annotations
+ 
+@@ -21,10 +20,6 @@
+ 
+ V, A, R = Nivel.VERDE, Nivel.AMBAR, Nivel.ROJO
+ 
+-HOY_FALLA = pytest.mark.xfail(
+-    strict=True, reason="T024: hoy sale ambar/rojo por el texto de un argumento")
+-
+-
+ FALSOS_POSITIVOS = [
+     'git commit -m "instale winget"',
+     'git commit -m "quitar rm -rf del script"',
+@@ -40,12 +35,11 @@
+ 
+ 
+ @pytest.mark.parametrize("comando", FALSOS_POSITIVOS)
+-@HOY_FALLA
+ def test_falso_positivo_sale_verde(comando):
+     assert nivel_de_comando(comando) is V
+ 
+ 
+-# (comando, nivel exacto). Todos salen asi HOY y deben seguir igual.
++# (comando, nivel exacto). Salian asi antes de N05 y deben seguir igual.
+ NO_REGRESION = [
+     # Ordenes normales de trabajo: verde.
+     ("git status", V),
+@@ -118,7 +112,6 @@
+ 
+ 
+ @pytest.mark.parametrize("comando", SECRETOS)
+-@pytest.mark.xfail(strict=True, reason="K1 por la shell: hoy sale VERDE")
+ def test_secretos_por_shell_es_rojo(comando):
+     assert nivel_de_comando(comando) is R
+ 

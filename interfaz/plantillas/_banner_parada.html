@@ -1,0 +1,9 @@
+<div id="banner-parada"{% if oob %} hx-swap-oob="true"{% endif %}>
+{% if parada.activa %}
+  <div class="banner banner-parada">
+    <strong><span aria-hidden="true">■</span> NEXO está PARADO</strong>
+    — motivo: {{ parada.motivo }}{% if parada.quien %} · por {{ parada.quien }}{% endif %}{% if parada.cuando %} · desde {{ parada.cuando }}{% endif %}.
+    Las órdenes están bloqueadas; el resto de la web funciona. Para reanudar, «Seguir» arriba.
+  </div>
+{% endif %}
+</div>

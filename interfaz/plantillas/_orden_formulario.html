@@ -1,0 +1,23 @@
+{% include "_orden_bloqueo.html" %}
+<form class="form-orden" hx-post="/orden" hx-target="#ordenes-sesion" hx-swap="afterbegin"
+      hx-disabled-elt="find button[type=submit]" data-limpiar>
+  <fieldset{% if parada.activa %} disabled{% endif %}>
+    <legend class="solo-lector">Orden para NEXO</legend>
+    <label for="texto-orden">Qué quieres que haga NEXO</label>
+    <textarea id="texto-orden" name="texto" rows="4" minlength="4" maxlength="4000" required
+              placeholder="Ej.: investiga qué es X y si nos sirve"></textarea>
+    <div class="modos" role="radiogroup" aria-labelledby="t-modo">
+      <span id="t-modo" class="etiqueta-grupo">Cuándo</span>
+      <label><input type="radio" name="modo" value="instantanea" checked>
+        <strong>Ahora</strong> — la apunta y, si es resumen/redacción/investigación, hace ya el borrador con revisor (puede tardar minutos)</label>
+      <label><input type="radio" name="modo" value="bloque">
+        <strong>Para más tarde</strong> — solo la apunta y la clasifica; la trabajará un turno</label>
+    </div>
+    <div class="fila-botones">
+      <button type="submit">Enviar orden</button>
+      <span class="htmx-indicator">Enviando…</span>
+    </div>
+  </fieldset>
+  <div id="error-orden" aria-live="assertive"></div>
+  <p class="nota">Código, arquitectura o tocar el PC nunca se ejecutan desde aquí: quedan encolados para Claude.</p>
+</form>

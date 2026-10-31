@@ -1,0 +1,118 @@
+{# T230: la parte de arriba del Centro, en palabras normales. Se repinta sola con los eventos (SSE). #}
+{# Lo importante arriba: primero si NEXO funciona, luego lo que necesita a Damian, luego el resto. #}
+<section class="panel bc-estado-nexo" aria-labelledby="bc-nexo">
+  <h2 id="bc-nexo" class="solo-lector">Estado de NEXO</h2>
+  {% if parada.activa %}
+  <p class="bc-titular bc-mal"><span aria-hidden="true">■</span> Nexo parado <span class="nota">desde {{ hace(parada.cuando) }}</span></p>
+  <p>Motivo: {{ parada.motivo }}. No empieza ningún trabajo automático hasta que pulses «Seguir» arriba.</p>
+  {% else %}
+  <p class="bc-titular bc-bien"><span aria-hidden="true">●</span> Nexo funcionando</p>
+  <p>{{ cuenta.en_marcha }} tarea{{ "s" if cuenta.en_marcha != 1 }} en marcha, {{ cuenta.por_hacer }} por hacer,
+     {{ cuenta.atascadas }} atascada{{ "s" if cuenta.atascadas != 1 }} y {{ cuenta.sin_comprobar }} hecha{{ "s" if cuenta.sin_comprobar != 1 }} que falta comprobar.{% if cuenta.aparcadas %} <a href="/tareas?estado=aparcadas">{{ cuenta.aparcadas }} aparcada{{ "s" if cuenta.aparcadas != 1 }}</a> hasta que vuelvan.{% endif %}</p>
+  {% endif %}
+  {% if cierre %}<p class="nota-aviso">Has pedido cerrar el turno: NEXO termina lo que tiene entre manos y no empieza nada nuevo.</p>{% endif %}
+</section>
+
+<section class="panel" aria-labelledby="bc-atencion">
+  <h2 id="bc-atencion">Necesita tu atención {% if n_atencion %}<span class="bc-contador">{{ n_atencion }}</span>{% endif %}</h2>
+  {% if not n_atencion %}
+  <p class="vacio">Nada. Todo lo pendiente lo lleva Nexo.</p>
+  {% endif %}
+
+  {% if te_tocan %}
+  <h3>Te toca a ti ({{ n_te_tocan }})</h3>
+  <ul class="bc-avisos">
+    {% for v in te_tocan %}
+    <li class="bc-aviso bc-aviso-tuyo">
+      <a href="/tareas/{{ v.t.id }}"><strong>{{ v.t.id }} · {{ v.t.titulo }}</strong></a>
+      {% if v.resumen.texto %}<p>{{ v.resumen.texto }}</p>{% endif %}
+      <p class="bc-meta">{{ v.prioridad }}{% if v.plazo %} · {{ v.plazo }}{% endif %} · desde {{ v.creada }}</p>
+    </li>
+    {% endfor %}
+  </ul>
+  {% if n_te_tocan > te_tocan|length %}<p><a href="/tareas?depende=damian">Ver las {{ n_te_tocan }}</a></p>{% endif %}
+  {% endif %}
+
+  {% if chat_ok %}
+  <h3>Esperan tu OK en el chat de una tarea ({{ chat_ok|length }})</h3>
+  <ul class="bc-avisos">
+    {% for p in chat_ok %}
+    <li class="bc-aviso bc-aviso-tuyo">
+      <a href="/tareas/{{ p.tarea }}#chat-tarea"><strong>{{ p.tarea }} · {{ p.texto }}</strong></a>
+      <p class="bc-meta">Pedido {{ hace(p.cuando) }}. Se aprueba o no dentro de la tarea; si no contestas en 24 h, caduca.</p>
+    </li>
+    {% endfor %}
+  </ul>
+  {% endif %}
+
+  {% if abiertos %}
+  <h3>Trabajos de otras IAs frenados por el control de calidad ({{ abiertos|length }})</h3>
+  <ul class="bc-avisos">
+    {% for a in abiertos %}
+    <li class="bc-aviso bc-aviso-frenado">
+      <strong>{{ a.tarea }} · {{ a.titulo }}</strong> <span class="bc-cuando">{{ hace(a.cuando) }}</span>
+      <p>{{ a.que_paso }}{% if a.por_que %} Motivo: {{ a.por_que|join("; ") }}.{% endif %}</p>
+      <p><strong>Qué pasa ahora:</strong> {{ a.que_pasa }}</p>
+      <p class="bc-meta"><a href="/tareas/{{ a.tarea }}">Ver la tarea</a>{% if a.borrador %} · <a href="/borrador?f={{ a.borrador|urlencode }}">ver el trabajo entregado</a>{% endif %}</p>
+    </li>
+    {% endfor %}
+  </ul>
+  {% endif %}
+
+  {% if cola.alerta %}
+  <h3>Revisión atrasada</h3>
+  <p class="bc-aviso bc-aviso-frenado">Hay {{ cola.pendientes }} trabajo{{ "s" if cola.pendientes != 1 }} esperando a que Claude los revise (el más antiguo, de hace {{ "%.0f"|format(cola.mas_antigua) }} días).
+    Mientras tanto no se aplica ni se cierra nada de eso. <strong>Qué hacer:</strong> abrir una sesión de Claude para revisarlos.</p>
+  {% endif %}
+
+  {% if altavoz and not altavoz.visible %}
+  <h3>Altavoz</h3>
+  <p class="bc-aviso">{{ altavoz.texto }}. El brief por voz no sonará hasta que lo vea; lo sigo buscando cada vez más espaciado{% if altavoz.fallos %} ({{ altavoz.fallos }} búsqueda{{ "s" if altavoz.fallos != 1 }} sin verlo){% endif %}.</p>
+  {% endif %}
+
+  {% if mal_asignadas %}
+  <h3>Tareas a tu nombre que no son tuyas</h3>
+  <p class="bc-aviso bc-aviso-frenado">El repaso de responsables ({{ hace(repaso_cuando) }}) ha encontrado {{ mal_asignadas|length }} tarea{{ "s" if mal_asignadas|length != 1 }} a tu nombre que no dependen de tus datos, tu dinero o tus cuentas, tus gustos ni tu presencia.
+    No salen en «Te toca»; en cuanto alguien las toque pasan solas a Claude.</p>
+  <ul class="bc-lista-simple">
+    {% for x in mal_asignadas[:5] %}<li><a href="/tareas/{{ x.id }}">{{ x.id }} · {{ x.titulo }}</a></li>{% endfor %}
+  </ul>
+  {% endif %}
+
+  {% if vencidas %}
+  <h3>Con fecha vencida</h3>
+  <ul class="bc-lista-simple">
+    {% for v in vencidas %}<li><a href="/tareas/{{ v.t.id }}">{{ v.t.id }} · {{ v.t.titulo }}</a> · {{ v.plazo }} · {{ v.quien|lower }}</li>{% endfor %}
+  </ul>
+  {% endif %}
+
+  {% if otros %}
+  <h3>Otros avisos</h3>
+  <ul class="bc-lista-simple">{% for x in otros %}<li>{{ x.titulo }} <span class="bc-cuando">{{ hace(x.cuando) }}</span></li>{% endfor %}</ul>
+  {% endif %}
+</section>
+
+<section class="panel" aria-labelledby="bc-movido">
+    <h2 id="bc-movido">Lo último que se ha movido</h2>
+    <ul class="bc-lista-simple">
+      {% for v in recientes %}
+      <li><span class="bc-cuando">{{ v.actualizada }}</span> <a href="/tareas/{{ v.t.id }}">{{ v.t.id }} · {{ v.t.titulo|truncate(80) }}</a> · {{ v.estado.nombre|lower }}</li>
+      {% endfor %}
+    </ul>
+    <p><a href="/tareas?orden=actualizada&amp;estado=todas">Ver todo por fecha</a></p>
+  </section>
+
+
+{% if resueltos %}
+<details class="panel">
+  <summary><strong>Resuelto recientemente</strong> ({{ resueltos|length }}) <span class="nota">ya no necesita nada</span></summary>
+  <ul class="bc-avisos">
+    {% for a in resueltos %}
+    <li class="bc-aviso bc-aviso-resuelto">
+      <strong>{{ a.tarea }} · {{ a.titulo }}</strong> <span class="bc-cuando">{{ hace(a.cuando) }}</span>
+      <p>{{ a.que_pasa }}.{% if a.motivo %} <span class="nota">{{ a.motivo|truncate(200) }}</span>{% endif %}</p>
+    </li>
+    {% endfor %}
+  </ul>
+</details>
+{% endif %}

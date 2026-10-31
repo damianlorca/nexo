@@ -1,0 +1,17 @@
+{# Noche 05/10: resultado de "Inicializar" (una pestana de fondo por proveedor web en el Chrome de NEXO). #}
+{% set etiquetas = {"activa": ("●", "Sesión activa"), "caducada": ("✖", "Sesión caducada: entra a mano en esa pestaña"),
+                    "desconocida": ("◐", "No se sabe (la página no cargó del todo)"), "error": ("✖", "No se pudo abrir")} %}
+{% if error %}
+<p class="estado-parado" role="status">{{ error }}</p>
+{% elif filas %}
+<ul class="lista-acciones" role="status">
+  {% for f in filas %}
+  {% set icono, texto = etiquetas.get(f.estado, ("?", f.estado)) %}
+  <li class="salud-{{ 'disponible' if f.estado == 'activa' else 'no_disponible' }}">
+    <strong>{{ f.nombre }}</strong>: <span aria-hidden="true">{{ icono }}</span> {{ texto }}
+    <span class="recorte">{{ f.url }}</span>{% if f.detalle %} · {{ f.detalle }}{% endif %}
+  </li>
+  {% endfor %}
+</ul>
+<p class="nota">Se abrieron como pestañas de fondo en la única ventana del Chrome de NEXO (no en tu Chrome personal).</p>
+{% endif %}

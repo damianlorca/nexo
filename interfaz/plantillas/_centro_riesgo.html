@@ -1,0 +1,82 @@
+{# T668 (F2 de la epica T664): matriz de riesgo. R1 = se hara salvo tu NO en 8 h (silencio = si; antes la juzga el tribunal); R2 = tu OK sobre
+   el diff real (7 dias, silencio = no; maximo 10); R3 = solo Claude + tu diff. POST a /riesgo/decidir. #}
+{% if aviso %}<p class="nota nota-aviso" role="status">{{ aviso }}</p>{% endif %}
+{% if error %}<p class="estado-parado" role="alert">{{ error }}</p>{% endif %}
+
+<h3>R1: se hará salvo que digas NO (8 h)</h3>
+{% if not m.r1 %}
+<p role="status">Nada pendiente de veto.</p>
+{% else %}
+<ul class="lista-limpia">
+  {% for x in m.r1 %}
+  <li class="panel">
+    {% if x.fusion %}
+    <p><strong>{{ x.tarea }}</strong> {{ x.titulo }}<br>{{ x.resumen }}<br>Tests dados por Claude + puerta en verde: <strong>se fusionará sola</strong> después de {{ x.vence }} salvo que la vetes.</p>
+    <details>
+      <summary>Ver el diff resumido</summary>
+      <pre class="tabla-desplazable">{{ x.diff_resumido }}</pre>
+    </details>
+    {% if x.estado_tribunal == "pendiente" %}<p class="nota">El tribunal la está juzgando (3 IAs); si no decide por unanimidad, te llega aquí con su opinión y corre tu plazo de 8 h.</p>{% elif x.tribunal.dictamenes %}<details><summary>Tribunal: {{ x.tribunal.motivo }}</summary><ul>{% for d in x.tribunal.dictamenes %}<li><strong>{{ d.voto }}</strong> ({{ d.id }}): {{ d.motivo }}</li>{% endfor %}</ul></details>{% endif %}
+    <form hx-post="/riesgo/decidir" hx-target="#panel-riesgo" hx-disabled-elt="find button">
+      <input type="hidden" name="id" value="{{ x.id }}">
+      <button type="submit" name="accion" value="aceptar">Aceptar</button>
+      <button type="submit" name="accion" value="denegar">Vetar</button>
+    </form>
+    {% else %}
+    <p><strong>{{ x.tarea }}</strong> {{ x.titulo }}<br>Se implementará salvo que digas NO antes de {{ x.vence }}.</p>
+    {% if x.estado_tribunal == "pendiente" %}<p class="nota">El tribunal la está juzgando (3 IAs); si no decide por unanimidad, te llega aquí con su opinión y corre tu plazo de 8 h.</p>{% elif x.tribunal.dictamenes %}<details><summary>Tribunal: {{ x.tribunal.motivo }}</summary><ul>{% for d in x.tribunal.dictamenes %}<li><strong>{{ d.voto }}</strong> ({{ d.id }}): {{ d.motivo }}</li>{% endfor %}</ul></details>{% endif %}
+    <form hx-post="/riesgo/decidir" hx-target="#panel-riesgo" hx-disabled-elt="find button">
+      <input type="hidden" name="id" value="{{ x.id }}">
+      <button type="submit" name="accion" value="aceptar">Aceptar</button>
+      <button type="submit" name="accion" value="denegar">NO</button>
+    </form>
+    {% endif %}
+  </li>
+  {% endfor %}
+</ul>
+{% endif %}
+
+{% if m.vetadas %}
+<h3>R1 que vetaste (puedes deshacerlo 7 días)</h3>
+<ul class="lista-limpia">
+  {% for x in m.vetadas %}
+  <li class="panel">
+    <p><strong>{{ x.tarea }}</strong> {{ x.titulo }}<br>Vetada el {{ x.vetada_el }}. Si la deshaces, vuelve a esperar tu NO 8 h (silencio = sí).</p>
+    <form hx-post="/riesgo/deshacer" hx-target="#panel-riesgo" hx-disabled-elt="find button">
+      <input type="hidden" name="id" value="{{ x.id }}">
+      <button type="submit">Deshacer veto</button>
+    </form>
+  </li>
+  {% endfor %}
+</ul>
+{% endif %}
+
+<h3>R2: esperan tu OK</h3>
+<p><strong>{{ m.r2|length }} / {{ m.r2_max }}</strong> esperando{% if m.r2_lleno %} · <strong>lleno: el implementador no produce más R2</strong>{% endif %}. Sin respuesta en 7 días = NO.</p>
+{% if m.r2 %}
+<ul class="lista-limpia">
+  {% for x in m.r2 %}
+  <li class="panel">
+    <p><strong>{{ x.tarea }}</strong> {{ x.titulo }}<br>{{ x.resumen }}{% if x.nivel_aprobado and x.nivel_aprobado != "R2" %}<br>Aprobada como {{ x.nivel_aprobado }}; el diff real es R2.{% endif %}<br>Vence {{ x.vence }}.</p>
+    <details>
+      <summary>Ver el diff resumido</summary>
+      <pre class="tabla-desplazable">{{ x.diff_resumido }}</pre>
+    </details>
+    <form hx-post="/riesgo/decidir" hx-target="#panel-riesgo" hx-disabled-elt="find button">
+      <input type="hidden" name="id" value="{{ x.id }}">
+      <button type="submit" name="accion" value="aprobar">Aprobar</button>
+      <button type="submit" name="accion" value="denegar">Rechazar</button>
+    </form>
+  </li>
+  {% endfor %}
+</ul>
+{% endif %}
+
+<h3>R3: solo Claude + tu diff</h3>
+{% if not m.r3 %}
+<p role="status">Ninguna tarea R3 abierta.</p>
+{% else %}
+<ul>
+  {% for t in m.r3 %}<li><a href="/tareas/{{ t.id }}">{{ t.id }}</a> {{ t.titulo }}</li>{% endfor %}
+</ul>
+{% endif %}

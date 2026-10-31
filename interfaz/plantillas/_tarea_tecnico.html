@@ -1,0 +1,19 @@
+{# T230: la capa para las IAs. Todo lo crudo sigue aqui, plegado. #}
+<details class="panel bc-tecnico">
+  <summary>Detalle técnico <span class="nota">(id, texto completo, etiquetas, puntuación)</span></summary>
+  <dl class="datos">
+    <dt>Id</dt><dd><code>{{ t.id }}</code></dd>
+    <dt>Estado real</dt><dd>{{ estado_real }} · <code>{{ t.estado }}</code>{% if t.testeado %} · testeada{% else %} · sin testear{% endif %}</dd>
+    <dt>Depende de</dt><dd><code>{{ t.depende }}</code></dd>
+    <dt>Puntuación</dt><dd>{{ puntuacion }} (imp {{ t.importancia }} · urg {{ urgencia_efectiva }}{% if urgencia_efectiva != t.urgencia %}, manda la fecha{% endif %} · dif {{ t.dificultad }} · coste {{ t.coste }})</dd>
+    <dt>Modelo sugerido</dt><dd>{% if claude %}{{ claude.texto }} ({{ modelo }}){% else %}— (no la trabaja la IA){% endif %}</dd>
+    <dt>Formato v2</dt><dd>quién <code>{{ t.quien }}</code>{% if t.motivo_quien %} ({{ t.motivo_quien }}){% endif %} · tipo <code>{{ t.tipo or '—' }}</code> · prioridad {{ t.prioridad }} · esfuerzo {{ t.esfuerzo }}{% if t.coste_eur is not none %} · {{ t.coste_eur }} €{% endif %}</dd>
+    {% if t.origen %}<dt>Origen</dt><dd>{% for k, x in t.origen.items() %}<code class="bc-etiqueta">{{ k }}: {{ x }}</code> {% endfor %}</dd>{% endif %}
+    {% if t.limite %}<dt>Límite</dt><dd>{{ t.limite }}{% if dias is not none %} ({% if dias < 0 %}vencida hace {{ -dias }} d{% elif dias == 0 %}vence hoy{% else %}quedan {{ dias }} d{% endif %}){% endif %}</dd>{% endif %}
+    {% if t.aparcada_hasta %}<dt>Aparcada hasta</dt><dd>{{ t.aparcada_hasta }}</dd>{% endif %}
+    {% if t.bloqueada_por %}<dt>Bloqueada por</dt><dd><code>{{ t.bloqueada_por }}</code></dd>{% endif %}
+    <dt>Fechas</dt><dd>creada {{ t.creada }} · actualizada {{ t.actualizada }}{% if t.cerrada %} · cerrada {{ t.cerrada }}{% endif %}</dd>
+    <dt>Etiquetas</dt><dd>{% for e in t.etiquetas or [] %}<code class="bc-etiqueta">{{ e }}</code> {% else %}—{% endfor %}</dd>
+  </dl>
+  {% if t.detalle %}<h3>Detalle completo</h3><p class="texto-largo">{{ t.detalle }}</p>{% endif %}
+</details>

@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% block titulo %}Centro{% endblock %}
+{% block encabezado %}{{ saludo or "Centro" }}{% endblock %}
+{% block contenido %}
+{# Centro v2 (T230, aprobado por Damian el 18/10; diseno en documentacion/diseno/CENTRO_V2.md). Cuatro cambios sobre
+   la opcion A: Te toca con botones en la tarjeta, Hecho desde tu ultima visita, En marcha en tres lineas y Avisos en
+   lugar de Radares (que siguen en /radares). En ordenador, dos columnas (izquierda Te toca + Hecho, derecha En marcha
+   + Avisos); en movil, una: Te toca, Hecho, En marcha, Avisos. Lo tecnico sigue en Mas -> Detalle tecnico. #}
+<div data-panel id="frase-estado" hx-get="/centro/frase"
+     hx-trigger="load, every 60s, nexo:parada from:body, nexo:tareas from:body throttle:3s, nexo:turno from:body, nexo:reconciliar from:body">
+  {% include "_esqueleto.html" %}
+</div>
+<p class="nota ultima-visita">{% if visita %}Tu última visita: {{ visita }}{% else %}Primera visita desde que existe este registro.{% endif %}</p>
+
+<div class="centro-columnas">
+<div class="centro-lado">
+<section class="centro-col" aria-labelledby="col-te-toca">
+  <h2 id="col-te-toca">Te toca</h2>
+  <div data-panel id="te-toca" hx-get="/centro/te_toca"
+       hx-trigger="load, every 60s, nexo:parada from:body, nexo:tareas from:body throttle:3s, nexo:aviso from:body, nexo:reconciliar from:body">
+    {% include "_esqueleto.html" %}
+  </div>
+</section>
+
+<section class="centro-col" aria-labelledby="col-hecho">
+  <h2 id="col-hecho">Hecho desde tu última visita</h2>
+  <div data-panel id="hecho" hx-get="/centro/hecho"
+       hx-trigger="load, every 120s, nexo:tareas from:body throttle:5s, nexo:reconciliar from:body">
+    {% include "_esqueleto.html" %}
+  </div>
+</section>
+
+</div>
+
+<div class="centro-lado">
+<section class="centro-col" aria-labelledby="col-en-marcha">
+  <h2 id="col-en-marcha">En marcha</h2>
+  <div data-panel id="en-marcha" hx-get="/centro/en_marcha"
+       hx-trigger="load, every 15s, nexo:turno from:body, nexo:turno_estado from:body, nexo:tareas from:body throttle:3s, nexo:reconciliar from:body">
+    {% include "_esqueleto.html" %}
+  </div>
+  <p class="em-botones"><a class="boton" href="/turnos#trabajar">Trabajar ahora</a></p>
+  {# Los botones de cada turno (parar, posponer, subir en la cola...) siguen aqui, plegados. #}
+  <details class="controles-turnos">
+    <summary>Controlar los turnos</summary>
+    <p id="msg-turnos" role="status"></p>
+    <div data-panel hx-get="/centro/turnos"
+         hx-trigger="load, every 10s, nexo:turno from:body, nexo:turno_estado from:body, nexo:reconciliar from:body"></div>
+  </details>
+  <form class="brief-centro" hx-post="/centro/brief" hx-target="#msg-brief" hx-swap="outerHTML" hx-disabled-elt="find button">
+    {# T697: lo mismo que "Hey Google, nexo", pero desde aqui: el resumen del dia en el altavoz. #}
+    <button type="submit" class="boton-sutil">Cuéntamelo ahora</button>
+  </form>
+  <p id="msg-brief" role="status"></p>
+</section>
+
+<section class="centro-col" aria-labelledby="col-avisos">
+  <h2 id="col-avisos">Avisos</h2>
+  <div data-panel id="avisos-centro" hx-get="/centro/avisos"
+       hx-trigger="load, every 120s, nexo:aviso from:body, nexo:reconciliar from:body">
+    {% include "_esqueleto.html" %}
+  </div>
+</section>
+</div>
+</div>
+
+<section class="panel centro-kuzushi" aria-labelledby="t-kuzushi">
+  {# T1011 fase 1 (apartado 4 de KUZUSHI_KAIZEN.md): solo el resumen semanal, fuera de las cuatro columnas del Centro
+     v2 (aprobado el 18/10) y pintado con la pagina (es semanal: no es un panel mas que cargar); los casos, en /kuzushi. #}
+  <h2 id="t-kuzushi">Kuzushi esta semana</h2>
+  {% if kuzushi %}{% with r = kuzushi %}{% include "_centro_kuzushi.html" %}{% endwith %}
+  {% else %}<p class="nota">No se ha podido leer el resumen de Kuzushi. Los casos, en <a href="/kuzushi">su página</a>.</p>{% endif %}
+</section>
+
+<div data-panel id="indicador-claude" hx-get="/centro/claude"
+     hx-trigger="load, every 30s, nexo:tareas from:body throttle:5s, nexo:reconciliar from:body"></div>
+
+<p class="nota">El texto pensado para las IAs (números de tarea, etiquetas, registros) está detrás de cada «Abrir» y en <a href="/tecnico">Más → Detalle técnico</a>. Los radares, en <a href="/radares">su pestaña</a>.</p>
+{% endblock %}

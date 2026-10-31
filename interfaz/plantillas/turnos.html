@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block titulo %}Turnos{% endblock %}
+{% block encabezado %}Turnos{% endblock %}
+{% block contenido %}
+{# T231 (rediseno 28/09): tabla de turnos. La lanza el planificador de NEXO, de uno en uno y en cola. #}
+<p class="nota">Un turno trabaja solo, sin Claude. Sea cual sea su plantilla, todo pasa por el OK absoluto, el auditor
+  y la cola de revisión de Claude; respeta la PARADA y <strong>nunca escribe código</strong>. Nunca corren dos a la vez:
+  si coinciden, el segundo espera en cola.</p>
+
+<section class="panel" aria-labelledby="t-en-curso">
+  <h2 id="t-en-curso">En marcha y en cola</h2>
+  <p id="msg-turnos" role="status"></p>
+  <div data-panel hx-get="/turnos/en-curso"
+       hx-trigger="load, every 10s, nexo:turno from:body, nexo:turno_estado from:body, nexo:reconciliar from:body">
+    {% include "_esqueleto.html" %}
+  </div>
+</section>
+
+<section class="panel" aria-labelledby="t-tabla">
+  <h2 id="t-tabla">Turnos</h2>
+  <div id="turnos-tabla" data-panel hx-get="/turnos/tabla"
+       hx-trigger="load, every 30s, nexo:turno from:body, nexo:turno_estado from:body, nexo:parada from:body, nexo:reconciliar from:body">
+    {% include "_esqueleto.html" %}
+  </div>
+  <div class="fila-botones">
+    <button type="button" hx-get="/turnos/nuevo" hx-target="#turno-form">Añadir turno</button>
+  </div>
+  <div id="turno-form" aria-live="polite"></div>
+</section>
+
+<section class="panel" aria-labelledby="t-textos">
+  <details>
+    <summary id="t-textos">Textos por defecto de las plantillas</summary>
+    <div id="turnos-textos">{% include "_turnos_textos.html" %}</div>
+  </details>
+</section>
+
+<section class="panel" aria-labelledby="t-resumen">
+  <h2 id="t-resumen">Qué han hecho los últimos turnos</h2>
+  <div data-panel hx-get="/turnos/resumen"
+       hx-trigger="load, nexo:turno from:body, nexo:aviso from:body throttle:2s, nexo:reconciliar from:body">
+    {% include "_esqueleto.html" %}
+  </div>
+</section>
+{% endblock %}

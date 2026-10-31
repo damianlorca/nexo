@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+{% block titulo %}Grafo{% endblock %}
+{% block encabezado %}Grafo{% endblock %}
+{% block contenido %}
+{# T251: grafo de NEXO al estilo Graphify. Los datos llegan de /grafo/datos y se dibujan y filtran en el
+   navegador (grafo.js + vis-network vendorizado). Los filtros viven en la URL: recargar o guardar el
+   enlace deja la misma vista. Sin JS no hay grafo: se dice y se enlaza a Tareas. #}
+<link rel="stylesheet" href="/estatico/grafo.css">
+<p class="grafo-intro">Cada punto es una tarea, un borrador, un turno o una IA; cada línea, una relación que NEXO ya tiene guardada.
+Pulsa un punto para ver su ficha. Con dos dedos (o la rueda) se acerca y se aleja.</p>
+<noscript><p class="banner banner-error">El grafo necesita JavaScript. La misma información está en <a href="/tareas">Tareas</a>.</p></noscript>
+
+<form id="grafo-filtros" class="bc-filtros panel" role="search" action="/grafo" method="get">
+  <label class="bc-buscar">Buscar
+    <input id="grafo-q" type="search" name="q" maxlength="100" placeholder="Número (T150) o palabras del título" autocomplete="off"
+           aria-controls="grafo-resultados" aria-describedby="grafo-ayuda-buscar">
+  </label>
+  <label>Estado
+    <select name="estado">
+      {% for clave, nombre in grupos %}<option value="{{ clave }}"{% if clave == "todas" %} selected{% endif %}>{{ nombre }}</option>{% endfor %}
+    </select>
+  </label>
+  <details class="bc-mas-filtros" id="grafo-mas">
+    <summary>Más filtros (tipo, tema, IA, fechas)</summary>
+    <div class="bc-filtros-extra">
+      <fieldset class="grafo-tipos">
+        <legend>Qué se ve</legend>
+        {% for clave, nombre in tipos.items() %}
+        <label class="grafo-check"><input type="checkbox" name="tipo" value="{{ clave }}" checked> <span class="grafo-forma grafo-forma-{{ clave }}" aria-hidden="true"></span> {{ nombre }}</label>
+        {% endfor %}
+      </fieldset>
+      <label>Tema
+        <select name="tema"><option value="">Cualquiera</option></select>
+      </label>
+      <label>IA
+        <select name="ia"><option value="">Cualquiera</option></select>
+      </label>
+      <label>Con actividad desde
+        <input type="date" name="desde">
+      </label>
+      <label>hasta
+        <input type="date" name="hasta">
+      </label>
+      <label class="grafo-check"><input type="checkbox" name="sueltos" value="1"> Mostrar también lo que no tiene relaciones</label>
+    </div>
+  </details>
+  <div class="bc-botones"><a href="/grafo" class="bc-enlace-sutil">Quitar filtros</a></div>
+</form>
+<p id="grafo-ayuda-buscar" class="solo-lector">Escribe y elige un resultado para centrar el grafo en él.</p>
+<ul id="grafo-resultados" class="grafo-resultados" hidden></ul>
+
+<p id="grafo-estado" class="grafo-estado" role="status">Cargando el grafo…</p>
+<p id="grafo-cambios" class="grafo-cambios" hidden>NEXO ha cambiado tareas desde que abriste el grafo. <button type="button" id="grafo-recargar">Actualizar</button></p>
+
+<div class="grafo">
+  <div class="grafo-marco">
+    <div id="grafo-lienzo" class="grafo-lienzo" role="img" aria-label="Grafo de tareas, borradores, turnos e IAs. Usa el buscador para llegar a cada elemento y su ficha para recorrer sus relaciones."></div>
+    <div class="grafo-zoom" role="group" aria-label="Zoom">
+      <button type="button" data-zoom="mas" aria-label="Acercar">+</button>
+      <button type="button" data-zoom="menos" aria-label="Alejar">−</button>
+      <button type="button" data-zoom="encajar">Ver todo</button>
+    </div>
+  </div>
+  <aside id="grafo-ficha" class="grafo-ficha" aria-labelledby="grafo-ficha-titulo" hidden>
+    <button type="button" id="grafo-cerrar" class="grafo-cerrar" aria-label="Cerrar la ficha">×</button>
+    <p class="grafo-ficha-tipo" id="grafo-ficha-tipo"></p>
+    <h2 id="grafo-ficha-titulo" class="grafo-ficha-titulo" tabindex="-1"></h2>
+    <p id="grafo-ficha-estado"></p>
+    <p id="grafo-ficha-resumen" class="bc-resumen"></p>
+    <p id="grafo-ficha-fecha" class="bc-meta"></p>
+    <p><a id="grafo-ficha-enlace" href="/tareas">Abrir la ficha completa</a></p>
+    <h3 class="grafo-ficha-sub">Relaciones</h3>
+    <ul id="grafo-ficha-relaciones" class="grafo-relaciones"></ul>
+  </aside>
+</div>
+
+<section class="panel grafo-leyenda" aria-labelledby="t-leyenda">
+  <h2 id="t-leyenda">Cómo leerlo</h2>
+  <p>La <strong>forma</strong> dice qué es y el <strong>color</strong>, en qué estado está (siempre con su nombre en la ficha).</p>
+  <ul class="grafo-leyenda-lista">
+    {% for clase, nombre in [("por-hacer", "Por hacer / aparcada"), ("en-marcha", "En marcha"), ("propuesta", "Idea sin revisar"), ("atascada", "Atascada, esperando o a rehacer"), ("sin-comprobar", "Hecha, falta comprobarla / borrador sin revisar"), ("comprobada", "Hecha y comprobada / borrador aprobado"), ("descartada", "Descartada o sustituida"), ("turno", "Turno de NEXO"), ("ia", "IA o persona")] %}
+    <li><span class="grafo-muestra grafo-c-{{ clase }}" aria-hidden="true"></span> {{ nombre }}</li>
+    {% endfor %}
+  </ul>
+  <p class="bc-meta">Las flechas van de quien actúa a quien recibe: «T175 → ha generado → T251», «Borrador → escrito por → ChatGPT». Solo se dibujan relaciones que ya están guardadas; no se inventa ninguna.</p>
+</section>
+
+<script src="/estatico/vendor/vis-network.min.js" defer></script>
+<script src="/estatico/grafo.js" defer></script>
+{% endblock %}

@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{# T1020: ficha de UNA solicitud de la cola de aprobaciones (nucleo.guardian.explicacion), su historia y, si espera a
+   Damian, los botones. Debajo, el minichat (pieza 3, nucleo/chat_aprobacion.py) en #chat-aprobacion. #}
+{% block titulo %}Permiso {{ x.id }}{% endblock %}
+{% block encabezado %}Permiso <span class="bc-id">{{ x.id }}</span>{% endblock %}
+{% block contenido %}
+<p><a href="/bandejas#bandeja-ambar">← Volver a Bandejas</a></p>
+<section class="panel" aria-labelledby="t-ficha">
+  <h2 id="t-ficha">{{ x.explica.que }}</h2>
+  <p role="status"><strong>{{ x.estado_llano }}</strong>{% if x.decidida_por %} · decidió {{ x.decidida_por }}{% endif %}{% if x.estado == "pendiente" and x.vence %} · vence {{ x.vence }}{% endif %}</p>
+  {% if x.con_tribunal %}<p class="nota">El tribunal de 3 IAs lo está mirando; si no se ponen de acuerdo, te llega con su opinión. Puedes decidir tú antes.</p>{% endif %}
+  {% include "_ficha_aprobacion.html" %}
+  <details><summary>Ver la orden exacta ({{ x.accion }})</summary><pre class="tabla-desplazable">{{ x.detalle }}</pre></details>
+  {% if x.estado == "pendiente" %}
+  {% if x.nivel == "ambar" %}
+  <form hx-post="/ambar/decidir" hx-disabled-elt="find button" hx-target="#error-ficha">
+    <input type="hidden" name="id" value="{{ x.id }}">
+    <input type="hidden" name="desde" value="ficha">
+    <button type="submit" name="accion" value="aprobar">Aprobar</button>
+    <button type="submit" name="accion" value="denegar">Denegar</button>
+  </form>
+  <div id="error-ficha"></div>
+  {% else %}
+  <p><a class="boton" href="/bandejas#bandeja-riesgo">Decidir en Bandejas</a></p>
+  {% endif %}
+  {% endif %}
+</section>
+
+<section class="panel" aria-labelledby="t-chat" id="chat-aprobacion">
+  {% include "_aprobacion_chat.html" %}
+</section>
+
+<section class="panel" aria-labelledby="t-historia">
+  <h2 id="t-historia">Qué ha pasado</h2>
+  <ol class="lista-limpia">
+    {% for e in eventos %}<li class="nota">{{ e.cuando }} · {{ e.tipo|replace("_", " ") }} · {{ e.quien }}{% if e.motivo %}: {{ e.motivo }}{% endif %}</li>{% endfor %}
+  </ol>
+</section>
+{% endblock %}

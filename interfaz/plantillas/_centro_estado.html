@@ -1,0 +1,15 @@
+{% if parada.activa %}
+<p class="estado-grande estado-parado"><span aria-hidden="true">■</span> PARADO</p>
+<dl class="datos">
+  <dt>Motivo</dt><dd>{{ parada.motivo }}</dd>
+  {% if parada.quien %}<dt>Por</dt><dd>{{ parada.quien }}</dd>{% endif %}
+  {% if parada.cuando %}<dt>Desde</dt><dd>{{ parada.cuando }}</dd>{% endif %}
+</dl>
+<p class="nota">Ningún turno automático empieza ni sigue. Las órdenes están bloqueadas; para reanudar, «Seguir» arriba.</p>
+{% else %}
+<p class="estado-grande estado-activo"><span aria-hidden="true">●</span> ACTIVO</p>
+<p class="nota">Sin PARADA de emergencia: los turnos automáticos pueden correr.</p>
+{% endif %}
+{% if cierre %}
+<p class="nota nota-aviso"><span aria-hidden="true">⚠</span> Cierre de turno pedido: el turno en curso termina lo que tiene y no empieza nada nuevo.</p>
+{% endif %}

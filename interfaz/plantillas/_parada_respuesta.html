@@ -1,0 +1,6 @@
+{# Respuesta a POST /parada y /seguir: boton (swap normal) + banner y aviso accesible (OOB). #}
+{% include "_parada.html" %}
+{% with oob = true %}{% include "_banner_parada.html" %}{% endwith %}
+{# El error ya se anuncia con role=alert dentro del boton; aqui solo el aviso de exito.
+   Sin aviso no se toca #avisos: un refresco silencioso no debe borrar un anuncio en curso. #}
+{% if aviso %}<div hx-swap-oob="innerHTML:#avisos">{{ aviso }}</div>{% endif %}

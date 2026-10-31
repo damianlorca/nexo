@@ -1,0 +1,52 @@
+--- a/manos/servidor_mcp.py
++++ b/manos/servidor_mcp.py
+@@ -232,7 +232,15 @@
+         if respuesta:
+             return respuesta
+ 
+-        return shell.lanzar(comando if ok else _con_guardia(comando), nombre, cwd or None, ok)
++        if ok:
++            return shell.lanzar(comando, nombre, cwd or None, True)
++
++        # 18/10 (A0062/A0069/A0071): el envoltorio de la guardia nombra nucleo/guardia_python.py, que es blindado, y
++        # shell.lanzar lo veia AMBAR aunque lo pedido fuera VERDE: pedia una aprobacion que luego nunca se consumia.
++        # El nivel ya se ha juzgado arriba sobre lo pedido; el envoltorio lo pone NEXO. aprobado=True salta el ambar
++        # del envoltorio, NUNCA el rojo (shell.lanzar lo corta igual).
++        envuelto = _con_guardia(comando)
++        return shell.lanzar(envuelto, nombre, cwd or None, envuelto != comando)
+ 
+     return _envuelto(_correr)
+ 
+--- a/tests/test_enganche_aprobaciones.py
++++ b/tests/test_enganche_aprobaciones.py
+@@ -239,3 +239,30 @@
+     # lo que no esta en la lista blanca sigue esperando a Damian
+     assert "SOLICITUD" in srv.comando("pip install requests")
+     assert len(ejecutados) == 1
++
++
++@con_patch
++def test_lanzar_py_verde_no_pide_aprobacion_por_el_envoltorio_de_la_guardia(monkeypatch):
++    """18/10 (A0071): un .py verde se lanza envuelto en la guardia sin crear solicitud ni quedarse en bucle."""
++    lanzados = []
++    monkeypatch.setattr(shell, "lanzar", lambda c, n, cwd, ok: lanzados.append((c, ok)) or {"pid": 1})
++
++    r = srv.lanzar(r".venv\Scripts\python.exe herramientas_nube\estudio.py")
++
++    assert "SOLICITUD" not in r
++    assert ap.pendientes() == []
++    assert len(lanzados) == 1
++    comando, ok = lanzados[0]
++    assert "guardia_python.py" in comando and comando.endswith(r"herramientas_nube\estudio.py") and ok is True
++
++
++@con_patch
++def test_lanzar_ambar_aprobado_se_lanza_sin_envoltorio(monkeypatch):
++    lanzados = []
++    monkeypatch.setattr(shell, "lanzar", lambda c, n, cwd, ok: lanzados.append((c, ok)) or {"pid": 1})
++
++    assert "SOLICITUD" in srv.lanzar("winget install algo")
++    ap.aprobar("A0001")
++    srv.lanzar("winget install algo", aprobacion_id="A0001")
++
++    assert lanzados == [("winget install algo", True)]

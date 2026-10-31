@@ -1,0 +1,11 @@
+{# T231: bloque "Turnos" del Centro: el que corre (paso, tiempo, tarea), la cola, el proximo y el ultimo. #}
+<div class="turnos-centro">
+{% include "_turnos_en_curso.html" %}
+<dl>
+  <dt>Próximo</dt>
+  <dd>{% if desactivados %}turnos desactivados ({{ desactivados }}){% elif proximo %}{{ proximo.nombre }} · {{ proximo.cuando }}{% else %}ninguno programado{% endif %}</dd>
+  <dt>Último</dt>
+  <dd>{% if ultimo %}{{ ultimo.nombre }} · {{ ultimo.texto }}{% else %}todavía ninguno{% endif %}</dd>
+</dl>
+<p class="nota"><a href="/turnos">Ver y editar los turnos</a></p>
+</div>

@@ -1,0 +1,8 @@
+{% if trazas %}
+    <ul class="lista-acciones">
+      {% for x in trazas %}
+      <li><span class="hora">{{ x.t[5:16] }}</span> <strong>{{ x.evento or "—" }}</strong>
+          {% if x.detalle %}<code class="recorte">{{ x.detalle }}</code>{% endif %}</li>
+      {% endfor %}
+    </ul>
+    {% else %}<p class="vacio">Sin trazas registradas todavía.</p>{% endif %}

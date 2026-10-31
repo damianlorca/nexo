@@ -1,0 +1,14 @@
+{# T1020: la ficha en llano de una solicitud (nucleo.guardian.explicacion), en x.explica. La usan Bandejas y la pagina
+   /aprobacion/<id>. Sin «sin clasificar»: el guardian siempre dice que es, sobre que y si se puede deshacer. #}
+<dl class="explica-aprobacion">
+  <dt>Qué hace</dt><dd>{{ x.explica.que }}</dd>
+  {% if x.explica.sobre %}<dt>Sobre qué</dt><dd><ul class="lista-limpia">{% for r in x.explica.sobre %}<li><code>{{ r.ruta }}</code> · {{ r.papel }}</li>{% endfor %}</ul></dd>{% endif %}
+  <dt>Tipo</dt><dd>{{ x.explica.tipo_llano }}</dd>
+  <dt>¿Se puede deshacer?</dt><dd>{{ x.explica.deshacer }}</dd>
+  <dt>Quién lo pide y para qué</dt><dd>{{ x.explica.quien }} Para qué: {{ x.explica.para_que }}</dd>
+  <dt>Riesgo</dt><dd>{{ x.explica.riesgo }}</dd>
+  <dt>Recomendación</dt><dd>{{ x.explica.recomendacion }}</dd>
+  {% if x.explica.dictamenes %}<dt>Lo que dijo el tribunal</dt><dd><ul class="lista-limpia">{% for d in x.explica.dictamenes %}<li><strong>{{ d.voto }}</strong> ({{ d.quien }}): {{ d.motivo }}</li>{% endfor %}</ul></dd>{% endif %}
+  {% if x.explica.por_que_a_ti %}<dt>Por qué te llega a ti</dt><dd>{{ x.explica.por_que_a_ti }}</dd>{% endif %}
+  <dt>Si dices que no</dt><dd>{{ x.explica.si_no }}</dd>
+</dl>

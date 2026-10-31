@@ -1,0 +1,15 @@
+{# Punto de estado (verde/ambar/rojo) + monograma con el color de marca + nombre. El color nunca va solo:
+   el estado va tambien en texto para lectores de pantalla y al pasar el raton. #}
+<ul class="bc-ias" data-t195="ordenar-y-bloquear">
+  {% for x in ias %}
+  <li class="bc-ia" data-ia="{{ x.clave }}" title="{{ x.nombre }}: {{ x.texto }}{% if x.motivo %} ({{ x.motivo }}){% endif %}">
+    <span class="bc-punto-ia bc-punto-{{ x.punto }}" aria-hidden="true"></span>
+    <span class="bc-marca bc-marca-{{ x.clave }}" aria-hidden="true">{{ x.letra }}</span>
+    <span class="bc-ia-nombre">{{ x.nombre }}</span><span class="solo-lector">: {{ x.texto }}</span>
+  </li>
+  {% endfor %}
+</ul>
+<p class="nota"><span class="bc-punto-ia bc-punto-verde" aria-hidden="true"></span> lista ·
+  <span class="bc-punto-ia bc-punto-ambar" aria-hidden="true"></span> descansando ·
+  <span class="bc-punto-ia bc-punto-rojo" aria-hidden="true"></span> no disponible.
+  Bloquear u ordenar cada IA desde aquí llegará con T195.</p>

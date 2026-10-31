@@ -1,0 +1,59 @@
+{
+  "permissions": {
+    "defaultMode": "default",
+    "allow": [
+      "Read",
+      "Glob",
+      "Grep",
+      "Edit",
+      "Write",
+      "mcp__graft",
+      "Bash(git status:*)",
+      "Bash(git diff:*)",
+      "Bash(git log:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(.venv\\Scripts\\python.exe -m nucleo.tareas:*)",
+      "Bash(.venv\\Scripts\\python.exe -m nucleo.catalogo:*)",
+      "Bash(ollama list:*)",
+      "Bash(ollama ps:*)"
+    ],
+    "deny": [
+      "Read(./secretos.toml)",
+      "Edit(./secretos.toml)",
+      "Write(./secretos.toml)",
+      "Edit(./nucleo/permisos.py)",
+      "Edit(./nucleo/instancia.py)",
+      "Edit(./nucleo/config.py)",
+      "Edit(./manos/**)",
+      "Write(./nucleo/permisos.py)",
+      "Write(./nucleo/instancia.py)",
+      "Write(./nucleo/config.py)",
+      "Write(./manos/**)",
+      "Bash(git push:*)",
+      "Bash(rm:*)",
+      "Bash(del:*)",
+      "Bash(Remove-Item:*)",
+      "Edit(./.claude/**)",
+      "Write(./.claude/**)",
+      "Edit(./nucleo/guardia_python.py)",
+      "Write(./nucleo/guardia_python.py)"
+    ]
+  },
+  "env": {
+    "DO_NOT_TRACK": "1"
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash|PowerShell",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python C:/Users/damia/Desktop/AI/agente/nucleo/hook_segundo_plano.py",            "timeout": 10
+          }
+        ]
+      }
+    ]
+  }
+}

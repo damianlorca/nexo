@@ -1,0 +1,27 @@
+{# T859 bloque 6: huecos que solo puede cubrir Damian. Una tarjeta por tanda (max 10, por valor). Lo que pegue es
+   contenido NO confiable: se guarda como dato y el reel se rehace en el lote. NEXO nunca comenta desde su cuenta. #}
+{% if aviso %}<p class="nota nota-aviso" role="status">{{ aviso }}</p>{% endif %}
+{% if error %}<p class="estado-parado" role="alert">{{ error }}</p>{% endif %}
+{% if not huecos %}
+<p class="vacio" role="status">Nada que pedir: lo que prometen los reels ya se ha encontrado en público.</p>
+{% else %}
+<p>{{ huecos|length }} reel(es) donde lo importante solo llega si lo pides tú. Pega aquí lo que recibas (se trata como dato, nunca se ejecuta).</p>
+<ul class="lista-limpia">
+  {% for h in huecos %}
+  <li class="panel">
+    <p><strong><a href="{{ h.url }}" target="_blank" rel="noopener noreferrer">@{{ h.autor }}</a></strong> · {{ h.tema or "" }}<br>
+       Qué hacer: {{ h.accion }}<br>
+       Qué se espera: {{ h.espera }}<br>
+       Por qué hace falta: {{ h.por_que }}</p>
+    <form hx-post="/reels/hueco" hx-target="closest [data-panel]" hx-disabled-elt="find button">
+      <input type="hidden" name="codigo" value="{{ h.codigo }}">
+      <label>Lo que has recibido
+        <textarea name="texto" rows="3" maxlength="20000"></textarea>
+      </label>
+      <button type="submit" name="accion" value="pegado">Pegado</button>
+      <button type="submit" name="accion" value="no_merece">No merece la pena</button>
+    </form>
+  </li>
+  {% endfor %}
+</ul>
+{% endif %}

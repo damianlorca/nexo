@@ -1,0 +1,115 @@
+diff --git a/manos/archivos.py b/manos/archivos.py
+index 94cfd7b..4fca5f0 100644
+--- a/manos/archivos.py
++++ b/manos/archivos.py
+@@ -21,7 +21,7 @@ from pathlib import Path
+ 
+ from nucleo.config import RAIZ
+ from nucleo.escritura import escribir_atomico
+-from nucleo.permisos import Bloqueado, Nivel, exigir, nivel_de_ruta
++from nucleo.permisos import ARCHIVOS_BLINDADOS, Bloqueado, Nivel, exigir, nivel_de_ruta
+ from nucleo.registro import logger
+ 
+ 
+@@ -170,6 +170,16 @@ def _comprobar_archivable(p: Path, destino: Path) -> None:
+             f"({destino}) dentro de si misma."
+         )
+ 
++    # N01 (H07): una carpeta que contiene un archivo blindado (nucleo/, manos/, .claude/) no se
++    # archiva entera: se llevaria permisos.py & cia. sin pasar por el ambar de K2.
++    if p.is_dir():
++        for b in ARCHIVOS_BLINDADOS:
++            if p in (RAIZ / b).parents:
++                raise Bloqueado(
++                    f"Archivar {p} se llevaria {b}, que esta blindado. Archiva los "
++                    "archivos sueltos, o que Damian lo haga viendo el cambio."
++                )
++
+     if p.is_dir() and p.name in INTOCABLES and p.parent == RAIZ:
+         raise Bloqueado(
+             f"Archivar la carpeta '{p.name}' entera. Los archivos sueltos "
+diff --git a/nucleo/permisos.py b/nucleo/permisos.py
+index 9c73f22..a242202 100644
+--- a/nucleo/permisos.py
++++ b/nucleo/permisos.py
+@@ -47,7 +47,8 @@ def _cualquiera(patrones: tuple[str, ...]) -> re.Pattern:
+ 
+ 
+ # Inicio de comando: principio de linea o tras ; | & (
+-_INI = r"(?:^|[;|&(]\s*)"
++# N01 (H03): tambien detras de `cmd /c` o `cmd /k`, que es por donde se colaba `del`.
++_INI = r"(?:^|[;|&(]\s*|\bcmd(?:\.exe)?\s+/[ck]\s+[\"']?)"
+ 
+ 
+ # Nunca, bajo ningun concepto.
+@@ -59,6 +60,13 @@ ROJOS = _cualquiera((
+     rf"{_INI}shutdown\b",
+     r"\bvssadmin\s+delete\b",
+     r"\breg\s+delete\s+hk(lm|ey_local)",
++
++    # N01 (H03/H08): matar procesos por nombre o por patron. CLAUDE.md (25/09): NUNCA.
++    # Solo por el PID exacto que se lanzo, comprobando antes su linea de comando.
++    r"\btaskkill\b[^;|&]*\s/im\b",
++    r"\bstop-process\b[^;|&]*\s-(name|processname)\b",
++    r"\b(pkill|killall)\b",
++    r"commandline\s+-(like|match)\b.*\bstop-process\b",
+ ))
+ 
+ 
+@@ -71,6 +79,11 @@ BORRADO = _cualquiera((
+     r"\brd\s+/s\b",
+     r"\brmdir\s+/s\b",
+     r"\brm\s+-[a-z]*[rf]",
++
++    # N01 (H03): borrados que antes pasaban en verde.
++    rf"{_INI}(rm|ri|rmdir|rd|del|erase)\s",   # rm/ri sueltos y rmdir sin /s
++    r"\bgit\s+clean\b",                      # borra lo no versionado
++    r"\bgit\s+reset\s+--hard\b",             # tira cambios sin commitear
+ ))
+ 
+ 
+@@ -89,8 +102,8 @@ AMBAR = _cualquiera((
+     r"\bchoco\s+install\b",
+     r"\bscoop\s+install\b",
+ 
+-    # Sacar codigo de casa
+-    r"\bgit\s+push\b",
++    # Sacar codigo de casa (N01: tambien `git -c x=y push`)
++    r"\bgit\s+(-c\s+\S+\s+)*push\b",
+ 
+     # Traerse cosas de internet (L2). Bajar un .exe y dejarlo en disco
+     # es exactamente "descarga cosas", que es lo que dice el titulo.
+@@ -143,6 +156,9 @@ AMBAR = _cualquiera((
+ ARCHIVOS_EN_ROJO = ("secretos.toml",)
+ 
+ ARCHIVOS_BLINDADOS = (
++    Path("nucleo") / "guardia_python.py",   # N01 (H06): la guardia tambien es control
++    Path(".claude") / "settings.json",       # N01 (H02): los permisos de Claude Code tambien
++    Path("manos") / "__init__.py",           # CLAUDE.md: manos/* entero
+     Path("nucleo") / "permisos.py",
+     Path("nucleo") / "instancia.py",
+     Path("nucleo") / "config.py",
+@@ -190,12 +206,22 @@ def nivel_de_ruta(destino: str | Path, escritura: bool = True) -> Nivel:
+     return Nivel.AMBAR
+ 
+ 
++# N01 (H03): lo que el filtro de rutas protege tampoco se toca por la shell.
++_SECRETOS_EN_COMANDO = _cualquiera(tuple(re.escape(n) for n in ARCHIVOS_EN_ROJO))
++_BLINDADOS_EN_COMANDO = _cualquiera(tuple(
++    re.escape(b.as_posix()).replace("/", r"[\\/]") for b in ARCHIVOS_BLINDADOS
++))
++
++
+ def nivel_de_comando(comando: str) -> Nivel:
+     """Que nivel tiene este comando de shell."""
+ 
+-    if ROJOS.search(comando) or BORRADO.search(comando):
++    if ROJOS.search(comando) or BORRADO.search(comando) or _SECRETOS_EN_COMANDO.search(comando):
+         return Nivel.ROJO
+ 
++    if _BLINDADOS_EN_COMANDO.search(comando):
++        return Nivel.AMBAR
++
+     if AMBAR.search(comando):
+         return Nivel.AMBAR
+ 

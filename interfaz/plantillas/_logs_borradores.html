@@ -1,0 +1,9 @@
+{% if not borradores %}
+<p class="vacio">Todavía no hay borradores.</p>
+{% else %}
+<ul class="lista-acciones">
+  {% for b in borradores %}
+  <li><span class="hora">{{ b.cuando|hora }}</span> <a href="/borrador?f={{ b.nombre|urlencode }}">{{ b.nombre }}</a></li>
+  {% endfor %}
+</ul>
+{% endif %}

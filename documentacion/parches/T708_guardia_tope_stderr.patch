@@ -1,0 +1,24 @@
+Parche PROPUESTO para nucleo/guardia_python.py (archivo blindado: lo aplica Damian tras ver este diff).
+T708: la guardia escribe una linea en stderr por cada bloqueo. Si algo de fuera reintenta sin fin, el log
+(redirigido por quien lance el script) crece sin limite: 280 GB el 23-24/09. Con el parche, tras MAX_AVISOS
+mensajes por proceso solo se avisa una vez mas ("silenciados") y se sigue lanzando GuardiaBloqueo igual.
+
+--- a/nucleo/guardia_python.py
++++ b/nucleo/guardia_python.py
+@@ def instalar() -> None:
+     def cortar(motivo: str) -> None:
+         msg = f"GUARDIA NEXO: bloqueado {motivo}. Si Damian lo aprueba, repetir con aprobado=True."
++        cuenta[0] += 1
+         try:
+-            sys.stderr.write(msg + "\n")
++            if cuenta[0] <= MAX_AVISOS:
++                sys.stderr.write(msg + "\n")
++            elif cuenta[0] == MAX_AVISOS + 1:
++                sys.stderr.write(f"GUARDIA NEXO: mas de {MAX_AVISOS} bloqueos; el resto se corta sin escribir mas.\n")
+         except Exception:
+             pass
+         raise GuardiaBloqueo(msg)
+@@ (antes de def cortar, dentro de instalar)
++    cuenta = [0]
+@@ (a nivel de modulo, junto a RAIZ)
++MAX_AVISOS = 200   # T708: tope de lineas de bloqueo por proceso

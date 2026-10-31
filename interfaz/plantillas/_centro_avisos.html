@@ -1,0 +1,12 @@
+{# Centro v2 (T230): solo los avisos que piden una respuesta de Damián, agrupados. Los informativos, en Detalle técnico. #}
+{% if not grupos %}
+<p class="tt-vacio">Ninguno te pide nada ahora.</p>
+<p class="nota">Aquí solo sale lo que necesita una respuesta tuya, agrupado. Los avisos informativos siguen en Detalle técnico.</p>
+{% else %}
+<ul class="lista-llana">
+  {% for g in grupos %}
+  <li><strong>{{ g.nombre }}</strong>{% if g.n > 1 %} <span class="nota">· {{ g.n }}</span>{% endif %}
+    <ul class="lista-llana">{% for a in g.avisos %}<li><a href="{{ a.ruta }}">{{ a.titulo|truncate(90) }}</a></li>{% endfor %}</ul></li>
+  {% endfor %}
+</ul>
+{% endif %}
